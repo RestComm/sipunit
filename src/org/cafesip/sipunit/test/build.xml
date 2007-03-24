@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+
+<!--
+	This is an ant script for running SipUnit API tests. It groups the tests
+	together based on whether or not a proxy is required for the tests, and
+	if so, whether or not an auth challenge will be sent by the proxy for 
+	REGISTER, INVITE, etc. This is for convenience so that a whole category
+	of tests can be run at once, rather than having to hunt and find
+	the individual test classes to run using standard junit given a certain
+	setup.
+	
+	You can change some defaults for the tests by modifying the
+	sysproperty values set in these targets. Most tests accomodate any of
+	the javax.sip.xyz properties (gov.nist.javax.sip also) even if not shown 
+	here. There are some exceptions which are duly noted, otherwise you can 
+	assume that setting a javax.sip.xyz or gov.nist.javax.sip.xyz sysproperty 
+	for a target will be observed by the test class and applied to the test 
+	program (SipUnit) side. If you want to change the defaults for
+	those exception cases, you'll have to modify the test class source code.
+	
+	SipUnit-specific properties that you can set per target include:
+	    	sipunit.trace 			true/false, on/off
+			sipunit.test.port		local port to be used by the test (ie, 5060)
+			sipunit.test.protocol	protocol to be used by the test (udp/tcp)
+
+			sipunit.test.domain		post '@' portion of address for calling and 
+										called party
+			sipunit.proxy.host		IP address (or host name if resolvable) of
+			         					the proxy to which REGISTER, INVITE,
+			         					etc. messages should be sent
+			sipunit.proxy.port		port that the proxy is listening for SIP
+			 							messages on
+	
+-->
+
+<project name="SipUnit test" basedir="." default="all-no-proxy-tests">
+
+	<target name="init">
+		<path id="test.classpath">
+			<fileset dir="../../../../../lib" includes="*.jar" />
+			<pathelement location="../../../../../src" />
+		</path>
+		<tstamp />
+		<echo message="Running SipUnit test..." />
+	</target>
+
+	<!-- TESTS WITH NO PROXY -->
+
+	<target name="test-no-proxy" depends="init" description="Run basic tests with no proxy involved">
+		<junit fork="no" haltonfailure="yes" printsummary="no">
+			<test name="org.cafesip.sipunit.test.TestNoProxy" />
+
+			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
+			<sysproperty key="sipunit.trace" value="false" />
+			<sysproperty key="sipunit.test.port" value="5060" />
+
+			<formatter type="brief" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+
+	<target name="test-no-proxy-presence" depends="init" description="Run presence tests with no proxy involved">
+		<junit fork="no" haltonfailure="yes" printsummary="no">
+			<test name="org.cafesip.sipunit.test.TestPresenceNoProxy" />
+
+			<sysproperty key="javax.sip.STACK_NAME" value="testNotify" />
+			<sysproperty key="gov.nist.javax.sip.DEBUG_LOG" value="testNotify_debug.txt" />
+			<sysproperty key="gov.nist.javax.sip.SERVER_LOG" value="testNotify_log.txt" />
+			<sysproperty key="sipunit.trace" value="false" />
+			<sysproperty key="sipunit.test.port" value="5060" />
+			<sysproperty key="sipunit.test.protocol" value="udp" />
+
+			<formatter type="brief" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+
+	<target name="test-no-proxy-twostacks" depends="init" description="Run multiple stack (on one machine) tests with no proxy involved">
+		<junit fork="no" haltonfailure="yes" printsummary="no">
+			<test name="org.cafesip.sipunit.test.TestTwoSipStacksNoProxy" />
+
+			<!-- This test class receives SipUnit-specific properties only -->
+
+			<sysproperty key="sipunit.ipaddress.1" value="127.0.0.1" />
+			<sysproperty key="sipunit.testport.1" value="5061" />
+
+			<sysproperty key="sipunit.ipaddress.2" value="192.168.1.102" />
+			<sysproperty key="sipunit.testport.2" value="5091" />
+
+			<sysproperty key="sipunit.trace" value="false" />
+			<sysproperty key="sipunit.test.protocol" value="udp" />
+
+			<formatter type="brief" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+
+	<!-- TESTS WITH PROXY BUT NO AUTHENTICATION -->
+
+	<target name="test-proxy-noauth-example" depends="init" description="Run example test with proxy but no authentication">
+		<junit fork="no" haltonfailure="yes" printsummary="no">
+			<test name="org.cafesip.sipunit.test.ExampleTestWithProxyNoAuth" />
+
+			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
+			<sysproperty key="sipunit.trace" value="false" />
+			<sysproperty key="sipunit.test.port" value="5060" />
+			<sysproperty key="sipunit.test.protocol" value="udp" />
+
+			<sysproperty key="sipunit.test.domain" value="nist.gov" />
+			<sysproperty key="sipunit.proxy.host" value="127.0.0.1" />
+			<sysproperty key="sipunit.proxy.port" value="4000" />
+
+			<formatter type="brief" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+
+	<!-- TESTS WITH AUTHENTICATION -->
+
+	<target name="test-proxy" depends="init" description="Run full test with proxy and authentication">
+		<junit fork="no" haltonfailure="yes" printsummary="no">
+			<test name="org.cafesip.sipunit.test.TestWithProxyAuthentication" />
+
+			<!--  my setup for nist-sip proxy -->
+			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
+			<sysproperty key="sipunit.trace" value="false" />
+			<sysproperty key="sipunit.test.port" value="9091" />
+			<sysproperty key="sipunit.test.protocol" value="udp" />
+
+			<sysproperty key="sipunit.test.domain" value="nist.gov" />
+			<sysproperty key="sipunit.proxy.host" value="127.0.0.1" />
+			<sysproperty key="sipunit.proxy.port" value="4000" />
+
+			<!-- my setup for SipExchange 
+			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
+			<sysproperty key="javax.sip.IP_ADDRESS" value="127.0.0.1" />
+			<sysproperty key="sipunit.trace" value="false" />
+			<sysproperty key="sipunit.test.port" value="9091" />
+			<sysproperty key="sipunit.test.protocol" value="udp" />
+
+			<sysproperty key="sipunit.test.domain" value="cafesip.org" />
+			<sysproperty key="sipunit.proxy.host" value="192.168.1.102" />
+			<sysproperty key="sipunit.proxy.port" value="4000" />
+			-->
+
+			<formatter type="brief" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+
+	<!-- why does the following test pass when run from JUnit directly, but fails from here? (w/jain-sip-presence-proxy?)
+	     seems related to timing, and the proxy discards NOTIFY. TODO try w/another proxy
+	<target name="test-proxy-presence" depends="init" description="Run presence test with proxy and authentication">
+		<junit fork="no" haltonfailure="yes" printsummary="no">
+			<test name="org.cafesip.sipunit.test.TestPresenceWithProxy" />
+
+			<sysproperty key="javax.sip.STACK_NAME" value="testPresence" />
+			<sysproperty key="sipunit.trace" value="true" />
+			<sysproperty key="sipunit.test.port" value="5093" />
+			<sysproperty key="sipunit.test.protocol" value="udp" />
+
+			<sysproperty key="sipunit.test.domain" value="nist.gov" />
+			<sysproperty key="sipunit.proxy.host" value="127.0.0.1" />
+			<sysproperty key="sipunit.proxy.port" value="4000" />
+
+			<formatter type="brief" usefile="false" />
+			<classpath refid="test.classpath" />
+		</junit>
+	</target>
+	-->
+
+	<!-- GROUPS OF TESTS -->
+
+	<target name="all-no-proxy-tests" depends="test-no-proxy, test-no-proxy-presence, test-no-proxy-twostacks" description="Run all the tests that don't require a proxy" />
+	<target name="all-proxy-noauth-tests" depends="test-proxy-noauth-example" description="Run all the tests that use a proxy but without auth challenge" />
+	<!-- fix above, then uncomment: <target name="all-proxy-auth-tests" depends="test-proxy, test-proxy-presence" description="Run all the tests that use a proxy with auth challenge" /> -->
+
+
+</project>

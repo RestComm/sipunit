@@ -1,0 +1,60 @@
+SipUnit 0.0.6b
+
+- added support for running SipUnit tests from behind a NAT (see SipSession.setPublicAddress(host,port) comments and TestWithStun.java for an example).
+- deprecated getLocalViaHeaders(), getLocalContactInfo() in favor of getViaHeaders(), getContactInfo()
+- allow multiple sip stacks to be created without specifying IP address.
+
+
+SipUnit 0.0.5b
+
+- added additional method signatures to take extra parms (body/headers) for message sending
+   API NOTE: SipCall.sendReinvite()/respondToReinvite() and some SipSession.sendReply() signatures modified slightly
+   Additional signatures added for other methods resulting in request/response sending. 
+- picked up final JAIN SIP API and reference implementation changes for version 1.2.
+- fixed misc. bugs
+- copied xml.xsd to conf dir so offline compile can succeed
+   
+   
+SipUnit 0.0.4b
+
+- upgraded stack to new nist-sip 1.2 release
+- created ant script with overridable properties for executing tests grouped by configuration
+- added RE-INVITE (w/optional message header manipulation, groundwork for other methods)
+- added listen/waitForAck() methods for verifying ACK received.
+- fixed minor bugs
+
+TODO NEXT: 
+- add CANCEL, MESSAGE, REFER
+- incorporate multiple listening points per provider
+- ant test script: add more overridable test properties as needed (auth username, password, etc.)
+- modify remaining two test classes so they can be invoked from the ant test script like the others
+- review TODO'S in the code, address the important ones
+- other TODO's from the website TODO list.
+
+
+SipUnit 0.0.3a
+
+- added asynchronous version of makeCall()
+- added more SipTestCase methods: assertAnswered(), assertResponseReceived(x), etc.
+- fixed bugs - [ 1231719 ] SipRequest.isXXX() is bugus
+             - incorrect Request URI in outbound REGISTER
+             - incorrect routing of ACK when proxy sets LR param in record route header
+             - added authentication challenge handling to SipCall.disconnect(), needed for callee BYE sending through proxy
+             - corrected 'is it for me?' check in SipSession.processRequest()
+             - fixed SipSession synchronization problems
+- fixed example source dir tree in binary distribution packaging, added more detailed instructions for running examples
+
+- added new feature: client-side SUBSCRIBE/NOTIFY handling (Type II, distributed agents) and a
+  utility to simulate a presence server for the purpose of testing a Type II client.
+
+
+
+
+NOTES on nist-gov stack 1.1 mods included with this package
+   - routing problem: nist-sip-stack needs to set record-route header lr param
+   - challenged BYE problem: nist-stack SipDialog CSEQ checking doesn't handle gaps
+   - fix for the above didn't handle SUBSCRIBE/NOTIFY sequencing
+
+TODO next release
+   - PUBLISH
+   - put client-side loop control check in authentication challenge handling 

@@ -1,0 +1,41 @@
+SipUnit README
+-----------------------
+
+Author: Becky McElroy <sipunit@cafesip.org>
+
+Version: __VERSION__
+
+For installation instructions and all other documentation, visit 
+	http://www.cafesip.org/projects/sipunit/
+
+For license information: Open the file 
+	docs/license/index.html using a web browser.
+
+For the SipUnit API class javadocs: open the file 
+	docs/api/index.html using a web browser.
+	
+For tutorial-type examples, see
+	http://www.cafesip.org/projects/sipunit/user_guide.html#An_Example_Test_Class
+	http://www.cafesip.org/projects/sipunit/user_guide.html#An_Example_of_Using_the_JAIN-SIP_API_
+	
+For actual example test classes using SipUnit, see the java files in the
+	examples/org/cafesip/sipunit/test directory. You can run the TestNoProxy
+	test right away as long as sipunit/examples and the jar files from 
+	sipunit/lib are in the classpath (more on running the test classes below). 
+	For running some of the other test classes, a proxy is required. For setup info,
+	see the header comments about proxy setup in each test java file and also visit 
+	http://www.cafesip.org/projects/sipunit/user_guide.html#Proxy_Considerations.
+	
+TO RUN AN EXAMPLE TEST: see how at
+	http://www.cafesip.org/projects/sipunit/user_guide.html#mozTocId89601
+
+To debug what's happening during a SipUnit test, turn on the SipUnit trace by adding
+    this line of code to your test class setUp() method:
+         SipStack.setTraceEnabled(true);
+          
+    Also you can use the NIST-SIP trace tool.
+	It's included in the lib directory. For instructions on using the tool, visit
+	http://www.cafesip.org/projects/sipunit/user_guide.html#Debugging
+
+
+	

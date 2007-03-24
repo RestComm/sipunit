@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>JWSDP Redistributable Components</title>
+</head>
+<body>
+<h2>JWSDP Redistributable Components</h2>
+<p>The following Java WSDP components are individually redistributable.
+Redistribution of a component entails the redistribution of all files
+comprising the component and any dependent components. </p>
+<p>
+<table summary="" border="1" cellpadding="5">
+  <tbody>
+    <tr>
+      <th align="left">Redistributable Component</th>
+      <th align="left">Files</th>
+    </tr>
+    <tr>
+      <td>JAXP</td>
+      <td><code>jaxp-api.jar</code>, <code>dom.jar</code>, <code>sax.jar</code>,
+      <code>xalan.jar</code>, <code>xercesImpl.jar</code>, <code>xsltc.jar</code></td>
+    </tr>
+    <tr>
+      <td>JAXB <sup><b>*</b></sup></td>
+      <td>JAXB JAR files (<code>jaxb-api.jar</code>, <code>jaxb-impl.jar</code>,
+      <code>jaxb-libs.jar</code>, <code>jaxb-xjc.jar</code>), JAXP 1.1
+or higher JAR files (<code>jaxp-api.jar</code>, <code>sax.jar</code>, <code>dom.jar</code>,
+      <code>xalan.jar</code>), JWSDP Shared JAR files (<code>jax-qname.jar</code>,
+      <code>namespace.jar</code>, <code>xsdlib.jar</code>, <code>relaxngDataype.jar</code>)
+      </td>
+    </tr>
+    <tr>
+      <td>JAX-RPC</td>
+      <td><code>jaxrpc-api.jar</code>, <code>jaxrpc-impl.jar</code>, <code>jaxrpc-spi.jar</code>,
+      <code>relaxngDatatype.jar</code>, <code>xsdlib.jar</code>, JAXP,
+SAAJ, <code>jcert.jar</code>, <code>jnet.jar</code>, <code>jsse.jar</code>
+      </td>
+    </tr>
+    <tr>
+      <td>SAAJ</td>
+      <td><code>saaj-api.jar</code>, <code>saaj-impl.jar</code>, <code>jaxp-api.jar</code>,
+      <code>dom.jar</code>, <code>sax.jar</code>, <code>xalan.jar</code>,
+      <code>xercesImpl.jar</code>, <code>activation.jar</code>, <code>mail.jar</code>,
+      <code>servlet.jar</code></td>
+    </tr>
+    <tr>
+      <td>JAXR</td>
+      <td><code>jaxr-api.jar</code>, <code>jaxr-impl.jar</code>, <code>jaxb-api.jar</code>,
+      <code>jaxb-impl.jar</code>, <code>jaxb-libs.jar</code>, <code>saaj-api.jar</code>,
+      <code>saaj-impl.jar</code>, <code>jaxp-api.jar</code>, <code>dom.jar</code>,
+      <code>sax.jar</code>, <code>xercesImpl.jar</code>, <code>activation.jar</code>,
+      <code>jaas.jar</code>, <code>mail.jar</code>, <code>namespace.jar</code>,
+      <code>relaxngDatatype.jar</code>, <code>xsdlib.jar</code></td>
+    </tr>
+    <tr>
+      <td colspan="2"><sup><b>*</b></sup>&nbsp;&nbsp;<font size="-1">If
+the application will not be doing any compilation at runtime, the <code>jaxb-xjc.jar</code>
+file does not need to be redistributed with the application.</font></td>
+    </tr>
+  </tbody>
+</table>
+</p>
+<p>Click <a
+ href="http://java.sun.com/webservices/docs/1.4/ReleaseNotes.html#RedistributableComponents">here</a>
+to check for any changes. </p>
+<br>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/concurrent.jar"/>
+	<classpathentry kind="lib" path="lib/dev/jaxb-xjc.jar"/>
+	<classpathentry kind="lib" path="lib/dom.jar"/>
+	<classpathentry kind="lib" path="lib/JainSipApi1.2.jar"/>
+	<classpathentry kind="lib" path="lib/JainSipRi1.2.jar"/>
+	<classpathentry kind="lib" path="lib/jax-qname.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-libs.jar"/>
+	<classpathentry kind="lib" path="lib/junit.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.8.jar"/>
+	<classpathentry kind="lib" path="lib/namespace.jar"/>
+	<classpathentry kind="lib" path="lib/nist-sdp-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/relaxngDatatype.jar"/>
+	<classpathentry kind="lib" path="lib/Stun4J.jar"/>
+	<classpathentry kind="lib" path="lib/tracesviewer.jar"/>
+	<classpathentry kind="lib" path="lib/xalan.jar"/>
+	<classpathentry kind="lib" path="lib/xercesImpl.jar"/>
+	<classpathentry kind="lib" path="lib/xsdlib.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="src"/>
+</classpath>
