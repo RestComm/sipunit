@@ -269,7 +269,7 @@ public class TestNoProxy extends SipTestCase
         }
 
     }
-
+    
     public void testBothSides() // test initiateOugoingCall(), passing routing
     // string
     {
