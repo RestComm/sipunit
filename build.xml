@@ -6,27 +6,27 @@
 -->
 
 <project name="SipUnit project" basedir="." default="build">
-
 	<!--
     This target is a private target that is called by the init target.
     It initializes the properties based on the build.properties file in
-    the CAFE_SIP home directory. The environment variable CAFESIP_HOME
-    must be set for this to work. 
+    the CAFESIP home directory if it exists. The idea is that certain properties
+    that are common across all cafesip projects can be set using a global build.properites
+    file.
     -->
-	<target name="setglobalenv" unless="cafesip.home">
-		<!-- global (all projects) properties initialization is done here-->
+	<target name="init-base" unless="cafesip.home">
 		<property environment="env" />
-		<property name="cafesip.home" value="${env.CAFESIP_HOME}" />
-		<property name="global.build.properties" value="${cafesip.home}/build.properties" />
+		<property name="cafesip.home" value="${basedir}/.." />
+		<property name="global.build.properties"
+		          value="${cafesip.home}/build.properties" />
+		<property file="${global.build.properties}" />
 	</target>
 
 	<!--
     This target is a private target that gets called every time a public target is
     invoked. It defines properties based on the the build.properties in the
-    project home directory. The project build properties may override the global 
-    build properties.
+    project home directory. 
     -->
-	<target name="init" depends="setglobalenv">
+	<target name="init" depends="init-base">
 		<!-- project-specific properties initialization is done here -->
 		<property name="project.home" value="${cafesip.home}/sipunit" />
 		<property name="project.build.properties" value="${project.home}/build.properties" />
