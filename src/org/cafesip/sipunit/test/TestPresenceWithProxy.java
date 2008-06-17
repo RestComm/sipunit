@@ -1340,7 +1340,7 @@ public class TestPresenceWithProxy extends SipTestCase
             Request request = sipStack.getMessageFactory().createRequest(
                     "NOTIFY sip:amit@"
                             + properties.getProperty("javax.sip.IP_ADDRESS")
-                            + ':' + myPort + ";transport=udp SIP/2.0");
+                            + ':' + myPort + ";transport=udp SIP/2.0\n");
             String notify_body = "<?xml version='1.0' encoding='UTF-8'?> "
                     + " <presence entity='sip:anyone@"
                     + properties.getProperty("sipunit.test.domain") + "' "

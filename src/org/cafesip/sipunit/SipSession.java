@@ -1198,7 +1198,14 @@ public class SipSession implements SipListener, SipActionObject
                 }
                 else
                 {
-                    dialog.sendRequest(trans);
+                    if (request.getMethod().equals(Request.ACK))
+                    {
+                        dialog.sendAck(request);
+                    }
+                    else
+                    {
+                        dialog.sendRequest(trans);
+                    }
                 }
             }
             catch (Exception e)

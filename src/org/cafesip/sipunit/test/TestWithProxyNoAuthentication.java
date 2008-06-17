@@ -481,7 +481,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
 
             Request invite = ua.getParent().getMessageFactory().createRequest(
                     "INVITE sip:becky@" + PROXY_HOST + ':' + PROXY_PORT
-                            + ";transport=" + PROXY_PROTO + " SIP/2.0 ");
+                            + ";transport=" + PROXY_PROTO + " SIP/2.0\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
             invite.addHeader(hdr_factory.createCSeqHeader((long)1, Request.INVITE));
@@ -739,7 +739,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
             HeaderFactory hdr_factory = ua.getParent().getHeaderFactory();
 
             Request invite = ua.getParent().getMessageFactory().createRequest(
-                    "INVITE sip:becky@nist.gov SIP/2.0 ");
+                    "INVITE sip:becky@nist.gov SIP/2.0\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
             invite.addHeader(hdr_factory.createCSeqHeader((long)1, Request.INVITE));

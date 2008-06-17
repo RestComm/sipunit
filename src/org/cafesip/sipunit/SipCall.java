@@ -1688,6 +1688,7 @@ public class SipCall implements SipActionObject, MessageListener
 
             if (siptrans != null)
             {
+                cseq = (CSeqHeader) req.getHeader(CSeqHeader.NAME);
                 return siptrans;
             }
 
@@ -1847,7 +1848,7 @@ public class SipCall implements SipActionObject, MessageListener
             Thread.sleep(100); // TODO - investigate more. why needed? if so,
             // use OK timestamp here
 
-            Request ack = dialog.createRequest(Request.ACK);
+            Request ack = dialog.createAck(cseq.getSeqNumber());
             parent.addAuthorizations(callId.getCallId(), ack);
             parent.putElements(ack, additionalHeaders, replaceHeaders, body);
 
@@ -1999,7 +2000,7 @@ public class SipCall implements SipActionObject, MessageListener
         {
             Thread.sleep(10); // TODO - needed here? see sendInviteOkAck().
 
-            Request ack = dialog.createRequest(Request.ACK);
+            Request ack = dialog.createAck(cseq.getSeqNumber());
 
             parent.addAuthorizations(callId.getCallId(), ack);
             parent.putElements(ack, additionalHeaders, replaceHeaders, body);
