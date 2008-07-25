@@ -1170,10 +1170,15 @@ public class SipSession implements SipListener, SipActionObject
             // clear out branch (client transaction) value, if by some chance we
             // repeat it, the stack will fail the 'getNewClientTransaction()'
             // call below
-            ViaHeader via = (ViaHeader) request.getHeader(ViaHeader.NAME);
-            if (via != null)
+            // Addition of a "if" condition) to check if the new Request
+            // is a CANCEL. In this case, the branch-ID is the same.
+            if (request.getMethod() != Request.CANCEL)
             {
-                via.removeParameter(ParameterNames.BRANCH);
+                ViaHeader via = (ViaHeader) request.getHeader(ViaHeader.NAME);
+                if (via != null)
+                {
+                    via.removeParameter(ParameterNames.BRANCH);
+                }
             }
 
             putElements(request, additionalHeaders, replaceHeaders, body);

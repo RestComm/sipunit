@@ -1313,8 +1313,8 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public boolean initiateOutgoingCall(String fromUri, String toUri,
             String viaNonProxyRoute, String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders)
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -1590,7 +1590,7 @@ public class SipCall implements SipActionObject, MessageListener
      *            (even if body bytes length 0). Use null for no message
      *            content.
      * @return A SipTransaction object if the message was successfully sent,
-     *         null otherwise. You don't need to anything with this returned
+     *         null otherwise. You don't need to do anything with this returned
      *         object other than to pass it to methods that you call
      *         subsequently for this operation, namely waitReinviteResponse()
      *         and sendReinviteOkAck().
@@ -2992,5 +2992,488 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         return null;
+    }
+
+    /**
+     * This method sends a basic CANCEL in a new transaction on the current
+     * dialog.
+     * <p>
+     * This method returns when the request message has been sent out. The
+     * calling program must subsequently call the waitForCancelResponse() method
+     * (one or more times) to get the response(s). On the receive side,
+     * pertinent methods include listenForCancel, waitForCancel() and
+     * respondToCancel().
+     * 
+     * @return A SipTransaction object if the message was successfully sent,
+     *         null otherwise. You don't need to do anything with this returned
+     *         object other than to pass it to methods that you call
+     *         subsequently for this operation, namely waitForCancelResponse().
+     */
+    public SipTransaction sendCancel()
+    {
+        return sendCancel(null, null, null);
+    }
+
+    /**
+     * This method is equivalent to the basic sendCancel() method except that it
+     * allows the caller to specify a message body and/or additional JAIN-SIP
+     * API message headers to add to or replace in the outbound message. Use of
+     * this method requires knowledge of the JAIN-SIP API.
+     * 
+     * The extra parameters supported by this method are:
+     * 
+     * @param additionalHeaders
+     *            ArrayList of javax.sip.header.Header, each element a SIP
+     *            header to add to the outbound message. These headers are added
+     *            to the message after a correct message has been constructed.
+     *            Note that if you try to add a header that there is only
+     *            supposed to be one of in a message, and it's already there and
+     *            only one single value is allowed for that header, then this
+     *            header addition attempt will be ignored. Use the
+     *            'replaceHeaders' parameter instead if you want to replace the
+     *            existing header with your own. Use null for no additional
+     *            message headers.
+     * @param replaceHeaders
+     *            ArrayList of javax.sip.header.Header, each element a SIP
+     *            header to add to the outbound message, replacing existing
+     *            header(s) of that type if present in the message. These
+     *            headers are applied to the message after a correct message has
+     *            been constructed. Use null for no replacement of message
+     *            headers.
+     * @param body
+     *            A String to be used as the body of the message. The
+     *            additionalHeaders parameter must contain a ContentTypeHeader
+     *            for this body to be included in the message. Use null for no
+     *            body bytes.
+     */
+    public SipTransaction sendCancel(ArrayList additionalHeaders,
+            ArrayList replaceHeaders, String body)
+    {
+        initErrorInfo();
+
+        if (dialog == null || dialog.getState() == null)
+        {
+            setReturnCode(SipSession.INVALID_OPERATION);
+            setErrorMessage((String) SipSession.statusCodeDescription
+                    .get(new Integer(returnCode))
+                    + " - dialog not yet initialized (i.e. no provisional response received for the original request), can't send CANCEL");
+            return null;
+        }
+
+        if (dialog.getState().getValue() != DialogState.EARLY.getValue())
+        {
+            setReturnCode(SipSession.INVALID_OPERATION);
+            setErrorMessage((String) SipSession.statusCodeDescription
+                    .get(new Integer(returnCode))
+                    + " - dialog has been confirmed or terminated (i.e. already received a final response), can't send CANCEL");
+            return null;
+        }
+
+        try
+        {
+            Request req = transaction.getClientTransaction().createCancel();
+            parent.addAuthorizations(callId.getCallId(), req);
+            MaxForwardsHeader mf = parent.getHeaderFactory()
+                    .createMaxForwardsHeader(10);
+            req.setHeader(mf);
+
+            SipStack.dumpMessage("We have created this CANCEL", req);
+
+            SipTransaction siptrans;
+            synchronized (this)// needed for asynchronous response -
+            // processEvent(), although we're not using that here now.
+            // Change there would be needed because that uses attribute
+            // 'transaction'
+            {
+                siptrans = parent.sendRequestWithTransaction(req, false, null,
+                        additionalHeaders, replaceHeaders, body);
+            }
+
+            if (siptrans != null)
+            {
+                return siptrans;
+            }
+
+            setReturnCode(parent.getReturnCode());
+            setErrorMessage(parent.getErrorMessage());
+            setException(parent.getException());
+            return null;
+        }
+        catch (Exception ex)
+        {
+            setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+            setException(ex);
+            setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                    + ex.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * This method is equivalent to the basic sendCancel() method except that it
+     * allows the caller to specify a message body and/or additional JAIN-SIP
+     * API message headers to add to or replace in the outbound message without
+     * requiring knowledge of the JAIN-SIP API.
+     * 
+     * The extra parameters supported by this method are:
+     * 
+     * @param body
+     *            A String to be used as the body of the message. Parameters
+     *            contentType, contentSubType must both be non-null to get the
+     *            body included in the message. Use null for no body bytes.
+     * @param contentType
+     *            The body content type (ie, 'application' part of
+     *            'application/sdp'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param contentSubType
+     *            The body content sub-type (ie, 'sdp' part of
+     *            'application/sdp'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param additionalHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message. Examples: "Priority:
+     *            Urgent", "Max-Forwards: 10". These headers are added to the
+     *            message after a correct message has been constructed. Note
+     *            that if you try to add a header that there is only supposed to
+     *            be one of in a message, and it's already there and only one
+     *            single value is allowed for that header, then this header
+     *            addition attempt will be ignored. Use the 'replaceHeaders'
+     *            parameter instead if you want to replace the existing header
+     *            with your own. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no additional message headers.
+     * @param replaceHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message, replacing existing
+     *            header(s) of that type if present in the message. Examples:
+     *            "Priority: Urgent", "Max-Forwards: 10". These headers are
+     *            applied to the message after a correct message has been
+     *            constructed. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no replacement of message headers.
+     */
+    public SipTransaction sendCancel(String body, String contentType,
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
+    {
+        try
+        {
+            return sendCancel(parent.toHeader(additionalHeaders, contentType,
+                    contentSubType), parent.toHeader(replaceHeaders), body);
+        }
+        catch (Exception ex)
+        {
+            setException(ex);
+            setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                    + ex.getMessage());
+            setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+            return null;
+        }
+    }
+
+    /**
+     * Start listening for a CANCEL request. This is a non-blocking call.
+     * Starting from the time this method is called, any received request(s) for
+     * this UA are collected. After calling this method, call waitForCancel() to
+     * process the first CANCEL received since calling this method.
+     * 
+     * NOTE: it's not necessary to call this method if a previous listenForXyz()
+     * method has been called and request listening has NOT been turned off
+     * since (ie, method stopListeningForRequests() hasn't been called).
+     * 
+     * @return true unless an error is encountered, in which case false is
+     *         returned.
+     */
+    public boolean listenForCancel()
+    {
+        return parent.listenRequestMessage();
+    }
+
+    /**
+     * The waitForCancel() method waits for a CANCEL request addressed to this
+     * user agent to be received from the network. Call this method after
+     * calling the listenForCancel() method.
+     * <p>
+     * This method blocks until one of the following occurs: 1) A CANCEL message
+     * has been received on the current dialog corresponding to the transaction
+     * of the INVITE previously received on this SipCall. In this case, the
+     * value of the new (CANCEL) Transaction is returned. The transaction of the
+     * original INVITE Request remains associated with this SipCall. The
+     * returned SipTransaction object is required for responding to the received
+     * CANCEL. Use the method respondToCancel() for sending a response to the
+     * received CANCEL. The getLastReceivedRequest() method can be called to get
+     * information about the received CANCEL request. 2) The wait timeout period
+     * specified by the parameter to this method expires. Null is returned in
+     * this case. 3) An error occurs. Null is returned in this case.
+     * <p>
+     * Any non-CANCEL requests or unmatched CANCEL requests received for this
+     * user agent are discarded while waiting for the CANCEL message.
+     * 
+     * @param timeout
+     *            The maximum amount of time to wait, in milliseconds. Use a
+     *            value of 0 to wait indefinitely.
+     * @return null in the case of wait timeout or error; call getReturnCode()
+     *         and/or getErrorMessage() and, if applicable, getException() for
+     *         further diagnostics. If a CANCEL message was received, a
+     *         SipTransaction object for the new transaction of the CANCEL
+     *         Request is returned. The old transaction of the INVITE being
+     *         canceled remains attached to this SipCall - it will be closed
+     *         with the 487 REQUEST TERMINATED Response. Call the
+     *         getLastReceivedRequest() method to get information about the
+     *         CANCEL, and call the respondToCancel() method to send a response
+     *         to the CANCEL, passing it the SipTransaction object returned
+     *         here.
+     */
+    public SipTransaction waitForCancel(long timeout)
+    {
+        initErrorInfo();
+
+        if (dialog == null)
+        {
+            setReturnCode(SipSession.INVALID_OPERATION);
+            setErrorMessage((String) SipSession.statusCodeDescription
+                    .get(new Integer(returnCode))
+                    + " - dialog hasn't been created, can't wait for CANCEL");
+            return null;
+        }
+
+        RequestEvent event = parent.waitRequest(timeout);
+
+        if (event == null)
+        {
+            setReturnCode(parent.getReturnCode());
+            setErrorMessage(parent.getErrorMessage());
+            setException(parent.getException());
+
+            return null;
+        }
+
+        Request request = event.getRequest();
+
+        String branchId = "";
+        if (event.getServerTransaction() != null)
+        {
+            branchId = event.getServerTransaction().getBranchId();
+        }
+
+        receivedRequests.add(new SipRequest(request));
+
+        while ((request.getMethod().equals(Request.CANCEL) == false)
+                || (branchId.equals(transaction.getServerTransaction()
+                        .getBranchId()) == false))
+        {
+            event = parent.waitRequest(timeout); // TODO, adjust timeout
+
+            if (event == null)
+            {
+                setReturnCode(parent.getReturnCode());
+                setErrorMessage(parent.getErrorMessage());
+                setException(parent.getException());
+
+                return null;
+            }
+
+            request = event.getRequest();
+
+            branchId = "";
+            if (event.getServerTransaction() != null)
+            {
+                branchId = event.getServerTransaction().getBranchId();
+            }
+
+            receivedRequests.add(new SipRequest(request));
+            continue;
+        }
+
+        SipStack.dumpMessage("CANCEL after received by stack", request);
+
+        ServerTransaction tr = event.getServerTransaction();
+        if (tr == null)
+        {
+            try
+            {
+                tr = parent.getParent().getSipProvider()
+                        .getNewServerTransaction(request);
+            }
+            catch (Exception ex)
+            {
+                setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+                setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                        + ex.getMessage());
+                setException(ex);
+
+                return null;
+            }
+        }
+
+        SipTransaction siptrans = new SipTransaction();
+        siptrans.setServerTransaction(tr);
+
+        return siptrans;
+    }
+
+    /**
+     * This method sends a basic response to a previously received CANCEL
+     * request. The response is constructed based on the parameters passed in.
+     * Call this method after waitForCancel() returns non-null. Call this method
+     * multiple times to send multiple responses to the received CANCEL.
+     * 
+     * @param siptrans
+     *            This is the object that was returned by method
+     *            waitForCancel(). It identifies a specific CANCEL transaction.
+     * @param statusCode
+     *            The status code of the response to send (may use SipResponse
+     *            constants).
+     * @param reasonPhrase
+     *            If not null, the reason phrase to send.
+     * @param expires
+     *            If not -1, an expiration time is added to the response. This
+     *            parameter indicates the duration the message is valid, in
+     *            seconds.
+     * @return true if the response was successfully sent, false otherwise.
+     */
+    public boolean respondToCancel(SipTransaction siptrans, int statusCode,
+            String reasonPhrase, int expires)
+    {
+        return respondToCancel(siptrans, statusCode, reasonPhrase, expires,
+                null, null, null);
+    }
+
+    /**
+     * This method is equivalent to the basic respondToCancel() method except
+     * that it allows the caller to specify additional JAIN-SIP API message
+     * headers to add to or replace in the outbound message. Use of this method
+     * requires knowledge of the JAIN-SIP API.
+     * 
+     * NOTE: The additionalHeaders parameter passed to this method must contain
+     * a ContentTypeHeader in order for a body to be included in the message.
+     * 
+     * The extra parameters supported by this method are:
+     * 
+     * @param additionalHeaders
+     *            ArrayList of javax.sip.header.Header, each element a SIP
+     *            header to add to the outbound message. These headers are added
+     *            to the message after a correct message has been constructed.
+     *            Note that if you try to add a header that there is only
+     *            supposed to be one of in a message, and it's already there and
+     *            only one single value is allowed for that header, then this
+     *            header addition attempt will be ignored. Use the
+     *            'replaceHeaders' parameter instead if you want to replace the
+     *            existing header with your own. Use null for no additional
+     *            message headers.
+     * 
+     * @param replaceHeaders
+     *            ArrayList of javax.sip.header.Header, each element a SIP
+     *            header to add to the outbound message, replacing existing
+     *            header(s) of that type if present in the message. These
+     *            headers are applied to the message after a correct message has
+     *            been constructed. Use null for no replacement of message
+     *            headers.
+     * 
+     * @return true if the response was successfully sent, false otherwise.
+     */
+    public boolean respondToCancel(SipTransaction siptrans, int statusCode,
+            String reasonPhrase, int expires, ArrayList additionalHeaders,
+            ArrayList replaceHeaders, String body)
+    {
+        initErrorInfo();
+
+        try
+        {
+            if (parent.sendReply(siptrans, statusCode, reasonPhrase, null,
+                    null, expires, additionalHeaders, replaceHeaders, body) == null)
+            {
+                setException(parent.getException());
+                setErrorMessage(parent.getErrorMessage());
+                setReturnCode(parent.getReturnCode());
+
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            setException(ex);
+            setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                    + ex.getMessage());
+            setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+            return false;
+        }
+
+    }
+
+    /**
+     * The waitForCancelResponse() method waits for a response to be received
+     * from the network for a sent CANCEL. Call this method after calling
+     * sendCancel().
+     * <p>
+     * This method blocks until one of the following occurs: 1) A response
+     * message has been received. In this case, a value of true is returned.
+     * Call the getLastReceivedResponse() method to get the response details. 2)
+     * A timeout occurs. A false value is returned in this case. 3) An error
+     * occurs. False is returned in this case.
+     * <p>
+     * Regardless of the outcome, getReturnCode() can be called after this
+     * method returns to get the status code: IE, the SIP response code received
+     * from the network (defined in SipResponse, along with the corresponding
+     * textual equivalent) or a SipUnit internal status/error code (defined in
+     * SipSession, along with the corresponding textual equivalent). SipUnit
+     * internal codes are in a specially designated range
+     * (SipSession.SIPUNIT_INTERNAL_RETURNCODE_MIN and upward).
+     * <p>
+     * 
+     * @param siptrans
+     *            This is the object that was returned by method sendCancel().
+     *            It identifies a specific Cancel transaction.
+     * @param timeout
+     *            The maximum amount of time to wait, in milliseconds. Use a
+     *            value of 0 to wait indefinitely.
+     * @return true if a response was received - in that case, call
+     *         getReturnCode() to get the status code that was contained in the
+     *         received response, and/or call getLastReceivedResponse() to see
+     *         the response details. Returns false if timeout or error.
+     */
+    public boolean waitForCancelResponse(SipTransaction siptrans, long timeout)
+    {
+        initErrorInfo();
+
+        if (siptrans == null)
+        {
+            returnCode = SipSession.INVALID_OPERATION;
+            errorMessage = (String) SipSession.statusCodeDescription
+                    .get(new Integer(returnCode))
+                    + " - no RE-INVITE transaction object given";
+            return false;
+        }
+
+        EventObject response_event = parent.waitResponse(siptrans, timeout);
+
+        if (response_event == null)
+        {
+            setErrorMessage(parent.getErrorMessage());
+            setException(parent.getException());
+            setReturnCode(parent.getReturnCode());
+            return false;
+        }
+
+        if (response_event instanceof TimeoutEvent == true)
+        {
+            setReturnCode(SipPhone.TIMEOUT_OCCURRED);
+            setErrorMessage("A Timeout Event was received");
+            return false;
+        }
+
+        Response resp = ((ResponseEvent) response_event).getResponse();
+        receivedResponses.add(new SipResponse(resp));
+        SipStack.trace("CANCEL response received: " + resp.toString());
+
+        setReturnCode(resp.getStatusCode());
+
+        return true;
     }
 }

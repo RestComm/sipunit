@@ -114,7 +114,7 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * This method starts a thread that waits for up to 'timeout' seconds to
+     * This method starts a thread that waits for up to 'timeout' milliseconds to
      * receive a SUBSCRIBE and if received, it sends a response with
      * 'statusCode' and 'reasonPhrase' (if not null). This method waits 500 ms
      * before returning to allow the thread to get started and begin waiting
@@ -122,7 +122,7 @@ public class PresenceNotifySender implements MessageListener
      * to account for this delay.
      * 
      * @param timeout -
-     *            number of seconds to wait for the SUBSCRIBE
+     *            number of milliseconds to wait for the SUBSCRIBE
      * @param statusCode -
      *            use in the response to the SUBSCRIBE
      * @param reasonPhrase -

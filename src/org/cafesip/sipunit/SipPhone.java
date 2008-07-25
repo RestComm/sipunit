@@ -1991,7 +1991,8 @@ public class SipPhone extends SipSession implements SipActionObject,
         Subscription sub = (Subscription) buddyList.get(uri);
         if (sub != null)
         {
-            return refreshBuddy(uri, duration, sub.getEventId(), timeout);
+            String eventid = sub.getEventId();
+            return refreshBuddy(uri, duration, eventid, timeout);
         }
 
         setReturnCode(SipSession.INVALID_ARGUMENT);

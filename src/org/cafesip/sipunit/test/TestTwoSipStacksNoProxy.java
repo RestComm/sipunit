@@ -60,7 +60,7 @@ public class TestTwoSipStacksNoProxy extends SipTestCase
 
     static
     {
-        defaultProperties1.setProperty("javax.sip.IP_ADDRESS", "192.168.1.101");
+        defaultProperties1.setProperty("javax.sip.IP_ADDRESS", "192.168.1.103");
         defaultProperties1.setProperty("javax.sip.STACK_NAME", "testAgent");
         defaultProperties1.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
         defaultProperties1.setProperty("gov.nist.javax.sip.DEBUG_LOG",

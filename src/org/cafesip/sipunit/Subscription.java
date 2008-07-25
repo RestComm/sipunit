@@ -78,7 +78,7 @@ import org.cafesip.sipunit.presenceparser.pidf.Tuple;
  * SipActionObject javadoc for more details on using these methods.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public class Subscription implements MessageListener, SipActionObject
 {
@@ -431,7 +431,8 @@ public class Subscription implements MessageListener, SipActionObject
                         method, callId, subscribeCSeq, from_header, to_header,
                         via_headers, max_forwards);
 
-                req.addHeader((ContactHeader) parent.getContactInfo().getContactHeader().clone());
+                req.addHeader((ContactHeader) parent.getContactInfo()
+                        .getContactHeader().clone());
 
                 String proxy_host = parent.getProxyHost();
                 if (proxy_host == null)
@@ -439,8 +440,7 @@ public class Subscription implements MessageListener, SipActionObject
                     // local: add a route header to loop the message back to our
                     // stack
                     SipURI route_uri = parent.getAddressFactory().createSipURI(
-                            null,
-                            parent.getStackAddress());
+                            null, parent.getStackAddress());
                     route_uri.setLrParam();
                     route_uri.setPort(parent.getParent().getSipProvider()
                             .getListeningPoints()[0].getPort());
@@ -454,7 +454,7 @@ public class Subscription implements MessageListener, SipActionObject
                     req.addHeader(parent.getHeaderFactory().createRouteHeader(
                             route_address));
                 }
-                
+
                 SipStack.trace("We have created this first SUBSCRIBE: " + req);
             }
             else if (dialog.getState() == null) // we've sent before but not
@@ -465,14 +465,16 @@ public class Subscription implements MessageListener, SipActionObject
                 subscribeCSeq = hdr_factory.createCSeqHeader(subscribeCSeq
                         .getSeqNumber() + 1, Request.SUBSCRIBE);
                 req.setHeader(subscribeCSeq);
-                
-                SipStack.trace("We have created this first resend SUBSCRIBE: " + req);
+
+                SipStack.trace("We have created this first resend SUBSCRIBE: "
+                        + req);
             }
             else
             // dialog is established enough to use
             {
                 req = dialog.createRequest(Request.SUBSCRIBE);
-                SipStack.trace("Dialog has created this subsequent SUBSCRIBE: " + req);
+                SipStack.trace("Dialog has created this subsequent SUBSCRIBE: "
+                        + req);
             }
 
             // set other needed request info
@@ -571,8 +573,8 @@ public class Subscription implements MessageListener, SipActionObject
         return false;
 
     } /*
-       * @see org.cafesip.sipunit.MessageListener#processEvent(java.util.EventObject)
-       */
+         * @see org.cafesip.sipunit.MessageListener#processEvent(java.util.EventObject)
+         */
 
     public void processEvent(EventObject event)
     {
@@ -598,7 +600,7 @@ public class Subscription implements MessageListener, SipActionObject
         }
     }
 
-    //  test prog may or may not yet be blocked waiting on this - watch
+    // test prog may or may not yet be blocked waiting on this - watch
     // synchronization
     private void processRequest(RequestEvent requestEvent)
     {
@@ -625,8 +627,7 @@ public class Subscription implements MessageListener, SipActionObject
 
         if (notifyCSeq != null) // This is not the first NOTIFY
         {
-            if (rcv_seq_hdr.getSeqNumber() <= notifyCSeq
-                    .getSeqNumber())
+            if (rcv_seq_hdr.getSeqNumber() <= notifyCSeq.getSeqNumber())
             {
                 Subscription.sendResponse(parent, requestEvent, SipResponse.OK,
                         "OK");
@@ -877,10 +878,9 @@ public class Subscription implements MessageListener, SipActionObject
         try
         {
             // bump up the sequence number
-            subscribeCSeq
-                    .setSeqNumber(subscribeCSeq.getSeqNumber() + 1);
+            subscribeCSeq.setSeqNumber(subscribeCSeq.getSeqNumber() + 1);
             msg.setHeader(subscribeCSeq);
-            
+
             synchronized (responseBlock)
             {
                 // send the message
@@ -1237,18 +1237,21 @@ public class Subscription implements MessageListener, SipActionObject
             return false;
         }
 
-        if (reqevent.getServerTransaction() == null)
-        {
-            // 1st NOTIFY received before 1st subscribe response
-            SipStack
-                    .trace("Informational : no UAS transaction available for received NOTIFY");
-        }
-
-        // send response statelessly
-
         try
         {
-            ((SipProvider) reqevent.getSource()).sendResponse(response);
+            if (reqevent.getServerTransaction() == null)
+            {
+                // 1st NOTIFY received before 1st subscribe response
+                SipStack
+                        .trace("Informational : no UAS transaction available for received NOTIFY");
+
+                // send response statelessly
+                ((SipProvider) reqevent.getSource()).sendResponse(response);
+            }
+            else
+            {
+                reqevent.getServerTransaction().sendResponse(response);
+            }
         }
         catch (Exception e)
         {
@@ -1785,8 +1788,7 @@ public class Subscription implements MessageListener, SipActionObject
 
         Request req = request.getRequest();
         String cseq_str = "CSEQ "
-                + ((CSeqHeader) req.getHeader(CSeqHeader.NAME))
-                        .getSeqNumber();
+                + ((CSeqHeader) req.getHeader(CSeqHeader.NAME)).getSeqNumber();
         SipStack.trace("Creating NOTIFY " + cseq_str
                 + " response with status code " + status + ", reason phrase = "
                 + reason);
@@ -1803,7 +1805,8 @@ public class Subscription implements MessageListener, SipActionObject
 
             ((ToHeader) response.getHeader(ToHeader.NAME)).setTag(myTag);
 
-            response.addHeader((ContactHeader) parent.getContactInfo().getContactHeader().clone());
+            response.addHeader((ContactHeader) parent.getContactInfo()
+                    .getContactHeader().clone());
 
             if (additionalHeaders != null)
             {

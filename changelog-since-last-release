@@ -1,3 +1,7 @@
+SipUnit 0.0.7b
+- CANCEL
+TODO: add tests for CANCEL methods with additional headers/body; add test w/proxy
+
 SipUnit 0.0.6b
 
 - added support for running SipUnit tests from behind a NAT (see SipSession.setPublicAddress(host,port) comments and TestWithStun.java for an example).

@@ -183,7 +183,8 @@ public class TestNoProxy extends SipTestCase
                     "INVITE sip:becky@nist.gov SIP/2.0\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
-            invite.addHeader(hdr_factory.createCSeqHeader((long)1, Request.INVITE));
+            invite.addHeader(hdr_factory.createCSeqHeader((long) 1,
+                    Request.INVITE));
             invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua
                     .generateNewTag()));
 
@@ -202,8 +203,7 @@ public class TestNoProxy extends SipTestCase
 
             // create and add the Route Header
             Address route_address = addr_factory.createAddress("sip:becky@"
-                    + ub.getStackAddress() + ':'
-                    + myPort + '/' + testProtocol);
+                    + ub.getStackAddress() + ':' + myPort + '/' + testProtocol);
             invite.addHeader(hdr_factory.createRouteHeader(route_address));
 
             SipTransaction trans = ua.sendRequestWithTransaction(invite, false,
@@ -269,7 +269,7 @@ public class TestNoProxy extends SipTestCase
         }
 
     }
-    
+
     public void testBothSides() // test initiateOugoingCall(), passing routing
     // string
     {
@@ -499,15 +499,13 @@ public class TestNoProxy extends SipTestCase
                             .getSeqNumber(), a);
             assertResponseReceived("Expected RINGING", SipResponse.RINGING,
                     SipRequest.INVITE, ((CSeqHeader) invite
-                            .getHeader(CSeqHeader.NAME))
-                            .getSeqNumber(), a);
+                            .getHeader(CSeqHeader.NAME)).getSeqNumber(), a);
             assertResponseNotReceived(SipResponse.RINGING, SipRequest.INVITE,
                     ((CSeqHeader) invite.getHeader(CSeqHeader.NAME))
                             .getSeqNumber() + 1, a);
             assertResponseNotReceived("Didn't expect this",
                     SipResponse.RINGING, SipRequest.ACK, ((CSeqHeader) invite
-                            .getHeader(CSeqHeader.NAME))
-                            .getSeqNumber(), a);
+                            .getHeader(CSeqHeader.NAME)).getSeqNumber(), a);
 
             long received_cseq_seqnum = ((CSeqHeader) invite
                     .getHeader(CSeqHeader.NAME)).getSeqNumber();
@@ -1198,7 +1196,8 @@ public class TestNoProxy extends SipTestCase
                     "INVITE sip:becky@nist.gov SIP/2.0\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
-            invite.addHeader(hdr_factory.createCSeqHeader((long)1, Request.INVITE));
+            invite.addHeader(hdr_factory.createCSeqHeader((long) 1,
+                    Request.INVITE));
             invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua
                     .generateNewTag()));
 
@@ -1564,7 +1563,7 @@ public class TestNoProxy extends SipTestCase
             addnl_hdrs.add("Reason: SIP; cause=42; text=\"I made it up\"");
 
             // TODO, find another header to replace, stack corrects this one
-            //replace_hdrs.add("Content-Length: 4");
+            // replace_hdrs.add("Content-Length: 4");
 
             assertTrue(a.respondToReinvite(siptrans_a, SipResponse.OK,
                     "ok reinvite last response", -1, a_orig_contact_uri,
@@ -2699,4 +2698,154 @@ public class TestNoProxy extends SipTestCase
         return;
     }
 
+    // this method tests cancel from a to b
+    public void testCancelWithoutHeader()
+    {
+        SipStack.trace("testAdditionalMessageParms");
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+
+            // establish a call
+            SipCall b = ub.createSipCall();
+            b.listenForIncomingCall();
+            Thread.sleep(500);
+            SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                    .getProperty("javax.sip.IP_ADDRESS")
+                    + ':' + myPort + '/' + testProtocol);
+            assertLastOperationSuccess(ua.format(), ua);
+
+            assertTrue(b.waitForIncomingCall(5000));
+            assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
+            assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+            Thread.sleep(200);
+            assertResponseReceived(SipResponse.RINGING, a);
+            Thread.sleep(300);
+
+            // Initiate the Cancel
+            b.listenForCancel();
+            Thread.sleep(500);
+            SipTransaction cancel = a.sendCancel();
+            assertNotNull(cancel);
+
+            // Respond to the Cancel
+            SipTransaction trans1 = b.waitForCancel(2000);
+            b.stopListeningForRequests();
+            assertNotNull(trans1);
+            assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+            assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
+            a.waitForCancelResponse(cancel, 5000);
+            Thread.sleep(500);
+            assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+            Thread.sleep(500);
+
+            // close the INVITE transaction
+            assertTrue("487 NOT SENT", b.sendIncomingCallResponse(
+                    SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+            Thread.sleep(500);
+            assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
+                    SipResponse.REQUEST_TERMINATED, a);
+            
+
+            // done, finish up
+            a.listenForDisconnect();
+            Thread.sleep(100);
+
+            b.disconnect();
+            assertLastOperationSuccess("b disc - " + b.format(), b);
+
+            a.waitForDisconnect(5000);
+            a.respondToDisconnect();
+            assertLastOperationSuccess("a wait disc - " + a.format(), a);
+
+            Thread.sleep(100);
+            ub.dispose();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    // this method tests cancel from a to b
+    public void testCancelWithoutHeaderWith481()
+    {
+        SipStack.trace("testAdditionalMessageParms");
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+
+            // establish a call
+            SipCall b = ub.createSipCall();
+            b.listenForIncomingCall();
+            Thread.sleep(500);
+            SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                    .getProperty("javax.sip.IP_ADDRESS")
+                    + ':' + myPort + '/' + testProtocol);
+            assertLastOperationSuccess(ua.format(), ua);
+            assertTrue(b.waitForIncomingCall(5000));
+            b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1);
+            assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+            Thread.sleep(200);
+            assertResponseReceived(SipResponse.RINGING, a);
+            Thread.sleep(300);
+
+            // Initiate the Cancel
+            b.listenForCancel();
+            Thread.sleep(500);
+            SipTransaction cancel = a.sendCancel();
+
+            // Take the call and assert Cancel received
+            SipTransaction trans1 = b.waitForCancel(2000);
+            a.waitOutgoingCallResponse(500);
+            assertTrue("200 OK FOR INVITE NOT SENT", b
+                    .sendIncomingCallResponse(Response.OK, "OK", -1));
+            assertNotNull(trans1);
+            assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+            Thread.sleep(500);
+            assertResponseReceived("200 OK FOR INVITE NOT RECEIVED",
+                    Response.OK, a);
+
+            // Respond to the 200 OK INVITE and Verify ACK
+            b.listenForAck();
+            assertTrue("OK ACK NOT SENT", a.sendInviteOkAck());
+            assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+            Thread.sleep(500);
+            assertTrue("ACK NOT RECEIVED", b.waitForAck(5000));
+            assertRequestReceived("ACK NOT RECEIVED", Request.ACK, b);
+
+            // Respond To Cancel ( Send 481 CALL_OR_TRANSACTION_DOES_NOT_EXIST
+            // TO THE CANCEL )
+            Thread.sleep(500);
+            a.waitForCancelResponse(cancel, 2000);
+            assertTrue("481 NOT SENT", b.respondToCancel(trans1,
+                    SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST,
+                    "Request Terminated", -1));
+            Thread.sleep(500);
+            assertTrue(a.waitForCancelResponse(cancel, 500));
+            assertResponseReceived(
+                    "481 Call/Transaction Does Not Exist NOT RECEIVED",
+                    SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST, a);
+            Thread.sleep(500);
+
+            // Disconnect AND Verify BYE
+            // Send 200 OK TO THE BYE
+            Thread.sleep(500);
+            b.listenForDisconnect();
+            assertTrue("BYE NOT SENT", a.disconnect());
+            b.waitForDisconnect(1000);
+            assertRequestReceived("BYE NOT RECEIVED", Request.BYE, b);
+            assertTrue("DISCONNECT OK", b.respondToDisconnect());
+            assertLastOperationSuccess("b disc - " + b.format(), b);
+
+            Thread.sleep(100);
+            ub.dispose();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
 }
