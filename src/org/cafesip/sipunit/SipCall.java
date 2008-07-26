@@ -1848,10 +1848,11 @@ public class SipCall implements SipActionObject, MessageListener
             Thread.sleep(100); // TODO - investigate more. why needed? if so,
             // use OK timestamp here
 
-            Request ack = dialog.createAck(cseq.getSeqNumber());
+            Request ack = dialog.createAck(((CSeqHeader)this.getLastReceivedResponse().getMessage().getHeader(CSeqHeader.NAME)).getSeqNumber());
             parent.addAuthorizations(callId.getCallId(), ack);
             parent.putElements(ack, additionalHeaders, replaceHeaders, body);
 
+            SipStack.dumpMessage("Sending the ACK", ack);
             dialog.sendAck(ack);
 
             return true;
@@ -2000,7 +2001,7 @@ public class SipCall implements SipActionObject, MessageListener
         {
             Thread.sleep(10); // TODO - needed here? see sendInviteOkAck().
 
-            Request ack = dialog.createAck(cseq.getSeqNumber());
+            Request ack = dialog.createAck(((CSeqHeader)this.getLastReceivedResponse().getMessage().getHeader(CSeqHeader.NAME)).getSeqNumber());
 
             parent.addAuthorizations(callId.getCallId(), ack);
             parent.putElements(ack, additionalHeaders, replaceHeaders, body);

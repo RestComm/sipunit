@@ -171,6 +171,18 @@ public class SipStack implements SipListener
             props.setProperty("javax.sip.STACK_NAME", "SipUnitTestAgent");
         }
 
+        /*
+         * The user can specify an IP address for the stack but we use it as an
+         * IP address for the listener and remove it from the property set so
+         * you can run multiple stacks.
+         */
+        String listenAddr = props.getProperty("javax.sip.IP_ADDRESS");
+
+        if (props.getProperty("javax.sip.IP_ADDRESS") != null)
+        {
+            props.remove("javax.sip.IP_ADDRESS");
+        }
+
         sipStack = sipFactory.createSipStack(props);
 
         headerFactory = sipFactory.createHeaderFactory();
@@ -187,7 +199,6 @@ public class SipStack implements SipListener
             port = DEFAULT_PORT;
         }
 
-        String listenAddr = props.getProperty("javax.sip.IP_ADDRESS");
         if (listenAddr == null)
         {
             listenAddr = InetAddress.getLocalHost().getHostAddress();
@@ -200,7 +211,6 @@ public class SipStack implements SipListener
          * Thanks to Venkita S. for contributing the changes to SipSession and
          * SipStack needed to make this work.
          */
-
 
         ListeningPoint lp = sipStack.createListeningPoint(listenAddr, port,
                 proto);
