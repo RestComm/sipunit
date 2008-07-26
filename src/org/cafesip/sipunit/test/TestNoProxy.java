@@ -101,7 +101,7 @@ public class TestNoProxy extends SipTestCase
                 "gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
         defaultProperties.setProperty("sipunit.trace", "true");
-        defaultProperties.setProperty("sipunit.test.port", "5060");
+        defaultProperties.setProperty("sipunit.test.port", "5061");
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
     }
 
@@ -119,7 +119,7 @@ public class TestNoProxy extends SipTestCase
         }
         catch (NumberFormatException e)
         {
-            myPort = 5060;
+            myPort = 5061;
         }
 
         testProtocol = properties.getProperty("sipunit.test.protocol");
@@ -1911,7 +1911,7 @@ public class TestNoProxy extends SipTestCase
             // (d') send reply with replace String Header (test replacement),
             // ignored body
             replace_hdrs.clear();
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5060>");
+            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
                     "my body", null, null, null, replace_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
@@ -1959,7 +1959,7 @@ public class TestNoProxy extends SipTestCase
             replace_hdrs.clear();
             addnl_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(
                     bogus_addr, "mytag").toString()); // verify ignored
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5060>"); // verify
+            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
             // replacement
             replace_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(60).toString()); // verify
@@ -2470,7 +2470,7 @@ public class TestNoProxy extends SipTestCase
             // call received
 
             replace_hdrs.clear();
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5060>");
+            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
                     "my body", null, null, null, replace_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
@@ -2544,7 +2544,7 @@ public class TestNoProxy extends SipTestCase
             replace_hdrs.clear();
             addnl_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(
                     bogus_addr, "mytag").toString()); // verify ignored
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5060>"); // verify
+            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
             // replacement
             replace_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(60).toString()); // verify
@@ -2701,7 +2701,7 @@ public class TestNoProxy extends SipTestCase
     // this method tests cancel from a to b
     public void testCancelWithoutHeader()
     {
-        SipStack.trace("testAdditionalMessageParms");
+        SipStack.trace("testCancelWithoutHeader");
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
@@ -2771,7 +2771,7 @@ public class TestNoProxy extends SipTestCase
     // this method tests cancel from a to b
     public void testCancelWithoutHeaderWith481()
     {
-        SipStack.trace("testAdditionalMessageParms");
+        SipStack.trace("testCancelWithoutHeaderWith481");
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");

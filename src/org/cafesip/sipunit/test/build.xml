@@ -52,7 +52,7 @@
 
 			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
 			<sysproperty key="sipunit.trace" value="false" />
-			<sysproperty key="sipunit.test.port" value="5060" />
+			<sysproperty key="sipunit.test.port" value="5061" />
 
 			<formatter type="brief" usefile="false" />
 			<classpath refid="test.classpath" />
@@ -67,7 +67,7 @@
 			<sysproperty key="gov.nist.javax.sip.DEBUG_LOG" value="testNotify_debug.txt" />
 			<sysproperty key="gov.nist.javax.sip.SERVER_LOG" value="testNotify_log.txt" />
 			<sysproperty key="sipunit.trace" value="false" />
-			<sysproperty key="sipunit.test.port" value="5060" />
+			<sysproperty key="sipunit.test.port" value="5061" />
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
 			<formatter type="brief" usefile="false" />
@@ -81,7 +81,7 @@
 
 			<!-- This test class receives SipUnit-specific properties only -->
 
-			<sysproperty key="sipunit.ipaddress.1" value="127.0.0.1" />
+			<sysproperty key="sipunit.ipaddress.1" value="192.168.1.102" />
 			<sysproperty key="sipunit.testport.1" value="5061" />
 
 			<sysproperty key="sipunit.ipaddress.2" value="192.168.1.102" />
@@ -103,12 +103,12 @@
 
 			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
 			<sysproperty key="sipunit.trace" value="false" />
-			<sysproperty key="sipunit.test.port" value="5060" />
+			<sysproperty key="sipunit.test.port" value="5061" />
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
-			<sysproperty key="sipunit.test.domain" value="nist.gov" />
-			<sysproperty key="sipunit.proxy.host" value="127.0.0.1" />
-			<sysproperty key="sipunit.proxy.port" value="4000" />
+			<sysproperty key="sipunit.test.domain" value="cafesip.org" />
+			<sysproperty key="sipunit.proxy.host" value="192.168.1.102" />
+			<sysproperty key="sipunit.proxy.port" value="5060" />
 
 			<formatter type="brief" usefile="false" />
 			<classpath refid="test.classpath" />
@@ -121,27 +121,14 @@
 		<junit fork="no" haltonfailure="yes" printsummary="no">
 			<test name="org.cafesip.sipunit.test.TestWithProxyAuthentication" />
 
-			<!--  my setup for nist-sip proxy -->
 			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
-			<sysproperty key="sipunit.trace" value="false" />
-			<sysproperty key="sipunit.test.port" value="9091" />
-			<sysproperty key="sipunit.test.protocol" value="udp" />
-
-			<sysproperty key="sipunit.test.domain" value="nist.gov" />
-			<sysproperty key="sipunit.proxy.host" value="127.0.0.1" />
-			<sysproperty key="sipunit.proxy.port" value="4000" />
-
-			<!-- my setup for SipExchange 
-			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
-			<sysproperty key="javax.sip.IP_ADDRESS" value="127.0.0.1" />
 			<sysproperty key="sipunit.trace" value="false" />
 			<sysproperty key="sipunit.test.port" value="9091" />
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
 			<sysproperty key="sipunit.test.domain" value="cafesip.org" />
 			<sysproperty key="sipunit.proxy.host" value="192.168.1.102" />
-			<sysproperty key="sipunit.proxy.port" value="4000" />
-			-->
+			<sysproperty key="sipunit.proxy.port" value="5060" />
 
 			<formatter type="brief" usefile="false" />
 			<classpath refid="test.classpath" />

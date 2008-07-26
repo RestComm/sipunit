@@ -54,6 +54,9 @@ import org.cafesip.sipunit.Subscription;
  * can run on the localhost. This class contains a subset of tests from
  * TestPresenceNoProxy test class.
  * 
+ * THIS CLASS IS UNDER CONSTRUCTION. Please run the TestPresenceNoProxy class
+ * to see the SUBSCRIBE/NOTIFY handling for the time being.
+ * 
  * Tests in this class require a proxy - one that will authenticate using DIGEST
  * and that will pass SUBSCRIBE, NOTIFY messages through to the 'To' party. You
  * can use nist.gov's JAIN-SIP proxy for this test. I used the old one with the
@@ -61,9 +64,9 @@ import org.cafesip.sipunit.Subscription;
  * header it sends out. Also, I had to make it do more than 20 server
  * transactions. It didn't work with the latest 1.2 sipstack so need to wait for
  * the new version to be incorporated into the jain-sip-presence-proxy before
- * trying to test with it using the latest stack. Start up the proxy before running
- * this test, and have the URIs used here in the list of users at the proxy, all
- * with password a1b2c3d4 - these URIs include: sip:becky@nist.gov,
+ * trying to test with it using the latest stack. Start up the proxy before
+ * running this test, and have the URIs used here in the list of users at the
+ * proxy, all with password a1b2c3d4 - these URIs include: sip:becky@nist.gov,
  * sip:amit@nist.gov, sip:tom@nist.gov, sip:vidya@nist.gov. By default, the
  * proxy host is 127.0.0.1 and its listening port is 4000.
  * 
@@ -117,9 +120,9 @@ public class TestPresenceWithProxy extends SipTestCase
         defaultProperties.setProperty("sipunit.test.port", "5093");
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
-        defaultProperties.setProperty("sipunit.test.domain", "nist.gov");
-        defaultProperties.setProperty("sipunit.proxy.host", "127.0.0.1");
-        defaultProperties.setProperty("sipunit.proxy.port", "4000");
+        defaultProperties.setProperty("sipunit.test.domain", "cafesip.org");
+        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.102");
+        defaultProperties.setProperty("sipunit.proxy.port", "5060");
     }
 
     private Properties properties = new Properties(defaultProperties);
@@ -146,7 +149,7 @@ public class TestPresenceWithProxy extends SipTestCase
         }
         catch (NumberFormatException e)
         {
-            proxyPort = 4000;
+            proxyPort = 5060;
         }
 
         testProtocol = properties.getProperty("sipunit.test.protocol");
@@ -213,20 +216,6 @@ public class TestPresenceWithProxy extends SipTestCase
 
         try
         {
-            // create far end (presence server simulator, fictitious buddy)
-            
-            PresenceNotifySender ub = new PresenceNotifySender(sipStack
-                    .createSipPhone(properties
-                            .getProperty("sipunit.proxy.host"), testProtocol,
-                            proxyPort, buddy));
-            boolean registered = ub.register(new Credential(properties
-                    .getProperty("sipunit.test.domain"), "becky", "a1b2c3d4"));
-            assertTrue(ub.getErrorMessage(), registered);
-
-            // tell far end to wait for a SUBSCRIBE, and when it
-            // comes in, respond with OK
-            assertTrue(ub.processSubscribe(2000, SipResponse.OK, "OK"));
-
             assertEquals(0, ua.getBuddyList().size()); // my list empty
 
             // add the buddy to the buddy list - sends SUBSCRIBE, gets response
@@ -240,8 +229,8 @@ public class TestPresenceWithProxy extends SipTestCase
             assertNotNull(ua.getBuddyInfo(buddy)); // call anytime to get
             // Subscription
             assertEquals(s.getBuddyUri(), ua.getBuddyInfo(buddy).getBuddyUri());
-            assertTrue(s.isSubscriptionPending());
-            assertFalse(s.isSubscriptionActive());
+            // assertFalse(s.isSubscriptionPending());
+            // assertTrue(s.isSubscriptionActive());
             assertFalse(s.isSubscriptionTerminated()); // call anytime
             assertEquals(SipResponse.PROXY_AUTHENTICATION_REQUIRED, s
                     .getReturnCode());
@@ -269,65 +258,19 @@ public class TestPresenceWithProxy extends SipTestCase
             response = (Response) s.getLastReceivedResponse().getMessage();
             assertEquals(3600, response.getExpires().getExpires());
 
-            // tell far end to send a bad NOTIFY
-            /*
-             * String notify_body = "<?xml version=\"1.0\"
-             * encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@" +
-             * properties.getProperty("sipunit.test.domain") + "\"
-             * xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
-             * assertTrue(ub.sendNotify(SubscriptionStateHeader.PENDING, null,
-             * notify_body, 3800, true)); // expiry too big
-             */
-            // tell far end to send a good NOTIFY
-            String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@"
-                    + properties.getProperty("sipunit.test.domain")
-                    + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
-            assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                    notify_body, 2400, false));
-
-            // wait for the first NOTIFY
-            /*
-             * RequestEvent reqevent = s.waitNotify(4000);
-             * assertNotNull(reqevent); // 1st JAXB parsing can // take 1100 ms -
-             * TODO, see how to improve // examine the request object - sequence
-             * diagram - start here // confirm detail Request request =
-             * reqevent.getRequest(); assertEquals(Request.NOTIFY,
-             * request.getMethod()); assertEquals(3800,
-             * ((SubscriptionStateHeader) request
-             * .getHeader(SubscriptionStateHeader.NAME)).getExpires());
-             * ArrayList received_requests = s.getAllReceivedRequests();
-             * assertTrue(received_requests.size() > 0);
-             * assertEquals(((SipRequest) received_requests.get(0)).getMessage()
-             * .toString(), request.toString()); // process the NOTIFY response =
-             * s.processNotify(reqevent); // check the notify processing results
-             * assertTrue(s.isSubscriptionPending());
-             * assertFalse(s.isSubscriptionActive());
-             * assertFalse(s.isSubscriptionTerminated());
-             * assertNull(s.getTerminationReason()); assertTrue(s.getTimeLeft() <=
-             * 3600); // expiry > what we sent
-             * assertEquals(SipResponse.BAD_REQUEST, s.getReturnCode()); //
-             * check the response that was created
-             * assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
-             * assertFalse(response.getReasonPhrase().equals("OK")); // check
-             * presence info - shouldn't have been processed assertEquals(0,
-             * s.getPresenceDevices().size()); assertEquals(0,
-             * s.getPresenceExtensions().size()); assertEquals(0,
-             * s.getPresenceNotes().size()); // reply to the NOTIFY
-             * assertTrue(s.replyToNotify(reqevent, response));
-             */
-            // wait a little
-            Thread.sleep(100);
-
-            // get the NOTIFY
-            RequestEvent reqevent = s.waitNotify(1000);
+            // wait for a NOTIFY
+            RequestEvent reqevent = s.waitNotify(10000);
             assertNotNull(reqevent);
             assertNoPresenceErrors(s);
 
             // examine the request object
             Request request = reqevent.getRequest();
             assertEquals(Request.NOTIFY, request.getMethod());
-            assertEquals(2400, ((SubscriptionStateHeader) request
-                    .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+            assertTrue(((SubscriptionStateHeader) request
+                    .getHeader(SubscriptionStateHeader.NAME)).getExpires() <= 3600
+                    && ((SubscriptionStateHeader) request
+                            .getHeader(SubscriptionStateHeader.NAME))
+                            .getExpires() >= 3595);
             ArrayList received_requests = s.getAllReceivedRequests();
             assertEquals(1, received_requests.size());
             SipRequest req = s.getLastReceivedRequest();
@@ -347,7 +290,7 @@ public class TestPresenceWithProxy extends SipTestCase
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionTerminated());
             assertNull(s.getTerminationReason());
-            assertTrue(s.getTimeLeft() <= 2400);
+            assertTrue(s.getTimeLeft() <= 3600);
             assertEquals(SipResponse.OK, s.getReturnCode());
 
             // check the response that was created
@@ -381,24 +324,27 @@ public class TestPresenceWithProxy extends SipTestCase
             assertTrue(s.replyToNotify(reqevent, response));
             Thread.sleep(200);
 
-            // Next: send a NOTIFY w/basic status, id, and expiry change
-
-            notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@"
-                    + properties.getProperty("sipunit.test.domain")
-                    + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"2\"><status><basic>open</basic></status></tuple></presence>";
-            assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                    notify_body, 1800, false));
+            // log the buddy in
+            SipPhone ub = sipStack.createSipPhone(properties
+                    .getProperty("sipunit.proxy.host"), testProtocol,
+                    proxyPort, buddy);
+            ub.addUpdateCredential(new Credential(properties
+                    .getProperty("sipunit.test.domain"), "becky", "a1b2c3d4"));
+            ua.register(null, 3600);
+            assertLastOperationSuccess(
+                    "Caller registration using pre-set credentials failed - "
+                            + ub.format(), ub);
 
             // get the NOTIFY
-            reqevent = s.waitNotify(1000);
+            reqevent = s.waitNotify(10000);
             assertNotNull(s.format(), reqevent);
             assertNoPresenceErrors(s);
 
             // examine the request object
             request = reqevent.getRequest();
             assertEquals(Request.NOTIFY, request.getMethod());
-            assertEquals(1800, ((SubscriptionStateHeader) request
-                    .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+            assertTrue(((SubscriptionStateHeader) request
+                    .getHeader(SubscriptionStateHeader.NAME)).getExpires() > 0);
             received_requests = s.getAllReceivedRequests();
             assertEquals(2, received_requests.size());
             req = s.getLastReceivedRequest();
@@ -415,10 +361,6 @@ public class TestPresenceWithProxy extends SipTestCase
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionTerminated());
             assertNull(s.getTerminationReason());
-            int timeleft = s.getTimeLeft();
-            assertTrue("Expected time left to be close to 1800, it was "
-                    + timeleft, timeleft <= 1800 && timeleft >= 1795);
-            assertEquals(SipResponse.OK, s.getReturnCode());
 
             // check the response that was created
             assertEquals(SipResponse.OK, response.getStatusCode());
@@ -450,18 +392,12 @@ public class TestPresenceWithProxy extends SipTestCase
             // reply to the NOTIFY
             assertTrue(s.replyToNotify(reqevent, response));
 
-            // Next, send another SUBSCRIBE via refreshBuddy()
-
-            // tell far end to wait for a SUBSCRIBE, and when it
-            // comes in, respond with OK
-            assertTrue(ub.processSubscribe(2000, SipResponse.OK, "Okey dokey"));
-
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
             assertNoPresenceErrors(s);
 
             // refresh buddy status - sends SUBSCRIBE, gets response
-            s = ua.refreshBuddy(buddy, 3600, 2000);
+            s = ua.refreshBuddy(buddy, 1790, 2000);
             assertNotNull(ua.format(), s);
 
             // check the return info
@@ -476,8 +412,7 @@ public class TestPresenceWithProxy extends SipTestCase
             assertEquals(SipResponse.OK, s.getReturnCode());
             resp_event = s.getCurrentSubscribeResponse();
             response = resp_event.getResponse();
-            assertEquals("Okey dokey", response.getReasonPhrase());
-            assertEquals(3600, response.getExpires().getExpires());
+            assertEquals(1790, response.getExpires().getExpires());
             assertEquals(response.toString(), s.getLastReceivedResponse()
                     .getMessage().toString());
             received_responses = s.getAllReceivedResponses();
@@ -493,23 +428,17 @@ public class TestPresenceWithProxy extends SipTestCase
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionTerminated());
             assertNull(s.getTerminationReason());
-            timeleft = s.getTimeLeft();
-            assertTrue("Expected time left to be close to 3600, it was "
-                    + timeleft, timeleft <= 3600 && timeleft >= 3595);
+            int timeleft = s.getTimeLeft();
+            assertTrue("Expected time left to be close to 1790, it was "
+                    + timeleft, timeleft <= 1790 && timeleft >= 1700);
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
             assertNoPresenceErrors(s);
 
-            // tell far end to send a NOTIFY
-            notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@"
-                    + properties.getProperty("sipunit.test.domain")
-                    + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"> <tuple id=\"3\"> <status> <basic>closed</basic> </status> </tuple> </presence>";
-            assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                    notify_body, timeleft, false)); // TODO - why doesn't it
-            // pick up previously
-            // sent authorization header? Call ID is the same.
+            // log the buddy out
+            ub.unregister(ub.getContactInfo().getURI(), 10000);
 
-            // get the NOTIFY
+            // get the resulting NOTIFY
             reqevent = s.waitNotify(5000);
             assertNotNull(reqevent);
             assertNoPresenceErrors(s);
@@ -534,63 +463,6 @@ public class TestPresenceWithProxy extends SipTestCase
             dev = (PresenceDeviceInfo) devices.get("3");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
-            assertEquals(-1.0, dev.getContactPriority(), 0.001);
-            assertNull(dev.getContactURI());
-            assertEquals(0, dev.getDeviceExtensions().size());
-            assertEquals(0, dev.getDeviceNotes().size());
-            assertEquals("3", dev.getId());
-            assertEquals(0, dev.getStatusExtensions().size());
-            assertNull(dev.getTimestamp());
-
-            // check PRESENCE info - top-level extensions
-            // -----------------------------------------------
-            assertEquals(0, s.getPresenceExtensions().size());
-
-            // check PRESENCE info - top-level notes
-            // -----------------------------------------------
-            assertEquals(0, s.getPresenceNotes().size());
-
-            // reply to the NOTIFY
-            assertTrue(s.replyToNotify(reqevent, response));
-
-            // Next, terminate the subscription from the far end
-
-            notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@"
-                    + properties.getProperty("sipunit.test.domain")
-                    + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"3\"><status><basic>open</basic></status></tuple></presence>";
-            assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
-                    SubscriptionStateHeader.TIMEOUT, notify_body, 0, false));
-
-            // get the NOTIFY
-            reqevent = s.waitNotify(1000);
-            assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
-
-            // process the NOTIFY
-            response = s.processNotify(reqevent);
-            assertNotNull(response);
-            assertEquals(1, ua.getBuddyList().size());
-            assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
-
-            // check the processing results
-            assertFalse(s.isSubscriptionActive());
-            assertFalse(s.isSubscriptionPending());
-            assertTrue(s.isSubscriptionTerminated());
-            assertEquals(SubscriptionStateHeader.TIMEOUT, s
-                    .getTerminationReason());
-            timeleft = s.getTimeLeft(); // should reflect the time that was left
-            assertTrue("Expected time left to be close to 3600, it was "
-                    + timeleft, timeleft <= 3600 && timeleft >= 3590);
-            assertEquals(SipResponse.OK, s.getReturnCode()); // response code
-
-            // check PRESENCE info - devices/tuples
-            // -----------------------------------------------
-            devices = s.getPresenceDevices();
-            assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
-            assertNotNull(dev);
-            assertEquals("open", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
             assertNull(dev.getContactURI());
             assertEquals(0, dev.getDeviceExtensions().size());

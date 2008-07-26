@@ -95,7 +95,7 @@ public class TestPresenceNoProxy extends SipTestCase
                 "gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
         defaultProperties.setProperty("sipunit.trace", "true");
-        defaultProperties.setProperty("sipunit.test.port", "5060");
+        defaultProperties.setProperty("sipunit.test.port", "5061");
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
     }
 
@@ -115,7 +115,7 @@ public class TestPresenceNoProxy extends SipTestCase
         }
         catch (NumberFormatException e)
         {
-            myPort = 5060;
+            myPort = 5061;
         }
 
         testProtocol = properties.getProperty("sipunit.test.protocol");

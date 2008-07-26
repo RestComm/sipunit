@@ -50,11 +50,11 @@ import org.cafesip.sipunit.SipTransaction;
  * 
  * Tests in this class require that a Proxy/registrar server be running with
  * authentication turned on. The Authentication scheme is Digest. Defaults:
- * proxy host = 127.0.0.1, port = 4000, protocol = udp; user amit password
+ * proxy host = 192.168.1.102, port = 5060, protocol = udp; user amit password
  * a1b2c3d4 and user becky password a1b2c3d4 defined at the proxy.
  * 
- * Example open-source Proxy/registrars include Jiplet Container (cafesip.org)
- * and nist.gov's JAIN-SIP Proxy for the People
+ * Example open-source Proxy/registrars include SipExchange (cafesip.org) and
+ * nist.gov's JAIN-SIP Proxy for the People
  * (http://snad.ncsl.nist.gov/proj/iptel/).
  * 
  * @author Becky McElroy
@@ -103,9 +103,9 @@ public class TestWithProxyAuthentication extends SipTestCase
         defaultProperties.setProperty("sipunit.test.port", "9091");
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
-        defaultProperties.setProperty("sipunit.test.domain", "nist.gov");
-        defaultProperties.setProperty("sipunit.proxy.host", "127.0.0.1");
-        defaultProperties.setProperty("sipunit.proxy.port", "4000");
+        defaultProperties.setProperty("sipunit.test.domain", "cafesip.org");
+        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.102");
+        defaultProperties.setProperty("sipunit.proxy.port", "5060");
     }
 
     private Properties properties = new Properties(defaultProperties);
@@ -132,7 +132,7 @@ public class TestWithProxyAuthentication extends SipTestCase
         }
         catch (NumberFormatException e)
         {
-            proxyPort = 4000;
+            proxyPort = 5060;
         }
 
         testProtocol = properties.getProperty("sipunit.test.protocol");
@@ -209,9 +209,8 @@ public class TestWithProxyAuthentication extends SipTestCase
                     .toString(), ua.getContactInfo().getURI());
 
             assertEquals("The default contact is wrong", "sip:amit@"
-                    + ua.getStackAddress() + ':'
-                    + myPort + ";transport=" + testProtocol + ";lr", ua
-                    .getContactInfo().getURI());
+                    + ua.getStackAddress() + ':' + myPort + ";lr;transport="
+                    + testProtocol, ua.getContactInfo().getURI());
         }
         catch (Exception ex)
         {
@@ -233,7 +232,8 @@ public class TestWithProxyAuthentication extends SipTestCase
         {
         }
 
-        ua.unregister("a@127.0.0.1", 10000); // unregister the wrong contact
+        ua.unregister("a@" + properties.getProperty("sipunit.proxy.host"),
+                10000); // unregister the wrong contact
         assertLastOperationFail("unregistering wrong user - " + ua.format(), ua);
 
         ua.unregister(ua.getContactInfo().getURI(), 10000);
@@ -275,7 +275,8 @@ public class TestWithProxyAuthentication extends SipTestCase
         {
         }
 
-        ua.unregister("a@127.0.0.1", 10000); // unregister the wrong contact
+        ua.unregister("a@" + properties.getProperty("sipunit.proxy.host"),
+                10000); // unregister the wrong contact
         assertLastOperationFail("unregistering wrong user - " + ua.format(), ua);
 
         ua.unregister(ua.getContactInfo().getURI().toString(), 10000);
@@ -1277,8 +1278,8 @@ public class TestWithProxyAuthentication extends SipTestCase
 
             addnl_hdrs.clear();
             addnl_hdrs.add(new String("Priority: 6"));
-            addnl_hdrs.add(new String("Route: "
-                    + ub.getContactInfo().getURI()));
+            addnl_hdrs
+                    .add(new String("Route: " + ub.getContactInfo().getURI()));
 
             replace_hdrs.clear();
             replace_hdrs.add(new String("Contact: <sip:dooodah@"
@@ -1298,9 +1299,7 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertHeaderContains(request, ContentTypeHeader.NAME,
                     "application/text");
             assertHeaderContains(request, ContactHeader.NAME, "dooodah");
-            assertHeaderContains(request, MaxForwardsHeader.NAME, "62"); // 62?
-            // jain-
-            // sip presence proxy, or 63 ? (JC)
+            assertHeaderContains(request, MaxForwardsHeader.NAME, "63");
             assertBodyContains(request, "my boddy");
 
             a.listenForDisconnect();
@@ -1329,15 +1328,15 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertHeaderContains(request, PriorityHeader.NAME, "7");
             assertHeaderContains(request, ContentTypeHeader.NAME, "appl/txt");
             assertHeaderContains(request, ContactHeader.NAME, "doooodah");
-            assertHeaderContains(request, MaxForwardsHeader.NAME, "63");
+            assertHeaderContains(request, MaxForwardsHeader.NAME, "64");
             assertBodyContains(request, "my bodddy");
 
             // create extra parameters for respondToDisconnect()
 
             addnl_hdrs.clear();
             addnl_hdrs.add(new String("Priority: 8"));
-            addnl_hdrs.add(new String("Route: "
-                    + ub.getContactInfo().getURI()));
+            addnl_hdrs
+                    .add(new String("Route: " + ub.getContactInfo().getURI()));
 
             replace_hdrs.clear();
             replace_hdrs.add(new String("Contact: <sip:ddah@"
@@ -1497,7 +1496,7 @@ public class TestWithProxyAuthentication extends SipTestCase
             b.listenForIncomingCall();
             Thread.sleep(20);
 
-            SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+            SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
                     .getProperty("javax.sip.IP_ADDRESS")
                     + ':' + myPort + '/' + testProtocol);
 
@@ -1718,7 +1717,8 @@ public class TestWithProxyAuthentication extends SipTestCase
 
             replace_hdrs = new ArrayList();
             replace_hdrs.add(ub.getParent().getHeaderFactory()
-                    .createContentLengthHeader(4));
+                    .createContentTypeHeader("mycontenttype",
+                            "mycontentsubtype"));
 
             assertTrue(b.respondToReinvite(siptrans_b, SipResponse.OK,
                     "ok reinvite last response", -1, b_orig_contact_uri,
@@ -1748,8 +1748,8 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertHeaderPresent(response, ContentTypeHeader.NAME);
             ct_hdr = (ContentTypeHeader) response.getMessage().getHeader(
                     ContentTypeHeader.NAME);
-            assertEquals("applicationn", ct_hdr.getContentType());
-            assertEquals("sdp", ct_hdr.getContentSubType());
+            assertEquals("mycontenttype", ct_hdr.getContentType());
+            assertEquals("mycontentsubtype", ct_hdr.getContentSubType());
             assertBodyContains(response, "DooD");
 
             // check additional headers
@@ -1758,7 +1758,8 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertHeaderContains(response, ReasonHeader.NAME, "42");
 
             // check override headers
-            assertHeaderContains(response, ContentLengthHeader.NAME, "4");
+            assertHeaderContains(response, ContentTypeHeader.NAME,
+                    "mycontenttype/mycontentsubtype");
 
             // send ACK
             // with additional, replacement String headers, and body
@@ -1774,7 +1775,7 @@ public class TestWithProxyAuthentication extends SipTestCase
                     "mysubtype", addnl_hdrs, replace_hdrs));
             assertTrue(b.waitForAck(1000));
             SipRequest req_ack = b.getLastReceivedRequest();
-            
+
             assertHeaderContains(req_ack, ReasonHeader.NAME, "dummy");
             assertHeaderContains(req_ack, MaxForwardsHeader.NAME, "29");
             assertHeaderContains(req_ack, PriorityHeader.NAME, "gent");
@@ -1806,6 +1807,69 @@ public class TestWithProxyAuthentication extends SipTestCase
             fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
         }
 
+    }
+
+    // this method tests cancel from a to b
+    public void testCancel()
+    {
+        SipStack.trace("testCancel");
+
+        ua.addUpdateCredential(new Credential(properties
+                .getProperty("sipunit.test.domain"), "amit", "a1b2c3d4"));
+        ua.register(null, 3600);
+        assertLastOperationSuccess(
+                "Caller registration using pre-set credentials failed - "
+                        + ua.format(), ua);
+
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone(properties
+                    .getProperty("sipunit.proxy.host"), testProtocol,
+                    proxyPort, "sip:becky@"
+                            + properties.getProperty("sipunit.test.domain"));
+            ub.addUpdateCredential(new Credential(properties
+                    .getProperty("sipunit.test.domain"), "becky", "a1b2c3d4"));
+            ub.register(null, 9600);
+            assertLastOperationSuccess(
+                    "Callee registration using pre-set credentials failed - "
+                            + ub.format(), ub);
+
+            SipCall b = ub.createSipCall();
+            b.listenForIncomingCall();
+            Thread.sleep(100);
+
+            SipCall a = ua.makeCall("sip:becky@"
+                    + properties.getProperty("sipunit.test.domain"), null);
+            assertLastOperationSuccess(ua.format(), ua);
+
+            assertTrue(b.waitForIncomingCall(5000));
+            b.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+            assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+            Thread.sleep(200);
+            assertResponseReceived(SipResponse.RINGING, a);
+            Thread.sleep(300);
+
+            // Initiate the Cancel
+            b.listenForCancel();
+            Thread.sleep(500);
+            SipTransaction cancel = a.sendCancel();
+            assertNotNull(cancel);
+
+            // check b
+            SipTransaction trans1 = b.waitForCancel(5000);
+            assertNotNull(trans1);
+            assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+            assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
+
+            // check a - TODO debug
+            //a.waitForCancelResponse(cancel, 5000);
+            //assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
 
 }

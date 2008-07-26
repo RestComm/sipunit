@@ -53,7 +53,7 @@ public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
 
     private SipPhone ua;
 
-    private int port1 = 5060;
+    private int port1 = 5061;
 
     private int port2 = 5090;
 
