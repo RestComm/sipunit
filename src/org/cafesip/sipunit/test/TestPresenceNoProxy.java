@@ -68,7 +68,7 @@ public class TestPresenceNoProxy extends SipTestCase
     private int myPort;
 
     private String testProtocol;
-    
+
     private static final Properties defaultProperties = new Properties();
     static
     {
@@ -105,7 +105,7 @@ public class TestPresenceNoProxy extends SipTestCase
     {
         super(arg0);
         host = properties.getProperty("javax.sip.IP_ADDRESS");
-        
+
         properties.putAll(System.getProperties());
 
         try
@@ -119,7 +119,7 @@ public class TestPresenceNoProxy extends SipTestCase
         }
 
         testProtocol = properties.getProperty("sipunit.test.protocol");
-        
+
     }
 
     /*
@@ -218,79 +218,32 @@ public class TestPresenceNoProxy extends SipTestCase
             assertNull(s.getTerminationReason());
             assertTrue(s.getTimeLeft() <= 3600);
 
-            // tell far end to send a bad NOTIFY
-            String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
-            assertTrue(ub.sendNotify(SubscriptionStateHeader.PENDING, null,
-                    notify_body, 3800, false)); // expiry too big
-
-            // tell far end to send a good NOTIFY
+            // tell far end to send a NOTIFY
             Thread.sleep(500);
-            notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
+            String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
             assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
                     notify_body, 2400, false));
-
-            // wait for the first NOTIFY
-            RequestEvent reqevent = s.waitNotify(2000);
-            assertNotNull(reqevent); // 1st JAXB parsing can
-            // take 1100 ms - TODO, see how to improve
-
-            // examine the request object - sequence diagram - start here
-            // confirm detail
-            Request request = reqevent.getRequest();
-            assertEquals(Request.NOTIFY, request.getMethod());
-            assertEquals(3800, ((SubscriptionStateHeader) request
-                    .getHeader(SubscriptionStateHeader.NAME)).getExpires());
-            ArrayList received_requests = s.getAllReceivedRequests();
-            assertTrue(received_requests.size() > 0);
-            assertEquals(((SipRequest) received_requests.get(0)).getMessage()
-                    .toString(), request.toString());
-
-            // process the NOTIFY
-            response = s.processNotify(reqevent);
-
-            // check the notify processing results
-            assertTrue(s.isSubscriptionPending());
-            assertFalse(s.isSubscriptionActive());
-            assertFalse(s.isSubscriptionTerminated());
-            assertNull(s.getTerminationReason());
-            assertTrue(s.getTimeLeft() <= 3600); // expiry > what we sent
-            assertEquals(SipResponse.BAD_REQUEST, s.getReturnCode());
-
-            // check the response that was created
-            assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
-            assertFalse(response.getReasonPhrase().equals("OK"));
-            System.out.println("The following validation FATAL_ERROR is SUPPOSED TO HAPPEN");
-
-            // check presence info - shouldn't have been processed
-            assertEquals(0, s.getPresenceDevices().size());
-            assertEquals(0, s.getPresenceExtensions().size());
-            assertEquals(0, s.getPresenceNotes().size());
-
-            // reply to the NOTIFY
-            assertTrue(s.replyToNotify(reqevent, response));
-
-            // wait a little
             Thread.sleep(10);
 
-            // get the second NOTIFY
-            reqevent = s.waitNotify(500);
+            // get the NOTIFY
+            RequestEvent reqevent = s.waitNotify(500);
             assertNotNull(reqevent);
             assertNoPresenceErrors(s);
 
             // examine the request object
-            request = reqevent.getRequest();
+            Request request = reqevent.getRequest();
             assertEquals(Request.NOTIFY, request.getMethod());
             assertEquals(2400, ((SubscriptionStateHeader) request
                     .getHeader(SubscriptionStateHeader.NAME)).getExpires());
-            received_requests = s.getAllReceivedRequests();
-            assertEquals(2, received_requests.size());
+            ArrayList received_requests = s.getAllReceivedRequests();
+            assertEquals(1, received_requests.size());
             SipRequest req = s.getLastReceivedRequest();
             assertNotNull(req);
             assertTrue(req.isNotify());
             assertFalse(req.isSubscribe());
-            assertEquals(((SipRequest) received_requests.get(1)).getMessage()
+            assertEquals(((SipRequest) received_requests.get(0)).getMessage()
                     .toString(), request.toString());
-            assertEquals(received_requests.get(1).toString(), req.toString());
+            assertEquals(received_requests.get(0).toString(), req.toString());
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
@@ -351,14 +304,14 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(1800, ((SubscriptionStateHeader) request
                     .getHeader(SubscriptionStateHeader.NAME)).getExpires());
             received_requests = s.getAllReceivedRequests();
-            assertEquals(3, received_requests.size());
+            assertEquals(2, received_requests.size());
             req = s.getLastReceivedRequest();
             assertNotNull(req);
             assertTrue(req.isNotify());
             assertFalse(req.isSubscribe());
-            assertEquals(((SipRequest) received_requests.get(2)).getMessage()
+            assertEquals(((SipRequest) received_requests.get(1)).getMessage()
                     .toString(), request.toString());
-            assertEquals(received_requests.get(2).toString(), req.toString());
+            assertEquals(received_requests.get(1).toString(), req.toString());
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
@@ -951,6 +904,77 @@ public class TestPresenceNoProxy extends SipTestCase
         }
     }
 
+    public void testBadNotify()
+    {
+        String buddy = "sip:becky@cafesip.org"; // I am amit
+
+        try
+        {
+            // create far end (presence server simulator, fictitious buddy)
+            PresenceNotifySender ub = new PresenceNotifySender(sipStack
+                    .createSipPhone(buddy));
+
+            // tell far end to wait for a SUBSCRIBE, and when it
+            // comes in, respond with OK
+            assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
+            Thread.sleep(500);
+
+            // add the buddy to the buddy list - sends SUBSCRIBE, gets response
+            Subscription s = ua.addBuddy(buddy, 2000);
+            assertNotNull(s);
+            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.isSubscriptionActive());
+
+            // tell far end to send a bad NOTIFY
+            String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
+            assertTrue(ub.sendNotify(SubscriptionStateHeader.PENDING, null,
+                    notify_body, 3800, false)); // expiry too big
+
+            // wait for the NOTIFY
+            RequestEvent reqevent = s.waitNotify(2000);
+            assertNotNull(reqevent);
+
+            // examine the request object - sequence diagram - start here
+            // confirm detail
+            Request request = reqevent.getRequest();
+            assertEquals(Request.NOTIFY, request.getMethod());
+            assertEquals(3800, ((SubscriptionStateHeader) request
+                    .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+            ArrayList received_requests = s.getAllReceivedRequests();
+            assertTrue(received_requests.size() > 0);
+            assertEquals(((SipRequest) received_requests.get(0)).getMessage()
+                    .toString(), request.toString());
+
+            // process the NOTIFY
+            Response response = s.processNotify(reqevent);
+
+            // check the notify processing results
+            assertTrue(s.isSubscriptionPending());
+            assertFalse(s.isSubscriptionActive());
+            assertFalse(s.isSubscriptionTerminated());
+            assertNull(s.getTerminationReason());
+            assertTrue(s.getTimeLeft() <= 3600); // expiry > what we sent
+            assertEquals(SipResponse.BAD_REQUEST, s.getReturnCode());
+
+            // check the response that was created
+            assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+            assertFalse(response.getReasonPhrase().equals("OK"));
+
+            // check presence info - shouldn't have been processed
+            assertEquals(0, s.getPresenceDevices().size());
+            assertEquals(0, s.getPresenceExtensions().size());
+            assertEquals(0, s.getPresenceNotes().size());
+
+            // reply to the NOTIFY
+            assertTrue(s.replyToNotify(reqevent, response));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
     public void testErrors()
     {
         Subscription s = ua.refreshBuddy("sip:ddd@aaa.bbb", 100);
@@ -1360,19 +1384,20 @@ public class TestPresenceNoProxy extends SipTestCase
 
             // create object to send a NOTIFY
             PresenceNotifySender sender = new PresenceNotifySender(sipStack
-                    .createSipPhone(host, testProtocol, myPort, "sip:huey@duey.com"));
+                    .createSipPhone(host, testProtocol, myPort,
+                            "sip:huey@duey.com"));
 
             // create and send NOTIFY out of the blue
             Request request = sipStack.getMessageFactory().createRequest(
-                    "NOTIFY sip:amit@" + host + ':' + myPort
-                            + ";transport=" + testProtocol + " SIP/2.0\n");
+                    "NOTIFY sip:amit@" + host + ':' + myPort + ";transport="
+                            + testProtocol + " SIP/2.0\n");
             String notify_body = "<?xml version='1.0' encoding='UTF-8'?> "
                     + " <presence entity='sip:anyone@cafesip.org' "
                     + "xmlns='urn:ietf:params:xml:ns:pidf'>" + "<tuple id='1'>"
                     + "<status><basic>closed</basic>" + "</status>"
                     + "</tuple>" + "</presence>";
 
-            sender.addNotifyHeaders(request, "amit","nist.gov", 
+            sender.addNotifyHeaders(request, "amit", "nist.gov",
                     SubscriptionStateHeader.TERMINATED, "late", notify_body, 0);
 
             SipTransaction trans = sender.sendStatefulNotify(request, true);
@@ -1439,13 +1464,13 @@ public class TestPresenceNoProxy extends SipTestCase
             // presence event on both
 
             request = sipStack.getMessageFactory().createRequest(
-                    "NOTIFY sip:amit@" + host + ':' + myPort
-                            + ";transport=" + testProtocol + " SIP/2.0");
+                    "NOTIFY sip:amit@" + host + ':' + myPort + ";transport="
+                            + testProtocol + " SIP/2.0\n");
             notify_body = "<?xml version='1.0' encoding='UTF-8'?> <presence entity='"
                     + buddy
                     + "'xmlns='urn:ietf:params:xml:ns:pidf'><tuple id='1'><status><basic>closed</basic></status></tuple></presence>";
 
-            sender.addNotifyHeaders(request, "amit","nist.gov",
+            sender.addNotifyHeaders(request, "amit", "nist.gov",
                     SubscriptionStateHeader.ACTIVE, "late", notify_body, 1000);
 
             EventHeader ehdr = (EventHeader) request
@@ -1930,100 +1955,63 @@ public class TestPresenceNoProxy extends SipTestCase
     }
 
     /*
-    private void template()
-    {
-        String buddy = "sip:becky@cafesip.org"; // I am amit
-
-        try
-        {
-            // create far end (presence server simulator, fictitious buddy)
-            PresenceNotifySender ub = new PresenceNotifySender(sipStack
-                    .createSipPhone(host, testProtocol, myPort, buddy));
-
-            // SEQUENCE OF EVENTS
-            // prepare far end to receive SUBSCRIBE
-            // do something with a buddy - sends SUBSCRIBE, gets response
-            // check the return info
-            // process the received response
-            // check the response processing results
-            // tell far end to send a NOTIFY
-            // wait for the NOTIFY
-            // process the NOTIFY
-            // check the processing results
-            // check PRESENCE info - devices/tuples
-            // check PRESENCE info - top-level extensions
-            // check PRESENCE info - top-level notes
-            // reply to the NOTIFY
-
-            // prepare far end to receive SUBSCRIBE
-            assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
-
-            // do something with a buddy - sends SUBSCRIBE, gets response
-            Subscription s = ua.addBuddy(buddy, 2000);
-
-            // check the return info
-            assertNotNull(s);
-            assertEquals(SipResponse.OK, s.getReturnCode());
-
-            // process the received response
-            assertTrue(s.processSubscribeResponse(1000));
-
-            // check the response processing results
-            assertTrue(s.isSubscriptionActive());
-            assertTrue(s.getTimeLeft() <= 3600);
-
-            // tell far end to send a NOTIFY
-            String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
-            assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                    notify_body, 2400, false));
-
-            // get the NOTIFY
-            RequestEvent reqevent = s.waitNotify(500);
-            assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
-
-            // process the NOTIFY
-            Response response = s.processNotify(reqevent);
-            assertNotNull(response);
-
-            // check the processing results
-            assertTrue(s.isSubscriptionActive());
-            assertNull(s.getTerminationReason());
-            assertTrue(s.getTimeLeft() <= 2400);
-            assertEquals(SipResponse.OK, s.getReturnCode()); // response code
-
-            // check PRESENCE info - devices/tuples
-            // -----------------------------------------------
-            HashMap devices = s.getPresenceDevices();
-            assertEquals(1, devices.size());
-            PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
-            assertNotNull(dev);
-            assertEquals("closed", dev.getBasicStatus());
-            assertEquals(-1.0, dev.getContactPriority(), 0.001);
-            assertNull(dev.getContactURI());
-            assertEquals(0, dev.getDeviceExtensions().size());
-            assertEquals(0, dev.getDeviceNotes().size());
-            assertEquals("1", dev.getId());
-            assertEquals(0, dev.getStatusExtensions().size());
-            assertNull(dev.getTimestamp());
-
-            // check PRESENCE info - top-level extensions
-            // -----------------------------------------------
-            assertEquals(0, s.getPresenceExtensions().size());
-
-            // check PRESENCE info - top-level notes
-            // -----------------------------------------------
-            assertEquals(0, s.getPresenceNotes().size());
-
-            // reply to the NOTIFY
-            assertTrue(s.replyToNotify(reqevent, response));
-
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-        }
-    }
-    */
+     * private void template() { String buddy = "sip:becky@cafesip.org"; // I am
+     * amit
+     * 
+     * try { // create far end (presence server simulator, fictitious buddy)
+     * PresenceNotifySender ub = new PresenceNotifySender(sipStack
+     * .createSipPhone(host, testProtocol, myPort, buddy));
+     *  // SEQUENCE OF EVENTS // prepare far end to receive SUBSCRIBE // do
+     * something with a buddy - sends SUBSCRIBE, gets response // check the
+     * return info // process the received response // check the response
+     * processing results // tell far end to send a NOTIFY // wait for the
+     * NOTIFY // process the NOTIFY // check the processing results // check
+     * PRESENCE info - devices/tuples // check PRESENCE info - top-level
+     * extensions // check PRESENCE info - top-level notes // reply to the
+     * NOTIFY
+     *  // prepare far end to receive SUBSCRIBE
+     * assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
+     *  // do something with a buddy - sends SUBSCRIBE, gets response
+     * Subscription s = ua.addBuddy(buddy, 2000);
+     *  // check the return info assertNotNull(s); assertEquals(SipResponse.OK,
+     * s.getReturnCode());
+     *  // process the received response
+     * assertTrue(s.processSubscribeResponse(1000));
+     *  // check the response processing results
+     * assertTrue(s.isSubscriptionActive()); assertTrue(s.getTimeLeft() <=
+     * 3600);
+     *  // tell far end to send a NOTIFY String notify_body = "<?xml
+     * version=\"1.0\" encoding=\"UTF-8\"?>\n<presence
+     * entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple
+     * id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
+     * assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+     * notify_body, 2400, false));
+     *  // get the NOTIFY RequestEvent reqevent = s.waitNotify(500);
+     * assertNotNull(reqevent); assertNoPresenceErrors(s);
+     *  // process the NOTIFY Response response = s.processNotify(reqevent);
+     * assertNotNull(response);
+     *  // check the processing results assertTrue(s.isSubscriptionActive());
+     * assertNull(s.getTerminationReason()); assertTrue(s.getTimeLeft() <=
+     * 2400); assertEquals(SipResponse.OK, s.getReturnCode()); // response code
+     *  // check PRESENCE info - devices/tuples //
+     * ----------------------------------------------- HashMap devices =
+     * s.getPresenceDevices(); assertEquals(1, devices.size());
+     * PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
+     * assertNotNull(dev); assertEquals("closed", dev.getBasicStatus());
+     * assertEquals(-1.0, dev.getContactPriority(), 0.001);
+     * assertNull(dev.getContactURI()); assertEquals(0,
+     * dev.getDeviceExtensions().size()); assertEquals(0,
+     * dev.getDeviceNotes().size()); assertEquals("1", dev.getId());
+     * assertEquals(0, dev.getStatusExtensions().size());
+     * assertNull(dev.getTimestamp());
+     *  // check PRESENCE info - top-level extensions //
+     * ----------------------------------------------- assertEquals(0,
+     * s.getPresenceExtensions().size());
+     *  // check PRESENCE info - top-level notes //
+     * ----------------------------------------------- assertEquals(0,
+     * s.getPresenceNotes().size());
+     *  // reply to the NOTIFY assertTrue(s.replyToNotify(reqevent, response));
+     *  } catch (Exception e) { e.printStackTrace(); fail("Exception: " +
+     * e.getClass().getName() + ": " + e.getMessage()); } }
+     */
 }

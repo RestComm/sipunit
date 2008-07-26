@@ -4,8 +4,8 @@
 	<classpathentry kind="lib" path="lib/concurrent.jar"/>
 	<classpathentry kind="lib" path="lib/dev/jaxb-xjc.jar"/>
 	<classpathentry kind="lib" path="lib/dom.jar"/>
-	<classpathentry kind="lib" path="lib/JainSipApi1.2.jar"/>
-	<classpathentry kind="lib" path="lib/JainSipRi1.2.jar"/>
+	<classpathentry kind="lib" path="lib/JainSipApi1.2.jar" sourcepath="/jain-sip/src"/>
+	<classpathentry kind="lib" path="lib/JainSipRi1.2.jar" sourcepath="/jain-sip/src"/>
 	<classpathentry kind="lib" path="lib/jax-qname.jar"/>
 	<classpathentry kind="lib" path="lib/jaxb-api.jar"/>
 	<classpathentry kind="lib" path="lib/jaxb-impl.jar"/>
