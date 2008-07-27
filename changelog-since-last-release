@@ -1,11 +1,9 @@
 SipUnit 0.0.7b
 - CANCEL (Alcatel-Lucent)
 - Updated JAIN-SIP stack/sdp to version: 1.2.72 (June 16, 2008)
-- Misc. Bug fixes (sipunit-extensions branch up to and including rev. 420)
+- Misc. Bug fixes (M. Ranganathan, sipunit-extensions branch up to and including rev. 420)
 	- Use Dialog.createAck(long) to create the Ack
 	- Fix initialization to allow multiple stacks to run in a single app
-TODO: add tests for CANCEL methods with additional headers/body; 
-TODO: release doc
 TODO: clean up warnings
 
 SipUnit 0.0.6b

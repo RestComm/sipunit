@@ -26,7 +26,7 @@
 package org.cafesip.sipunit;
 
 import java.security.MessageDigest;
-import java.security.*;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * FOR INTERNAL USE, but available to test programs if needed. The class takes

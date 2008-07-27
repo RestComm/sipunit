@@ -1848,7 +1848,9 @@ public class SipCall implements SipActionObject, MessageListener
             Thread.sleep(100); // TODO - investigate more. why needed? if so,
             // use OK timestamp here
 
-            Request ack = dialog.createAck(((CSeqHeader)this.getLastReceivedResponse().getMessage().getHeader(CSeqHeader.NAME)).getSeqNumber());
+            Request ack = dialog.createAck(((CSeqHeader) this
+                    .getLastReceivedResponse().getMessage().getHeader(
+                            CSeqHeader.NAME)).getSeqNumber());
             parent.addAuthorizations(callId.getCallId(), ack);
             parent.putElements(ack, additionalHeaders, replaceHeaders, body);
 
@@ -2001,7 +2003,9 @@ public class SipCall implements SipActionObject, MessageListener
         {
             Thread.sleep(10); // TODO - needed here? see sendInviteOkAck().
 
-            Request ack = dialog.createAck(((CSeqHeader)this.getLastReceivedResponse().getMessage().getHeader(CSeqHeader.NAME)).getSeqNumber());
+            Request ack = dialog.createAck(((CSeqHeader) this
+                    .getLastReceivedResponse().getMessage().getHeader(
+                            CSeqHeader.NAME)).getSeqNumber());
 
             parent.addAuthorizations(callId.getCallId(), ack);
             parent.putElements(ack, additionalHeaders, replaceHeaders, body);
@@ -3346,9 +3350,9 @@ public class SipCall implements SipActionObject, MessageListener
 
     /**
      * This method is equivalent to the basic respondToCancel() method except
-     * that it allows the caller to specify additional JAIN-SIP API message
-     * headers to add to or replace in the outbound message. Use of this method
-     * requires knowledge of the JAIN-SIP API.
+     * that it allows the caller to specify a message body and/or additional
+     * JAIN-SIP API message headers to add to or replace in the outbound
+     * message. Use of this method requires knowledge of the JAIN-SIP API.
      * 
      * NOTE: The additionalHeaders parameter passed to this method must contain
      * a ContentTypeHeader in order for a body to be included in the message.
@@ -3366,7 +3370,6 @@ public class SipCall implements SipActionObject, MessageListener
      *            'replaceHeaders' parameter instead if you want to replace the
      *            existing header with your own. Use null for no additional
      *            message headers.
-     * 
      * @param replaceHeaders
      *            ArrayList of javax.sip.header.Header, each element a SIP
      *            header to add to the outbound message, replacing existing
@@ -3374,6 +3377,11 @@ public class SipCall implements SipActionObject, MessageListener
      *            headers are applied to the message after a correct message has
      *            been constructed. Use null for no replacement of message
      *            headers.
+     * @param body
+     *            A String to be used as the body of the message. The
+     *            additionalHeaders parameter must contain a ContentTypeHeader
+     *            for this body to be included in the message. Use null for no
+     *            body bytes.
      * 
      * @return true if the response was successfully sent, false otherwise.
      */
@@ -3406,6 +3414,77 @@ public class SipCall implements SipActionObject, MessageListener
             return false;
         }
 
+    }
+
+    /**
+     * This method is equivalent to the basic respondToCancel() method except
+     * that it allows the caller to specify a message body and/or additional
+     * JAIN-SIP API message headers to add to or replace in the outbound message
+     * without requiring knowledge of the JAIN-SIP API.
+     * 
+     * The extra parameters supported by this method are:
+     * 
+     * @param body
+     *            A String to be used as the body of the message. Parameters
+     *            contentType, contentSubType must both be non-null to get the
+     *            body included in the message. Use null for no body bytes.
+     * @param contentType
+     *            The body content type (ie, 'application' part of
+     *            'application/sdp'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param contentSubType
+     *            The body content sub-type (ie, 'sdp' part of
+     *            'application/sdp'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param additionalHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message. Examples: "Priority:
+     *            Urgent", "Max-Forwards: 10". These headers are added to the
+     *            message after a correct message has been constructed. Note
+     *            that if you try to add a header that there is only supposed to
+     *            be one of in a message, and it's already there and only one
+     *            single value is allowed for that header, then this header
+     *            addition attempt will be ignored. Use the 'replaceHeaders'
+     *            parameter instead if you want to replace the existing header
+     *            with your own. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no additional message headers.
+     * @param replaceHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message, replacing existing
+     *            header(s) of that type if present in the message. Examples:
+     *            "Priority: Urgent", "Max-Forwards: 10". These headers are
+     *            applied to the message after a correct message has been
+     *            constructed. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no replacement of message headers.
+     * 
+     * @return true if the response was successfully sent, false otherwise.
+     */
+    public boolean respondToCancel(SipTransaction siptrans, int statusCode,
+            String reasonPhrase, int expires, String body, String contentType,
+            String contentSubType, ArrayList additionalHeaders,
+            ArrayList replaceHeaders)
+    {
+        try
+        {
+            return respondToCancel(siptrans, statusCode, reasonPhrase, expires,
+                    parent.toHeader(additionalHeaders, contentType,
+                            contentSubType), parent.toHeader(replaceHeaders),
+                    body);
+        }
+        catch (Exception ex)
+        {
+            setException(ex);
+            setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                    + ex.getMessage());
+            setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+            return false;
+        }
     }
 
     /**

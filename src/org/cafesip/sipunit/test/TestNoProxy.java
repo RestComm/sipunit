@@ -2699,7 +2699,7 @@ public class TestNoProxy extends SipTestCase
     }
 
     // this method tests cancel from a to b
-    public void testCancelWithoutHeader()
+    public void testCancel()
     {
         SipStack.trace("testCancelWithoutHeader");
         try
@@ -2716,7 +2716,8 @@ public class TestNoProxy extends SipTestCase
             assertLastOperationSuccess(ua.format(), ua);
 
             assertTrue(b.waitForIncomingCall(5000));
-            assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
+            assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing",
+                    -1));
             assertLastOperationSuccess("b send RINGING - " + b.format(), b);
             Thread.sleep(200);
             assertResponseReceived(SipResponse.RINGING, a);
@@ -2745,7 +2746,6 @@ public class TestNoProxy extends SipTestCase
             Thread.sleep(500);
             assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
                     SipResponse.REQUEST_TERMINATED, a);
-            
 
             // done, finish up
             a.listenForDisconnect();
@@ -2769,7 +2769,7 @@ public class TestNoProxy extends SipTestCase
     }
 
     // this method tests cancel from a to b
-    public void testCancelWithoutHeaderWith481()
+    public void testCancelWith481()
     {
         SipStack.trace("testCancelWithoutHeaderWith481");
         try
@@ -2838,6 +2838,218 @@ public class TestNoProxy extends SipTestCase
             assertRequestReceived("BYE NOT RECEIVED", Request.BYE, b);
             assertTrue("DISCONNECT OK", b.respondToDisconnect());
             assertLastOperationSuccess("b disc - " + b.format(), b);
+
+            Thread.sleep(100);
+            ub.dispose();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    public void testCancelExtraJainsipParms()
+    {
+        SipStack.trace("testCancelExtraJainsipParms");
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+
+            // establish a call
+            SipCall b = ub.createSipCall();
+            b.listenForIncomingCall();
+            Thread.sleep(500);
+            SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                    .getProperty("javax.sip.IP_ADDRESS")
+                    + ':' + myPort + '/' + testProtocol);
+            assertLastOperationSuccess(ua.format(), ua);
+
+            assertTrue(b.waitForIncomingCall(5000));
+            assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing",
+                    -1));
+            assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+            Thread.sleep(200);
+            assertResponseReceived(SipResponse.RINGING, a);
+            Thread.sleep(300);
+
+            // Initiate a Cancel with extra Jain SIP parameters
+            b.listenForCancel();
+            Thread.sleep(200);
+
+            ArrayList addnl_hdrs = new ArrayList();
+            addnl_hdrs.add(ua.getParent().getHeaderFactory()
+                    .createPriorityHeader("5"));
+            addnl_hdrs.add(ua.getParent().getHeaderFactory()
+                    .createContentTypeHeader("applicationn", "texxt"));
+
+            ArrayList replace_hdrs = new ArrayList();
+            URI bogus_contact = ua.getParent().getAddressFactory().createURI(
+                    "sip:doodah@"
+                            + properties.getProperty("javax.sip.IP_ADDRESS")
+                            + ':' + myPort);
+            Address bogus_addr = ua.getParent().getAddressFactory()
+                    .createAddress(bogus_contact);
+            replace_hdrs.add(ua.getParent().getHeaderFactory()
+                    .createContactHeader(bogus_addr)); // verify replacement
+            replace_hdrs.add(ua.getParent().getHeaderFactory()
+                    .createMaxForwardsHeader(62));
+            SipTransaction cancel = a.sendCancel(addnl_hdrs, replace_hdrs,
+                    "my cancel body");
+            assertNotNull(cancel);
+
+            // Verify the received Cancel
+            SipTransaction trans1 = b.waitForCancel(2000);
+            assertNotNull(trans1);
+            assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    PriorityHeader.NAME, "5");
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    ContentTypeHeader.NAME, "applicationn/texxt");
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    ContactHeader.NAME, "doodah");
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    MaxForwardsHeader.NAME, "62");
+            assertBodyContains(b.getLastReceivedRequest(), "my cancel body");
+
+            // finish off the sequence
+            assertTrue(b.respondToCancel(trans1, 200, "0K", -1, addnl_hdrs,
+                    replace_hdrs, "my cancel response body"));
+            a.waitForCancelResponse(cancel, 5000);
+            assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    PriorityHeader.NAME, "5");
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    ContentTypeHeader.NAME, "applicationn/texxt");
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    ContactHeader.NAME, "doodah");
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    MaxForwardsHeader.NAME, "62");
+            assertBodyContains(a.getLastReceivedResponse(),
+                    "my cancel response body");
+            Thread.sleep(100);
+
+            // close the INVITE transaction
+            assertTrue("487 NOT SENT", b.sendIncomingCallResponse(
+                    SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+            Thread.sleep(200);
+            assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
+                    SipResponse.REQUEST_TERMINATED, a);
+
+            // done, finish up
+            a.listenForDisconnect();
+            Thread.sleep(100);
+
+            b.disconnect();
+            assertLastOperationSuccess("b disc - " + b.format(), b);
+
+            a.waitForDisconnect(5000);
+            a.respondToDisconnect();
+            assertLastOperationSuccess("a wait disc - " + a.format(), a);
+
+            Thread.sleep(100);
+            ub.dispose();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+
+    public void testCancelExtraStringParms()
+    {
+        SipStack.trace("testCancelExtraStringParms");
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+
+            // establish a call
+            SipCall b = ub.createSipCall();
+            b.listenForIncomingCall();
+            Thread.sleep(500);
+            SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                    .getProperty("javax.sip.IP_ADDRESS")
+                    + ':' + myPort + '/' + testProtocol);
+            assertLastOperationSuccess(ua.format(), ua);
+
+            assertTrue(b.waitForIncomingCall(5000));
+            assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing",
+                    -1));
+            assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+            Thread.sleep(200);
+            assertResponseReceived(SipResponse.RINGING, a);
+            Thread.sleep(300);
+
+            // Initiate a Cancel with extra Jain SIP headers as strings
+            b.listenForCancel();
+            Thread.sleep(200);
+
+            ArrayList addnl_hdrs = new ArrayList();
+            addnl_hdrs.add(new String("Priority: 5"));
+
+            ArrayList replace_hdrs = new ArrayList();
+            replace_hdrs.add(new String("Contact: <sip:doodah@"
+                    + properties.getProperty("javax.sip.IP_ADDRESS") + ':'
+                    + myPort + '>'));
+            replace_hdrs.add(new String("Max-Forwards: 62"));
+
+            SipTransaction cancel = a.sendCancel("my other cancel body",
+                    "applicationn", "texxt", addnl_hdrs, replace_hdrs);
+            assertNotNull(cancel);
+
+            // Verify the received Cancel
+            SipTransaction trans1 = b.waitForCancel(2000);
+            assertNotNull(trans1);
+            assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    PriorityHeader.NAME, "5");
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    ContentTypeHeader.NAME, "applicationn/texxt");
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    ContactHeader.NAME, "doodah");
+            assertHeaderContains(b.getLastReceivedRequest(),
+                    MaxForwardsHeader.NAME, "62");
+            assertBodyContains(b.getLastReceivedRequest(),
+                    "my other cancel body");
+
+            // finish off the sequence
+            assertTrue(b.respondToCancel(trans1, 200, "0K", -1,
+                    "my other cancel response body", "applicationn", "texxt",
+                    addnl_hdrs, replace_hdrs));
+            a.waitForCancelResponse(cancel, 5000);
+            assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    PriorityHeader.NAME, "5");
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    ContentTypeHeader.NAME, "applicationn/texxt");
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    ContactHeader.NAME, "doodah");
+            assertHeaderContains(a.getLastReceivedResponse(),
+                    MaxForwardsHeader.NAME, "62");
+            assertBodyContains(a.getLastReceivedResponse(),
+                    "my other cancel response body");
+            Thread.sleep(200);
+
+            // close the INVITE transaction
+            assertTrue("487 NOT SENT", b.sendIncomingCallResponse(
+                    SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+            Thread.sleep(200);
+            assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
+                    SipResponse.REQUEST_TERMINATED, a);
+
+            // done, finish up
+            a.listenForDisconnect();
+            Thread.sleep(100);
+
+            b.disconnect();
+            assertLastOperationSuccess("b disc - " + b.format(), b);
+
+            a.waitForDisconnect(5000);
+            a.respondToDisconnect();
+            assertLastOperationSuccess("a wait disc - " + a.format(), a);
 
             Thread.sleep(100);
             ub.dispose();
