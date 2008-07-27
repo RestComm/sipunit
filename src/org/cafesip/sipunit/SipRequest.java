@@ -36,7 +36,7 @@ import javax.sip.message.Request;
  * Knowledge of JAIN SIP API is required at this level.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public class SipRequest extends SipMessage
 {

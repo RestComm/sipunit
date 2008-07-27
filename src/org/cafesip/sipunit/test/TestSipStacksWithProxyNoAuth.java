@@ -31,34 +31,24 @@ import org.cafesip.sipunit.SipTestCase;
  * This class tests multiple SipStacks on the same machine.
  * 
  * Tests in this class require that a Proxy/registrar server be running with
- * authentication turned off. Defaults:
- * proxy host = 192.168.1.102, port = 5060, protocol = udp.
+ * authentication turned off. Defaults: proxy host = 192.168.1.102, port = 5060,
+ * protocol = udp.
  * 
  * @author Becky McElroy
- *  
- * sample ant script to run it outside of IDE:
-<?xml version="1.0"?>
-<project name="siptest" basedir="c:/sw/eclipse-workspace/sipunit" default="test">
-    	
-	<target name="test" description="Run test test">
-	 <ant dir="c:/jain-sip-presence-proxy" target="run-text-proxy" inheritAll="false"/>
-	 <antcall target="runtest"/>
-    </target>
-   
-   <target name="runtest" description="Execute JUNit test">
-	<path id="test.classpath">
-	   <fileset dir="lib">
-	      <include name="*.jar" />
-	   </fileset>
-	   <pathelement location="src"/>
-	</path>
-	<junit fork="false">
-	   <test name="org.cafesip.sipunit.test.TestSipStacksWithProxyNoAuth"/>
-	   <formatter type="brief" usefile="false"/>
-	   <classpath refid="test.classpath" /> 
-    </junit>
-   </target>
-</project>
+ * 
+ * sample ant script to run it outside of IDE: <?xml version="1.0"?> <project
+ * name="siptest" basedir="c:/sw/eclipse-workspace/sipunit" default="test">
+ * 
+ * <target name="test" description="Run test test"> <ant
+ * dir="c:/jain-sip-presence-proxy" target="run-text-proxy" inheritAll="false"/>
+ * <antcall target="runtest"/> </target>
+ * 
+ * <target name="runtest" description="Execute JUNit test"> <path
+ * id="test.classpath"> <fileset dir="lib"> <include name="*.jar" /> </fileset>
+ * <pathelement location="src"/> </path> <junit fork="false"> <test
+ * name="org.cafesip.sipunit.test.TestSipStacksWithProxyNoAuth"/> <formatter
+ * type="brief" usefile="false"/> <classpath refid="test.classpath" /> </junit>
+ * </target> </project>
  * 
  */
 public class TestSipStacksWithProxyNoAuth extends SipTestCase
@@ -161,13 +151,13 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
             b.listenForIncomingCall();
             Thread.sleep(100);
 
-            a.initiateOutgoingCall("sip:becky@cafesip.org", null); //"127.0.0.1:4000/UDP"
+            a.initiateOutgoingCall("sip:becky@cafesip.org", null); // "127.0.0.1:4000/UDP"
             assertLastOperationSuccess("a initiate call - " + a.format(), a);
 
             b.waitForIncomingCall(3000);
             assertLastOperationSuccess("b wait incoming call - " + b.format(),
                     b);
-            
+
             b.sendIncomingCallResponse(Response.RINGING, null, -1);
             assertLastOperationSuccess("b send RINGING - " + b.format(), b);
 
@@ -210,8 +200,10 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
             a.waitForDisconnect(5000);
             assertLastOperationSuccess("a wait disc - " + a.format(), a);
 
-         //   a.respondToDisconnect(); TODO - investigate - null pointer from stack or bad msg?
-         //   assertLastOperationSuccess("a respond to disc - " + a.format(), a);
+            // a.respondToDisconnect(); TODO - investigate - null pointer from
+            // stack or bad msg?
+            // assertLastOperationSuccess("a respond to disc - " + a.format(),
+            // a);
 
             ub.dispose();
         }

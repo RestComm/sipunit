@@ -49,8 +49,8 @@ import org.cafesip.sipunit.SipTransaction;
  * 
  * Tests in this class require that a Proxy/registrar server be running with
  * authentication turned off. Defaults: proxy host = 192.168.1.102, port = 5060,
- * protocol = udp; user amit@cafesip.org password a1b2c3d4 and user becky@cafesip.org password a1b2c3d4
- * defined at the proxy.
+ * protocol = udp; user amit@cafesip.org password a1b2c3d4 and user
+ * becky@cafesip.org password a1b2c3d4 defined at the proxy.
  * 
  * For the Proxy/registrar, I used cafesip.org's SipExchange server.
  * 
@@ -242,8 +242,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
             assertLastOperationSuccess("b wait disc - " + b.format(), b);
 
             // TODO investigate - null pointer from stack or my msg is bad
-            //b.respondToDisconnect();
-            //assertLastOperationSuccess("b disc - " + b.format(), b);
+            // b.respondToDisconnect();
+            // assertLastOperationSuccess("b disc - " + b.format(), b);
 
             ub.unregister(null, 10000);
             assertLastOperationSuccess("unregistering user b - " + ub.format(),
@@ -330,8 +330,9 @@ public class TestWithProxyNoAuthentication extends SipTestCase
             assertLastOperationSuccess("a wait disc - " + a.format(), a);
 
             // TODO - investigate - null pointer from stack or bad msg?
-            //a.respondToDisconnect();
-            //assertLastOperationSuccess("a respond to disc - " + a.format(), a);
+            // a.respondToDisconnect();
+            // assertLastOperationSuccess("a respond to disc - " + a.format(),
+            // a);
 
             ub.dispose();
         }
@@ -486,7 +487,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
                             + ";transport=" + PROXY_PROTO + " SIP/2.0\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
-            invite.addHeader(hdr_factory.createCSeqHeader((long)1, Request.INVITE));
+            invite.addHeader(hdr_factory.createCSeqHeader((long) 1,
+                    Request.INVITE));
             invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua
                     .generateNewTag()));
 
@@ -597,8 +599,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         // sendUnidirectionalReq(Request ack),
         // ack received
 
-        //SipStack.setTraceEnabled(true);
-        //SipStack.trace("testStatelessRequestStatefulResponse");
+        // SipStack.setTraceEnabled(true);
+        // SipStack.trace("testStatelessRequestStatefulResponse");
         ua.register("amit", "a1b2c3d4", null, 0, 10000);
         assertLastOperationSuccess(ua.format(), ua);
 
@@ -617,8 +619,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
                     + PROXY_HOST + ':' + PROXY_PORT + ";transport="
                     + PROXY_PROTO + " SIP/2.0\n");
             String myuniquecallID = String.valueOf(System.currentTimeMillis());
-            invite.append("Call-ID: " + myuniquecallID + "@"
-                    + thisHostAddr + "\n");
+            invite.append("Call-ID: " + myuniquecallID + "@" + thisHostAddr
+                    + "\n");
             invite.append("CSeq: 1 INVITE\n");
             invite.append("From: <sip:amit@cafesip.org>;tag=1181356482\n");
             invite.append("To: <sip:becky@cafesip.org>\n");
@@ -699,8 +701,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
                     invite.toString());
 
             ack.setMethod(Request.ACK);
-            ack.setHeader(ua.getParent().getHeaderFactory().createCSeqHeader((long)1,
-                    Request.ACK));
+            ack.setHeader(ua.getParent().getHeaderFactory().createCSeqHeader(
+                    (long) 1, Request.ACK));
             ((ToHeader) ack.getHeader(ToHeader.NAME)).setTag(to_tag);
             ack.setRequestURI(callee_contact);
             ack.setHeader(ua.getParent().getHeaderFactory().createRouteHeader(
@@ -745,7 +747,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
                     "INVITE sip:becky@cafesip.org SIP/2.0\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
-            invite.addHeader(hdr_factory.createCSeqHeader((long)1, Request.INVITE));
+            invite.addHeader(hdr_factory.createCSeqHeader((long) 1,
+                    Request.INVITE));
             invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua
                     .generateNewTag()));
 

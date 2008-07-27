@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * requests, responses, and response timeouts.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public interface MessageListener extends RequestListener
 {
@@ -40,7 +40,7 @@ public interface MessageListener extends RequestListener
      * 
      * @return ArrayList of zero or more SipResponse objects.
      */
-    public ArrayList getAllReceivedResponses();
+    public ArrayList<SipResponse> getAllReceivedResponses();
 
     /**
      * This method returns all the requests received by this object and can be
@@ -48,7 +48,7 @@ public interface MessageListener extends RequestListener
      * 
      * @return ArrayList of zero or more SipRequest objects.
      */
-    public ArrayList getAllReceivedRequests();
+    public ArrayList<SipRequest> getAllReceivedRequests();
 
     /**
      * This method returns the last request received by this object and can be

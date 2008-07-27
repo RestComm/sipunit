@@ -36,8 +36,8 @@ import org.cafesip.sipunit.SipTestCase;
  * settings in this test except for the IP_ADDRESS property used on the
  * SipStack(s) - it will be ignored by this particular test.
  * 
- * Thanks to Venkita S. for contributing the changes to SipSession and
- * SipStack needed to make this work.
+ * Thanks to Venkita S. for contributing the changes to SipSession and SipStack
+ * needed to make this work.
  * 
  * Tests in this class do not require a proxy/registrar server. Messaging
  * between UACs is direct.

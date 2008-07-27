@@ -19,12 +19,12 @@
 package org.cafesip.sipunit;
 
 /**
- * This class holds authentication information required for accessing a  
- * realm. This information is used to form an authorization header when
- * a sent request is challenged by the network element owning the realm.
+ * This class holds authentication information required for accessing a realm.
+ * This information is used to form an authorization header when a sent request
+ * is challenged by the network element owning the realm.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public class Credential
 {
@@ -35,11 +35,14 @@ public class Credential
     private String password = "";
 
     /**
-     *  A constructor for this class.
+     * A constructor for this class.
      * 
-     *  @param realm the realm to which the user, password apply
-     *  @param user the user name to use when authenticating
-     *  @param password the password to use when authenticating
+     * @param realm
+     *            the realm to which the user, password apply
+     * @param user
+     *            the user name to use when authenticating
+     * @param password
+     *            the password to use when authenticating
      */
     public Credential(String realm, String user, String password)
     {
@@ -47,12 +50,14 @@ public class Credential
         this.user = user;
         this.password = password;
     }
-    
+
     /**
-     *  A no-arg constructor for this class.
+     * A no-arg constructor for this class.
      */
-    public Credential() {}
-    
+    public Credential()
+    {
+    }
+
     /**
      * This method returns the password.
      * 

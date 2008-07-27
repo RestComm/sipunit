@@ -36,6 +36,7 @@ import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentLengthHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.FromHeader;
+import javax.sip.header.Header;
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.PriorityHeader;
@@ -198,7 +199,7 @@ public class TestNoProxy extends SipTestCase
             invite.addHeader(hdr_factory.createContactHeader(contact_address));
 
             invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
-            ArrayList via_headers = ua.getViaHeaders();
+            ArrayList<ViaHeader> via_headers = ua.getViaHeaders();
             invite.addHeader((ViaHeader) via_headers.get(0));
 
             // create and add the Route Header
@@ -476,14 +477,16 @@ public class TestNoProxy extends SipTestCase
             SipRequest received_bye = a.getLastReceivedRequest();
             assertNotNull(received_bye);
 
-            ArrayList received_requests = a.getAllReceivedRequests();
+            ArrayList<SipRequest> received_requests = a
+                    .getAllReceivedRequests();
             assertEquals(1, received_requests.size());
             assertEquals(received_bye, received_requests.get(0));
 
             SipResponse received_response = a.getLastReceivedResponse();
             assertNotNull(received_response);
 
-            ArrayList received_responses = a.getAllReceivedResponses();
+            ArrayList<SipResponse> received_responses = a
+                    .getAllReceivedResponses();
             int num_responses = received_responses.size();
             assertTrue(num_responses >= 2);
             assertEquals(received_response, received_responses
@@ -834,13 +837,13 @@ public class TestNoProxy extends SipTestCase
 
             // set up outbound INVITE contents
 
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
             addnl_hdrs.add(ua.getParent().getHeaderFactory()
                     .createPriorityHeader("5"));
             addnl_hdrs.add(ua.getParent().getHeaderFactory()
                     .createContentTypeHeader("applicationn", "texxt"));
 
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<Header> replace_hdrs = new ArrayList<Header>();
             URI bogus_contact = ua.getParent().getAddressFactory().createURI(
                     "sip:doodah@"
                             + properties.getProperty("javax.sip.IP_ADDRESS")
@@ -937,10 +940,10 @@ public class TestNoProxy extends SipTestCase
 
             // set up outbound INVITE contents
 
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<String> addnl_hdrs = new ArrayList<String>();
             addnl_hdrs.add(new String("Priority: 5"));
 
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<String> replace_hdrs = new ArrayList<String>();
             replace_hdrs.add(new String("Contact: <sip:doodah@"
                     + properties.getProperty("javax.sip.IP_ADDRESS") + ':'
                     + myPort + '>'));
@@ -984,13 +987,13 @@ public class TestNoProxy extends SipTestCase
 
             // set up outbound INVITE contents
 
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
             addnl_hdrs.add(ua.getParent().getHeaderFactory()
                     .createPriorityHeader("5"));
             addnl_hdrs.add(ua.getParent().getHeaderFactory()
                     .createContentTypeHeader("applicationn", "texxt"));
 
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<Header> replace_hdrs = new ArrayList<Header>();
             URI bogus_contact = ua.getParent().getAddressFactory().createURI(
                     "sip:doodah@"
                             + properties.getProperty("javax.sip.IP_ADDRESS")
@@ -1090,10 +1093,10 @@ public class TestNoProxy extends SipTestCase
 
             // set up outbound INVITE contents
 
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<String> addnl_hdrs = new ArrayList<String>();
             addnl_hdrs.add(new String("Priority: 5"));
 
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<String> replace_hdrs = new ArrayList<String>();
             replace_hdrs.add(new String("Contact: <sip:doodah@"
                     + properties.getProperty("javax.sip.IP_ADDRESS") + ':'
                     + myPort + '>'));
@@ -1211,7 +1214,7 @@ public class TestNoProxy extends SipTestCase
             invite.addHeader(hdr_factory.createContactHeader(contact_address));
 
             invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
-            ArrayList via_headers = ua.getViaHeaders();
+            ArrayList<ViaHeader> via_headers = ua.getViaHeaders();
             invite.addHeader((ViaHeader) via_headers.get(0));
 
             Address route_address = addr_factory.createAddress("sip:becky@"
@@ -1484,7 +1487,7 @@ public class TestNoProxy extends SipTestCase
 
             // send ACK
             // with JSIP additional, replacement headers, and body
-            ArrayList addnl_hdrs = new ArrayList(2);
+            ArrayList<Header> addnl_hdrs = new ArrayList<Header>(2);
             ReasonHeader reason_hdr = ub.getParent().getHeaderFactory()
                     .createReasonHeader("SIP", 44, "dummy");
             addnl_hdrs.add(reason_hdr);
@@ -1492,7 +1495,7 @@ public class TestNoProxy extends SipTestCase
                     "mytype", "mysubtype");
             addnl_hdrs.add(ct_hdr);
 
-            ArrayList replace_hdrs = new ArrayList(2);
+            ArrayList<Header> replace_hdrs = new ArrayList<Header>(2);
             MaxForwardsHeader hdr = ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(29);
             replace_hdrs.add(hdr);
@@ -1517,7 +1520,7 @@ public class TestNoProxy extends SipTestCase
 
             a.listenForReinvite();
 
-            addnl_hdrs = new ArrayList(2);
+            addnl_hdrs = new ArrayList<Header>(2);
             pri_hdr = ub.getParent().getHeaderFactory().createPriorityHeader(
                     PriorityHeader.URGENT);
             reason_hdr = ub.getParent().getHeaderFactory().createReasonHeader(
@@ -1525,7 +1528,7 @@ public class TestNoProxy extends SipTestCase
             addnl_hdrs.add(pri_hdr);
             addnl_hdrs.add(reason_hdr);
 
-            replace_hdrs = new ArrayList(1);
+            replace_hdrs = new ArrayList<Header>(1);
             hdr = ub.getParent().getHeaderFactory().createMaxForwardsHeader(21);
             replace_hdrs.add(hdr);
 
@@ -1557,10 +1560,11 @@ public class TestNoProxy extends SipTestCase
             // test everything
             // _____________________________________________
 
-            addnl_hdrs.clear();
-            replace_hdrs.clear();
-            addnl_hdrs.add("Priority: Normal");
-            addnl_hdrs.add("Reason: SIP; cause=42; text=\"I made it up\"");
+            ArrayList<String> addnl_str_hdrs = new ArrayList<String>();
+            ArrayList<String> replace_str_hdrs = new ArrayList<String>();
+            ;
+            addnl_str_hdrs.add("Priority: Normal");
+            addnl_str_hdrs.add("Reason: SIP; cause=42; text=\"I made it up\"");
 
             // TODO, find another header to replace, stack corrects this one
             // replace_hdrs.add("Content-Length: 4");
@@ -1568,7 +1572,7 @@ public class TestNoProxy extends SipTestCase
             assertTrue(a.respondToReinvite(siptrans_a, SipResponse.OK,
                     "ok reinvite last response", -1, a_orig_contact_uri,
                     "Original info", "DooDahDay", "applicationn", "sdp",
-                    addnl_hdrs, replace_hdrs));
+                    addnl_str_hdrs, replace_str_hdrs));
 
             assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
             while (b.getLastReceivedResponse().getStatusCode() == Response.TRYING)
@@ -1679,7 +1683,7 @@ public class TestNoProxy extends SipTestCase
             Address contact = ub.getParent().getAddressFactory().createAddress(
                     callee_contact);
             String to_tag = ub.generateNewTag();
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
             addnl_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(12));
             addnl_hdrs.add(ub.getParent().getHeaderFactory()
@@ -1752,7 +1756,7 @@ public class TestNoProxy extends SipTestCase
 
             // (d) send reply with replace JSIP Header (test replacement),
             // ignored body
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<Header> replace_hdrs = new ArrayList<Header>();
             URI bogus_contact = ub.getParent().getAddressFactory().createURI(
                     "sip:doodah@"
                             + properties.getProperty("javax.sip.IP_ADDRESS")
@@ -1841,13 +1845,13 @@ public class TestNoProxy extends SipTestCase
             // (a') send reply with additional String Headers & content type
             // info but no body
 
-            addnl_hdrs.clear();
-            addnl_hdrs.add(ub.getParent().getHeaderFactory()
+            ArrayList<String> addnl_str_hdrs = new ArrayList<String>();
+            addnl_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(12).toString());
             // no body - should receive msg with body length 0 and with content
             // type header
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
-                    null, "app", "subtype", addnl_hdrs, null);
+                    null, "app", "subtype", addnl_str_hdrs, null);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -1867,7 +1871,7 @@ public class TestNoProxy extends SipTestCase
 
             // (b') send reply with ContentTypeHeader info
             // and body
-            addnl_hdrs.clear();
+            addnl_str_hdrs.clear();
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
                     "my body", "bapp", "subtype", null, null);
             assertLastOperationSuccess(ub.format(), ub);
@@ -1888,11 +1892,11 @@ public class TestNoProxy extends SipTestCase
 
             // (c') send reply with other additional String Header (not
             // ContentType info) and body
-            addnl_hdrs.clear();
-            addnl_hdrs.add(ub.getParent().getHeaderFactory()
+            addnl_str_hdrs.clear();
+            addnl_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(11).toString());
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
-                    "my body", null, null, addnl_hdrs, null);
+                    "my body", null, null, addnl_str_hdrs, null);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -1910,10 +1914,10 @@ public class TestNoProxy extends SipTestCase
 
             // (d') send reply with replace String Header (test replacement),
             // ignored body
-            replace_hdrs.clear();
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
+            ArrayList<String> replace_str_hdrs = new ArrayList<String>();
+            replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
-                    "my body", null, null, null, replace_hdrs);
+                    "my body", null, null, null, replace_str_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -1932,11 +1936,11 @@ public class TestNoProxy extends SipTestCase
             assertHeaderNotPresent(resp, MaxForwardsHeader.NAME);
 
             // (e') send reply with replace String Header (test addition)
-            replace_hdrs.clear();
-            replace_hdrs.add(ub.getParent().getHeaderFactory()
+            replace_str_hdrs.clear();
+            replace_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(50).toString());
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
-                    null, null, null, null, replace_hdrs);
+                    null, null, null, null, replace_str_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -1955,18 +1959,16 @@ public class TestNoProxy extends SipTestCase
 
             // (f') send reply with all - additional,replace String Headers,
             // CTinfo & body
-            addnl_hdrs.clear();
-            replace_hdrs.clear();
-            addnl_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(
-                    bogus_addr, "mytag").toString()); // verify ignored
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
+            addnl_str_hdrs.clear();
+            replace_str_hdrs.clear();
+            replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
             // replacement
-            replace_hdrs.add(ub.getParent().getHeaderFactory()
+            replace_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(60).toString()); // verify
             // addition
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
-                    "my new body", "application", "text", addnl_hdrs,
-                    replace_hdrs);
+                    "my new body", "application", "text", replace_str_hdrs,
+                    replace_str_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -1988,10 +1990,10 @@ public class TestNoProxy extends SipTestCase
 
             // (g') send reply with bad String headers
 
-            replace_hdrs.clear();
-            replace_hdrs.add("Max-Forwards");
+            replace_str_hdrs.clear();
+            replace_str_hdrs.add("Max-Forwards");
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
-                    null, null, null, null, replace_hdrs);
+                    null, null, null, null, replace_str_hdrs);
             assertLastOperationFail(ub);
             assertTrue(ub.format().indexOf("no HCOLON") != -1);
 
@@ -2017,10 +2019,10 @@ public class TestNoProxy extends SipTestCase
             // (i') send reply with partial content type parms and body, other
             // addnl hdrs
 
-            addnl_hdrs.clear();
-            addnl_hdrs.add("Max-Forwards: 66");
+            addnl_str_hdrs.clear();
+            addnl_str_hdrs.add("Max-Forwards: 66");
             ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1,
-                    "my body", "app", null, addnl_hdrs, null);
+                    "my body", "app", null, addnl_str_hdrs, null);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -2123,7 +2125,7 @@ public class TestNoProxy extends SipTestCase
             Address contact = ub.getParent().getAddressFactory().createAddress(
                     callee_contact);
             String to_tag = ub.generateNewTag();
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
             addnl_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(12));
             addnl_hdrs.add(ub.getParent().getHeaderFactory()
@@ -2235,7 +2237,7 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<Header> replace_hdrs = new ArrayList<Header>();
             URI bogus_contact = ub.getParent().getAddressFactory().createURI(
                     "sip:doodah@"
                             + properties.getProperty("javax.sip.IP_ADDRESS")
@@ -2361,13 +2363,13 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            addnl_hdrs.clear();
-            addnl_hdrs.add(ub.getParent().getHeaderFactory()
+            ArrayList<String> addnl_str_hdrs = new ArrayList<String>();
+            addnl_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(12).toString());
             // no body - should receive msg with body length 0 and with content
             // type header
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
-                    null, "app", "subtype", addnl_hdrs, null);
+                    null, "app", "subtype", addnl_str_hdrs, null);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -2434,11 +2436,11 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            addnl_hdrs.clear();
-            addnl_hdrs.add(ub.getParent().getHeaderFactory()
+            addnl_str_hdrs.clear();
+            addnl_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(11).toString());
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
-                    "my body", null, null, addnl_hdrs, null);
+                    "my body", null, null, addnl_str_hdrs, null);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -2469,10 +2471,10 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            replace_hdrs.clear();
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
+            ArrayList<String> replace_str_hdrs = new ArrayList<String>();
+            replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
-                    "my body", null, null, null, replace_hdrs);
+                    "my body", null, null, null, replace_str_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -2504,11 +2506,11 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            replace_hdrs.clear();
-            replace_hdrs.add(ub.getParent().getHeaderFactory()
+            replace_str_hdrs.clear();
+            replace_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(50).toString());
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
-                    null, null, null, null, replace_hdrs);
+                    null, null, null, null, replace_str_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -2540,18 +2542,18 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            addnl_hdrs.clear();
-            replace_hdrs.clear();
-            addnl_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(
+            addnl_str_hdrs.clear();
+            replace_str_hdrs.clear();
+            addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(
                     bogus_addr, "mytag").toString()); // verify ignored
-            replace_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
+            replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
             // replacement
-            replace_hdrs.add(ub.getParent().getHeaderFactory()
+            replace_str_hdrs.add(ub.getParent().getHeaderFactory()
                     .createMaxForwardsHeader(60).toString()); // verify
             // addition
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
-                    "my new body", "application", "text", addnl_hdrs,
-                    replace_hdrs);
+                    "my new body", "application", "text", addnl_str_hdrs,
+                    replace_str_hdrs);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -2585,10 +2587,10 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            replace_hdrs.clear();
-            replace_hdrs.add("Max-Forwards");
+            replace_str_hdrs.clear();
+            replace_str_hdrs.add("Max-Forwards");
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
-                    null, null, null, null, replace_hdrs);
+                    null, null, null, null, replace_str_hdrs);
             assertLastOperationFail(ub);
             assertTrue(ub.format().indexOf("no HCOLON") != -1);
 
@@ -2638,10 +2640,10 @@ public class TestNoProxy extends SipTestCase
             assertNotNull(ub.format(), inc_req);
             // call received
 
-            addnl_hdrs.clear();
-            addnl_hdrs.add("Max-Forwards: 66");
+            addnl_str_hdrs.clear();
+            addnl_str_hdrs.add("Max-Forwards: 66");
             ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1,
-                    "my body", "app", null, addnl_hdrs, null);
+                    "my body", "app", null, addnl_str_hdrs, null);
             assertLastOperationSuccess(ub.format(), ub);
 
             Thread.sleep(100);
@@ -2877,13 +2879,13 @@ public class TestNoProxy extends SipTestCase
             b.listenForCancel();
             Thread.sleep(200);
 
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
             addnl_hdrs.add(ua.getParent().getHeaderFactory()
                     .createPriorityHeader("5"));
             addnl_hdrs.add(ua.getParent().getHeaderFactory()
                     .createContentTypeHeader("applicationn", "texxt"));
 
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<Header> replace_hdrs = new ArrayList<Header>();
             URI bogus_contact = ua.getParent().getAddressFactory().createURI(
                     "sip:doodah@"
                             + properties.getProperty("javax.sip.IP_ADDRESS")
@@ -2985,10 +2987,10 @@ public class TestNoProxy extends SipTestCase
             b.listenForCancel();
             Thread.sleep(200);
 
-            ArrayList addnl_hdrs = new ArrayList();
+            ArrayList<String> addnl_hdrs = new ArrayList<String>();
             addnl_hdrs.add(new String("Priority: 5"));
 
-            ArrayList replace_hdrs = new ArrayList();
+            ArrayList<String> replace_hdrs = new ArrayList<String>();
             replace_hdrs.add(new String("Contact: <sip:doodah@"
                     + properties.getProperty("javax.sip.IP_ADDRESS") + ':'
                     + myPort + '>'));

@@ -25,7 +25,7 @@ import javax.sip.header.ContactHeader;
  * associated getter methods.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public class SipContact
 {
@@ -52,7 +52,7 @@ public class SipContact
         this.contactHeader = contactHeader;
     }
 
-    //// PUBLIC API methods
+    // // PUBLIC API methods
 
     /**
      * The method getExpiry() returns the expiry value for this contact URI.

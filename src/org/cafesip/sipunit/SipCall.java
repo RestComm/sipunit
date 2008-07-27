@@ -38,9 +38,11 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.FromHeader;
+import javax.sip.header.Header;
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
@@ -96,9 +98,9 @@ public class SipCall implements SipActionObject, MessageListener
 
     private SipTransaction transaction;
 
-    private List receivedResponses; // list of SipResponse
+    private List<SipResponse> receivedResponses;
 
-    private List receivedRequests; // list of SipRequest
+    private List<SipRequest> receivedRequests;
 
     private Dialog dialog;
 
@@ -114,8 +116,10 @@ public class SipCall implements SipActionObject, MessageListener
         this.parent = phone;
         this.myAddress = myAddress;
 
-        receivedResponses = Collections.synchronizedList(new ArrayList());
-        receivedRequests = Collections.synchronizedList(new ArrayList());
+        receivedResponses = Collections
+                .synchronizedList(new ArrayList<SipResponse>());
+        receivedRequests = Collections
+                .synchronizedList(new ArrayList<SipRequest>());
     }
 
     /**
@@ -616,8 +620,9 @@ public class SipCall implements SipActionObject, MessageListener
      *            body bytes.
      */
     public boolean sendIncomingCallResponse(int statusCode,
-            String reasonPhrase, int expires, ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+            String reasonPhrase, int expires,
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
         if (myTag == null)
@@ -697,8 +702,8 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public boolean sendIncomingCallResponse(int statusCode,
             String reasonPhrase, int expires, String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders)
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -909,8 +914,8 @@ public class SipCall implements SipActionObject, MessageListener
     public boolean respondToReinvite(SipTransaction siptrans, int statusCode,
             String reasonPhrase, int expires, String newContact,
             String displayName, String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders)
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -965,8 +970,8 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public boolean respondToReinvite(SipTransaction siptrans, int statusCode,
             String reasonPhrase, int expires, String newContact,
-            String displayName, ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+            String displayName, ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -985,7 +990,7 @@ public class SipCall implements SipActionObject, MessageListener
 
             if (additionalHeaders == null)
             {
-                additionalHeaders = new ArrayList();
+                additionalHeaders = new ArrayList<Header>();
             }
             additionalHeaders.add(contact_hdr);
 
@@ -1092,7 +1097,8 @@ public class SipCall implements SipActionObject, MessageListener
      *            body bytes.
      */
     public boolean respondToDisconnect(int statusCode, String reasonPhrase,
-            ArrayList additionalHeaders, ArrayList replaceHeaders, String body)
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
         if (parent.sendReply(transaction, statusCode, reasonPhrase, myTag,
@@ -1164,7 +1170,8 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public boolean respondToDisconnect(int statusCode, String reasonPhrase,
             String body, String contentType, String contentSubType,
-            ArrayList additionalHeaders, ArrayList replaceHeaders)
+            ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         initErrorInfo();
         if (parent.sendReply(transaction, statusCode, reasonPhrase, myTag,
@@ -1256,8 +1263,8 @@ public class SipCall implements SipActionObject, MessageListener
      *            body bytes.
      */
     public boolean initiateOutgoingCall(String fromUri, String toUri,
-            String viaNonProxyRoute, ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+            String viaNonProxyRoute, ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         return initiateOutgoingCall(fromUri, toUri, viaNonProxyRoute, null,
                 additionalHeaders, replaceHeaders, body);
@@ -1342,7 +1349,8 @@ public class SipCall implements SipActionObject, MessageListener
 
     protected boolean initiateOutgoingCall(String fromUri, String toUri,
             String viaNonProxyRoute, MessageListener respListener,
-            ArrayList additionalHeaders, ArrayList replaceHeaders, String body)
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -1404,7 +1412,7 @@ public class SipCall implements SipActionObject, MessageListener
             MaxForwardsHeader max_forwards = hdr_factory
                     .createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
 
-            ArrayList via_headers = parent.getViaHeaders();
+            ArrayList<ViaHeader> via_headers = parent.getViaHeaders();
 
             Request msg = parent.getMessageFactory().createRequest(request_uri,
                     method, callId, cseq, from_header, to_header, via_headers,
@@ -1640,7 +1648,8 @@ public class SipCall implements SipActionObject, MessageListener
      *         and sendReinviteOkAck().
      */
     public SipTransaction sendReinvite(String newContact, String displayName,
-            ArrayList additionalHeaders, ArrayList replaceHeaders, String body)
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -1750,7 +1759,8 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public SipTransaction sendReinvite(String newContact, String displayName,
             String body, String contentType, String contentSubType,
-            ArrayList additionalHeaders, ArrayList replaceHeaders)
+            ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -1812,8 +1822,8 @@ public class SipCall implements SipActionObject, MessageListener
      *            for this body to be included in the message. Use null for no
      *            body bytes.
      */
-    public boolean sendInviteOkAck(ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+    public boolean sendInviteOkAck(ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         /*
          * RULES for Subsequent Request within a dialog: To = dialog state
@@ -1919,8 +1929,8 @@ public class SipCall implements SipActionObject, MessageListener
      * 
      */
     public boolean sendInviteOkAck(String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders)
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -1985,7 +1995,8 @@ public class SipCall implements SipActionObject, MessageListener
      *            body bytes.
      */
     public boolean sendReinviteOkAck(SipTransaction siptrans,
-            ArrayList additionalHeaders, ArrayList replaceHeaders, String body)
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -2075,7 +2086,8 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public boolean sendReinviteOkAck(SipTransaction siptrans, String body,
             String contentType, String contentSubType,
-            ArrayList additionalHeaders, ArrayList replaceHeaders)
+            ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -2314,8 +2326,8 @@ public class SipCall implements SipActionObject, MessageListener
      *            for this body to be included in the message. Use null for no
      *            body bytes.
      */
-    public boolean disconnect(ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+    public boolean disconnect(ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -2413,8 +2425,8 @@ public class SipCall implements SipActionObject, MessageListener
      * 
      */
     public boolean disconnect(String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders)
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -2609,9 +2621,9 @@ public class SipCall implements SipActionObject, MessageListener
      * 
      * @see org.cafesip.sipunit.MessageListener#getAllReceivedResponses()
      */
-    public ArrayList getAllReceivedResponses()
+    public ArrayList<SipResponse> getAllReceivedResponses()
     {
-        return new ArrayList(receivedResponses);
+        return new ArrayList<SipResponse>(receivedResponses);
     }
 
     /**
@@ -2621,9 +2633,9 @@ public class SipCall implements SipActionObject, MessageListener
      * 
      * @see org.cafesip.sipunit.MessageListener#getAllReceivedRequests()
      */
-    public ArrayList getAllReceivedRequests()
+    public ArrayList<SipRequest> getAllReceivedRequests()
     {
-        return new ArrayList(receivedRequests);
+        return new ArrayList<SipRequest>(receivedRequests);
     }
 
     /**
@@ -2984,12 +2996,12 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public SipResponse findMostRecentResponse(int statusCode)
     {
-        ArrayList responses = getAllReceivedResponses();
+        ArrayList<SipResponse> responses = getAllReceivedResponses();
 
-        ListIterator i = responses.listIterator(responses.size());
+        ListIterator<SipResponse> i = responses.listIterator(responses.size());
         while (i.hasPrevious())
         {
-            SipResponse resp = (SipResponse) i.previous();
+            SipResponse resp = i.previous();
             if (resp.getStatusCode() == statusCode)
             {
                 return resp;
@@ -3051,8 +3063,8 @@ public class SipCall implements SipActionObject, MessageListener
      *            for this body to be included in the message. Use null for no
      *            body bytes.
      */
-    public SipTransaction sendCancel(ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+    public SipTransaction sendCancel(ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -3386,8 +3398,9 @@ public class SipCall implements SipActionObject, MessageListener
      * @return true if the response was successfully sent, false otherwise.
      */
     public boolean respondToCancel(SipTransaction siptrans, int statusCode,
-            String reasonPhrase, int expires, ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+            String reasonPhrase, int expires,
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -3467,8 +3480,8 @@ public class SipCall implements SipActionObject, MessageListener
      */
     public boolean respondToCancel(SipTransaction siptrans, int statusCode,
             String reasonPhrase, int expires, String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders)
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {

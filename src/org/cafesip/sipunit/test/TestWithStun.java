@@ -46,8 +46,8 @@ import org.cafesip.sipunit.SipTestCase;
  * with the public sip server and communicating with each other through the
  * public sip server.)
  * 
- * Thanks to manchi for notes on STUN support and for the example
- * code which is used here (getPublicAddress()).
+ * Thanks to manchi for notes on STUN support and for the example code which is
+ * used here (getPublicAddress()).
  * 
  * I used the public SIP server sip.antisip.com for this test. It works! First
  * you need to go to http://sip.antisip.com and create yourself 2 accounts, one

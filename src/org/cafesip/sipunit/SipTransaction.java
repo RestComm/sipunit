@@ -18,6 +18,7 @@
  */
 package org.cafesip.sipunit;
 
+import java.util.EventObject;
 import java.util.LinkedList;
 
 import javax.sip.ClientTransaction;
@@ -44,7 +45,7 @@ public class SipTransaction
 
     private MessageListener clientListener;
 
-    private LinkedList events = new LinkedList();
+    private LinkedList<EventObject> events = new LinkedList<EventObject>();
 
     private ServerTransaction serverTransaction;
 
@@ -96,7 +97,7 @@ public class SipTransaction
     /**
      * @return Returns the events.
      */
-    protected LinkedList getEvents()
+    protected LinkedList<EventObject> getEvents()
     {
         return events;
     }
@@ -105,7 +106,7 @@ public class SipTransaction
      * @param events
      *            The events to set.
      */
-    protected void setEvents(LinkedList events)
+    protected void setEvents(LinkedList<EventObject> events)
     {
         this.events = events;
     }
@@ -141,12 +142,12 @@ public class SipTransaction
         {
             return clientTransaction.getRequest();
         }
-        
+
         if (serverTransaction != null)
         {
             return serverTransaction.getRequest();
         }
-        
+
         return null;
     }
 

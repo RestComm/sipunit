@@ -92,8 +92,8 @@ public class MessageDigestAlgorithm
             throw new NullPointerException(
                     "Null parameter to MessageDigestAlgorithm.calculateResponse()");
 
-        //The following follows closely the algorithm for generating a response
-        //digest as specified by rfc2617
+        // The following follows closely the algorithm for generating a response
+        // digest as specified by rfc2617
         String A1 = null;
 
         if (algorithm == null || algorithm.trim().length() == 0
@@ -157,7 +157,7 @@ public class MessageDigestAlgorithm
         }
         catch (NoSuchAlgorithmException ex)
         {
-            //shouldn't happen
+            // shouldn't happen
             return null;
         }
     }

@@ -25,14 +25,15 @@ import java.util.EventObject;
  * reception of SIP requests.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public interface RequestListener
 {
     /**
      * For internal SipUnit use only.
      * 
-     * @param event Event received.
+     * @param event
+     *            Event received.
      */
     public void processEvent(EventObject event);
 }

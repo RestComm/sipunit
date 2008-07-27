@@ -162,7 +162,7 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
         try
         {
             String user_b = "sip:becky@"
-                + properties.getProperty("sipunit.test.domain");
+                    + properties.getProperty("sipunit.test.domain");
             SipPhone ub = sipStack.createSipPhone(properties
                     .getProperty("sipunit.proxy.host"), testProtocol,
                     proxyPort, user_b);
@@ -182,8 +182,7 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
             // another way to invoke the operation and check the result
             // separately:
 
-            boolean status_ok = a.initiateOutgoingCall(user_b,
-                    null);
+            boolean status_ok = a.initiateOutgoingCall(user_b, null);
             assertTrue("Initiate outgoing call failed - " + a.format(),
                     status_ok);
 
@@ -274,13 +273,15 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
             b.waitForDisconnect(10000);
             assertLastOperationSuccess("b wait disc - " + b.format(), b);
 
-           // TODO investigate next line - NullPointer Exception from stack or msg bad?
-           //  b.respondToDisconnect();
-           //  assertLastOperationSuccess("b disc - " + b.format(), b);
+            // TODO investigate next line - NullPointer Exception from stack or
+            // msg bad?
+            // b.respondToDisconnect();
+            // assertLastOperationSuccess("b disc - " + b.format(), b);
 
-           //   ub.unregister(null, 10000);
-           //   assertLastOperationSuccess("unregistering user b - " + ub.format(),
-           //          ub);
+            // ub.unregister(null, 10000);
+            // assertLastOperationSuccess("unregistering user b - " +
+            // ub.format(),
+            // ub);
         }
         catch (Exception e)
         {

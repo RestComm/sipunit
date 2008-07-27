@@ -1862,8 +1862,8 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
 
             // check a - TODO debug
-            //a.waitForCancelResponse(cancel, 5000);
-            //assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+            // a.waitForCancelResponse(cancel, 5000);
+            // assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
         }
         catch (Exception e)
         {

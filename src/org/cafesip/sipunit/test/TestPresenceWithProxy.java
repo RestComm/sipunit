@@ -54,8 +54,8 @@ import org.cafesip.sipunit.Subscription;
  * can run on the localhost. This class contains a subset of tests from
  * TestPresenceNoProxy test class.
  * 
- * THIS CLASS IS UNDER CONSTRUCTION. Please run the TestPresenceNoProxy class
- * to see the SUBSCRIBE/NOTIFY handling for the time being.
+ * THIS CLASS IS UNDER CONSTRUCTION. Please run the TestPresenceNoProxy class to
+ * see the SUBSCRIBE/NOTIFY handling for the time being.
  * 
  * Tests in this class require a proxy - one that will authenticate using DIGEST
  * and that will pass SUBSCRIBE, NOTIFY messages through to the 'To' party. You

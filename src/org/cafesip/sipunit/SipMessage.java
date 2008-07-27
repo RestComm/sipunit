@@ -22,6 +22,7 @@ package org.cafesip.sipunit;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
+import javax.sip.header.Header;
 import javax.sip.message.Message;
 
 /**
@@ -30,7 +31,7 @@ import javax.sip.message.Message;
  * such as content length.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public class SipMessage
 {
@@ -54,13 +55,13 @@ public class SipMessage
      * @return the ListIterator over all the Headers of the specified name in
      *         the Message, this method returns an empty ListIterator if no
      *         Headers exist of this header type.
-     *  
+     * 
      */
-    protected ListIterator getHeaders(String header)
+    protected ListIterator<Header> getHeaders(String header)
     {
         if (message == null)
         {
-            return new ArrayList().listIterator();
+            return new ArrayList<Header>().listIterator();
         }
 
         return message.getHeaders(header);

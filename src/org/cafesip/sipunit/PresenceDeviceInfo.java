@@ -32,11 +32,11 @@ import java.util.List;
  * See RFC 3863 if you need more information.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public class PresenceDeviceInfo
 {
-    private List deviceExtensions; // list of zero or more Object
+    private List<Object> deviceExtensions;
 
     private double contactPriority = -1.0;
 
@@ -44,11 +44,11 @@ public class PresenceDeviceInfo
 
     private String id;
 
-    private List deviceNotes; // list of zero or more PresenceNote
+    private List<PresenceNote> deviceNotes;
 
     private String basicStatus;
 
-    private List statusExtensions; // list of zero or more Object
+    private List<Object> statusExtensions;
 
     private Calendar timestamp;
 
@@ -75,17 +75,17 @@ public class PresenceDeviceInfo
      * Gets the priority of this presence device, relative to others, with
      * respect to contact preference.
      * 
-     * The value MUST be a decimal number between 0 and 1 inclusive with at
-     * most 3 digits after the decimal point.  Higher values indicate higher
-     * priority.  Examples of priority values are 0, 0.021, 0.5, 1.00. If
-     * the 'priority' attribute is omitted, applications MUST assign the
-     * contact address the lowest priority.  If the 'priority' value is out
-     * of the range, applications just SHOULD ignore the value and process
-     * it as if the attribute was not present.
+     * The value MUST be a decimal number between 0 and 1 inclusive with at most
+     * 3 digits after the decimal point. Higher values indicate higher priority.
+     * Examples of priority values are 0, 0.021, 0.5, 1.00. If the 'priority'
+     * attribute is omitted, applications MUST assign the contact address the
+     * lowest priority. If the 'priority' value is out of the range,
+     * applications just SHOULD ignore the value and process it as if the
+     * attribute was not present.
      * 
-     * @return A decimal number between 0 and 1 inclusive with at
-     * most 3 digits after the decimal point, or -1.0 if this attribute was not
-     * received in the NOTIFY message.
+     * @return A decimal number between 0 and 1 inclusive with at most 3 digits
+     *         after the decimal point, or -1.0 if this attribute was not
+     *         received in the NOTIFY message.
      */
     public double getContactPriority()
     {
@@ -100,8 +100,8 @@ public class PresenceDeviceInfo
     /**
      * Gets the contact URI for this device.
      * 
-     * @return A string representing the contact URI of this presence device, or null
-     * if none received.
+     * @return A string representing the contact URI of this presence device, or
+     *         null if none received.
      */
     public String getContactURI()
     {
@@ -114,39 +114,40 @@ public class PresenceDeviceInfo
     }
 
     /**
-     * Gets the extensions received in the last NOTIFY message, if any, pertaining 
-     * to this presence device.
+     * Gets the extensions received in the last NOTIFY message, if any,
+     * pertaining to this presence device.
      * 
      * @return A list of zero or more Object.
      */
-    public List getDeviceExtensions()
+    public List<Object> getDeviceExtensions()
     {
         return deviceExtensions;
     }
 
-    protected void setDeviceExtensions(List deviceExtensions)
+    protected void setDeviceExtensions(List<Object> deviceExtensions)
     {
         this.deviceExtensions = deviceExtensions;
     }
 
     /**
-     * Gets the notes received in the last NOTIFY message, if any, pertaining 
-     * to this presence device.
+     * Gets the notes received in the last NOTIFY message, if any, pertaining to
+     * this presence device.
      * 
      * @return A list of zero or more PresenceNote objects.
      */
-    public List getDeviceNotes()
+    public List<PresenceNote> getDeviceNotes()
     {
         return deviceNotes;
     }
 
-    protected void setDeviceNotes(List deviceNotes)
+    protected void setDeviceNotes(List<PresenceNote> deviceNotes)
     {
         this.deviceNotes = deviceNotes;
     }
 
     /**
-     * Gets the unique, arbitrary ID representing this particular presence device.
+     * Gets the unique, arbitrary ID representing this particular presence
+     * device.
      * 
      * @return A String denoting the device ID.
      */
@@ -161,17 +162,17 @@ public class PresenceDeviceInfo
     }
 
     /**
-     * Gets the extensions received in the last NOTIFY message, if any, pertaining 
-     * to this device's status.
+     * Gets the extensions received in the last NOTIFY message, if any,
+     * pertaining to this device's status.
      * 
      * @return A list of zero or more Object.
      */
-    public List getStatusExtensions()
+    public List<Object> getStatusExtensions()
     {
         return statusExtensions;
     }
 
-    protected void setStatusExtensions(List statusExtensions)
+    protected void setStatusExtensions(List<Object> statusExtensions)
     {
         this.statusExtensions = statusExtensions;
     }
@@ -179,7 +180,8 @@ public class PresenceDeviceInfo
     /**
      * Gets the timestamp of when this device's information was set.
      * 
-     * @return A Calendar object indicating the timestamp, or null if none received.
+     * @return A Calendar object indicating the timestamp, or null if none
+     *         received.
      */
     public Calendar getTimestamp()
     {

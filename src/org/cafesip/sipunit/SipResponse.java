@@ -39,7 +39,7 @@ import javax.sip.message.Response;
  * Knowledge of JAIN SIP API is required at this level.
  * 
  * @author Becky McElroy
- *  
+ * 
  */
 public class SipResponse extends SipMessage
 {
@@ -59,7 +59,7 @@ public class SipResponse extends SipMessage
     // SUCCESS (2xx)
     public static final int OK = 200;
 
-    public static final int ACCEPTED = 202; //(Extension RFC3265)
+    public static final int ACCEPTED = 202; // (Extension RFC3265)
 
     // REDIRECTION (3xx)
     public static final int MULTIPLE_CHOICES = 300;
@@ -159,10 +159,10 @@ public class SipResponse extends SipMessage
      * Comment for <code>statusCodeDescription</code> This map yields a reason
      * phrase, given a SIP network response message status code.
      */
-    public static HashMap statusCodeDescription = new HashMap();
+    public static HashMap<Integer, String> statusCodeDescription = new HashMap<Integer, String>();
     static
     {
-        //      PROVISIONAL (1xx)
+        // PROVISIONAL (1xx)
         statusCodeDescription.put(new Integer(TRYING), "Trying");
         statusCodeDescription.put(new Integer(RINGING), "Ringing");
         statusCodeDescription.put(new Integer(CALL_IS_BEING_FORWARDED),
@@ -171,11 +171,11 @@ public class SipResponse extends SipMessage
         statusCodeDescription.put(new Integer(SESSION_PROGRESS),
                 "Session Progress");
 
-        //      SUCCESS (2xx)
+        // SUCCESS (2xx)
         statusCodeDescription.put(new Integer(OK), "OK");
         statusCodeDescription.put(new Integer(ACCEPTED), "Accepted");
 
-        //      REDIRECTION (3xx)
+        // REDIRECTION (3xx)
         statusCodeDescription.put(new Integer(MULTIPLE_CHOICES),
                 "Multiple Choices");
         statusCodeDescription.put(new Integer(MOVED_PERMANENTLY),
@@ -186,7 +186,7 @@ public class SipResponse extends SipMessage
         statusCodeDescription.put(new Integer(ALTERNATIVE_SERVICE),
                 "Alternative Service");
 
-        //      CLIENT_ERROR (4xx)
+        // CLIENT_ERROR (4xx)
         statusCodeDescription.put(new Integer(BAD_REQUEST), "Bad Request");
         statusCodeDescription.put(new Integer(UNAUTHORIZED), "Unauthorized");
         statusCodeDescription.put(new Integer(PAYMENT_REQUIRED),
@@ -236,7 +236,7 @@ public class SipResponse extends SipMessage
         statusCodeDescription
                 .put(new Integer(UNDECIPHERABLE), "Undecipherable");
 
-        //      SERVER_ERROR (5xx)
+        // SERVER_ERROR (5xx)
         statusCodeDescription.put(new Integer(SERVER_INTERNAL_ERROR),
                 "Server Internal Error");
         statusCodeDescription.put(new Integer(NOT_IMPLEMENTED),
@@ -251,7 +251,7 @@ public class SipResponse extends SipMessage
         statusCodeDescription.put(new Integer(MESSAGE_TOO_LARGE),
                 "Message Too Large");
 
-        //      GLOBAL_ERROR (6xx)
+        // GLOBAL_ERROR (6xx)
         statusCodeDescription.put(new Integer(BUSY_EVERYWHERE),
                 "Busy Everywhere");
         statusCodeDescription.put(new Integer(DECLINE), "Decline");

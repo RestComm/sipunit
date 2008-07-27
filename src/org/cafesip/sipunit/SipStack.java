@@ -75,7 +75,7 @@ public class SipStack implements SipListener
 
     private SipProvider sipProvider;
 
-    private LinkedList listeners = new LinkedList();
+    private LinkedList<SipListener> listeners = new LinkedList<SipListener>();
 
     private Random random = new Random((new Date()).getTime());
 
@@ -371,10 +371,10 @@ public class SipStack implements SipListener
         SipStack.trace("SipStack: request received !");
         synchronized (listeners)
         {
-            Iterator iter = listeners.iterator();
+            Iterator<SipListener> iter = listeners.iterator();
             while (iter.hasNext() == true)
             {
-                SipListener listener = (SipListener) iter.next();
+                SipListener listener = iter.next();
                 SipStack.trace("SipStack: calling listener");
                 listener.processRequest(arg0);
             }
@@ -404,7 +404,7 @@ public class SipStack implements SipListener
     {
         synchronized (listeners)
         {
-            Iterator iter = listeners.iterator();
+            Iterator<SipListener> iter = listeners.iterator();
             while (iter.hasNext() == true)
             {
                 SipListener listener = (SipListener) iter.next();

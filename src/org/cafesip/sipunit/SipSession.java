@@ -124,7 +124,7 @@ public class SipSession implements SipListener, SipActionObject
      * Comment for <code>statusCodeDescription</code> This map yields a
      * descriptive string, given an internal sipunit return code.
      */
-    public static HashMap statusCodeDescription = new HashMap();
+    public static HashMap<Integer, String> statusCodeDescription = new HashMap<Integer, String>();
     static
     {
         statusCodeDescription.put(new Integer(NONE_YET), "Not yet determined");
@@ -181,18 +181,17 @@ public class SipSession implements SipListener, SipActionObject
 
     protected int proxyPort;
 
-    private ArrayList viaHeaders;
+    private ArrayList<ViaHeader> viaHeaders;
 
-    // key = clientTransaction value = SipTransaction
-    private HashMap respTransactions = new HashMap();
+    private HashMap<ClientTransaction, SipTransaction> respTransactions = new HashMap<ClientTransaction, SipTransaction>();
 
-    private LinkedList reqEvents = new LinkedList();
+    private LinkedList<RequestEvent> reqEvents = new LinkedList<RequestEvent>();
 
     private boolean rcvRequests = false;
 
     private BlockObject reqBlock = new BlockObject();
 
-    private HashMap requestListeners = new HashMap();
+    private HashMap<String, ArrayList<RequestListener>> requestListeners = new HashMap<String, ArrayList<RequestListener>>();
 
     // key = String request method, value = ArrayList of RequestListener
 
@@ -258,7 +257,7 @@ public class SipSession implements SipListener, SipActionObject
                 parent.getSipProvider().getListeningPoints()[0].getTransport(),
                 "somebranchvalue");
 
-        viaHeaders = new ArrayList(1);
+        viaHeaders = new ArrayList<ViaHeader>(1);
         viaHeaders.add(via_header);
 
         // finally, register with the sip stack
@@ -450,11 +449,11 @@ public class SipSession implements SipListener, SipActionObject
         // check for listener handling
         synchronized (requestListeners)
         {
-            ArrayList listeners = (ArrayList) requestListeners.get(req_msg
+            ArrayList<RequestListener> listeners = requestListeners.get(req_msg
                     .getMethod());
             if (listeners != null)
             {
-                Iterator i = listeners.iterator();
+                Iterator<RequestListener> i = listeners.iterator();
                 while (i.hasNext())
                 {
                     RequestListener listener = (RequestListener) i.next();
@@ -886,8 +885,10 @@ public class SipSession implements SipListener, SipActionObject
      *            body bytes.
      */
     public SipTransaction sendRequestWithTransaction(String reqMessage,
-            boolean viaProxy, Dialog dialog, ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body) throws ParseException
+            boolean viaProxy, Dialog dialog,
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
+            throws ParseException
     {
         Request request = parent.getMessageFactory().createRequest(reqMessage);
         return sendRequestWithTransaction(request, viaProxy, dialog,
@@ -945,8 +946,8 @@ public class SipSession implements SipListener, SipActionObject
      */
     public SipTransaction sendRequestWithTransaction(String reqMessage,
             boolean viaProxy, Dialog dialog, String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders) throws ParseException
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders) throws ParseException
     {
         Request request = parent.getMessageFactory().createRequest(reqMessage);
 
@@ -1035,8 +1036,9 @@ public class SipSession implements SipListener, SipActionObject
      *            body bytes.
      */
     public SipTransaction sendRequestWithTransaction(Request request,
-            boolean viaProxy, Dialog dialog, ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body)
+            boolean viaProxy, Dialog dialog,
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         return sendRequestWithTransaction(request, viaProxy, dialog, null,
                 additionalHeaders, replaceHeaders, body);
@@ -1093,8 +1095,8 @@ public class SipSession implements SipListener, SipActionObject
      */
     public SipTransaction sendRequestWithTransaction(Request request,
             boolean viaProxy, Dialog dialog, String body, String contentType,
-            String contentSubType, ArrayList additionalHeaders,
-            ArrayList replaceHeaders)
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -1153,7 +1155,8 @@ public class SipSession implements SipListener, SipActionObject
      */
     protected SipTransaction sendRequestWithTransaction(Request request,
             boolean viaProxy, Dialog dialog, MessageListener respListener,
-            ArrayList additionalHeaders, ArrayList replaceHeaders, String body)
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -1267,7 +1270,7 @@ public class SipSession implements SipListener, SipActionObject
 
         synchronized (trans.getBlock())
         {
-            LinkedList events = trans.getEvents();
+            LinkedList<EventObject> events = trans.getEvents();
             if (events.size() == 0)
             {
                 try
@@ -1467,7 +1470,8 @@ public class SipSession implements SipListener, SipActionObject
      */
     public SipTransaction sendReply(RequestEvent request, int statusCode,
             String reasonPhrase, String toTag, Address contact, int expires,
-            ArrayList additionalHeaders, ArrayList replaceHeaders, String body)
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -1572,7 +1576,8 @@ public class SipSession implements SipListener, SipActionObject
     public SipTransaction sendReply(RequestEvent request, int statusCode,
             String reasonPhrase, String toTag, Address contact, int expires,
             String body, String contentType, String contentSubType,
-            ArrayList additionalHeaders, ArrayList replaceHeaders)
+            ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -1758,7 +1763,8 @@ public class SipSession implements SipListener, SipActionObject
     public SipTransaction sendReply(SipTransaction transaction, int statusCode,
             String reasonPhrase, String toTag, Address contact, int expires,
             String body, String contentType, String contentSubType,
-            ArrayList additionalHeaders, ArrayList replaceHeaders)
+            ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
     {
         try
         {
@@ -1776,16 +1782,17 @@ public class SipSession implements SipListener, SipActionObject
         }
     }
 
-    protected ArrayList toHeader(ArrayList strings) throws Exception
+    protected ArrayList<Header> toHeader(ArrayList<String> strings)
+            throws Exception
     {
         if (strings == null)
         {
             return null;
         }
 
-        ArrayList headers = new ArrayList();
+        ArrayList<Header> headers = new ArrayList<Header>();
 
-        Iterator i = strings.iterator();
+        Iterator<String> i = strings.iterator();
         while (i.hasNext())
         {
             String str = (String) i.next();
@@ -1809,10 +1816,10 @@ public class SipSession implements SipListener, SipActionObject
         return headers;
     }
 
-    protected ArrayList toHeader(ArrayList strings, String contentType,
-            String contentSubType) throws Exception
+    protected ArrayList<Header> toHeader(ArrayList<String> strings,
+            String contentType, String contentSubType) throws Exception
     {
-        ArrayList headers = toHeader(strings);
+        ArrayList<Header> headers = toHeader(strings);
         if ((contentType == null) || (contentSubType == null))
         {
             return headers;
@@ -1820,7 +1827,7 @@ public class SipSession implements SipListener, SipActionObject
 
         if (headers == null)
         {
-            headers = new ArrayList();
+            headers = new ArrayList<Header>();
         }
 
         ContentTypeHeader ct_type = parent.getHeaderFactory()
@@ -1866,7 +1873,8 @@ public class SipSession implements SipListener, SipActionObject
      */
     public SipTransaction sendReply(SipTransaction transaction, int statusCode,
             String reasonPhrase, String toTag, Address contact, int expires,
-            ArrayList additionalHeaders, ArrayList replaceHeaders, String body)
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
     {
         initErrorInfo();
 
@@ -1920,13 +1928,14 @@ public class SipSession implements SipListener, SipActionObject
         return sendReply(transaction, response);
     }
 
-    protected void putElements(Message message, ArrayList additionalHeaders,
-            ArrayList replaceHeaders, String body) throws Exception
+    protected void putElements(Message message,
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body) throws Exception
     {
         // check for additional headers and body to add
         if (additionalHeaders != null)
         {
-            Iterator i = additionalHeaders.iterator();
+            Iterator<Header> i = additionalHeaders.iterator();
             while (i.hasNext())
             {
                 Header h = (Header) i.next();
@@ -1950,7 +1959,7 @@ public class SipSession implements SipListener, SipActionObject
         // check for headers to replace
         if (replaceHeaders != null)
         {
-            Iterator i = replaceHeaders.iterator();
+            Iterator<Header> i = replaceHeaders.iterator();
             while (i.hasNext())
             {
                 message.setHeader((Header) i.next());
@@ -2220,9 +2229,9 @@ public class SipSession implements SipListener, SipActionObject
      *         javax.sip.header.ViaHeader currently in effect for this user
      *         agent.
      */
-    public ArrayList getViaHeaders()
+    public ArrayList<ViaHeader> getViaHeaders()
     {
-        return new ArrayList(viaHeaders);
+        return new ArrayList<ViaHeader>(viaHeaders);
     }
 
     /**
@@ -2234,7 +2243,7 @@ public class SipSession implements SipListener, SipActionObject
      * 
      * @return
      */
-    public ArrayList getLocalViaHeaders()
+    public ArrayList<ViaHeader> getLocalViaHeaders()
     {
         return getViaHeaders();
     }
@@ -2353,11 +2362,11 @@ public class SipSession implements SipListener, SipActionObject
 
         synchronized (requestListeners)
         {
-            ArrayList listeners = (ArrayList) requestListeners
+            ArrayList<RequestListener> listeners = requestListeners
                     .get(requestMethod);
             if (listeners == null)
             {
-                listeners = new ArrayList();
+                listeners = new ArrayList<RequestListener>();
                 requestListeners.put(requestMethod, listeners);
             }
 
@@ -2372,7 +2381,7 @@ public class SipSession implements SipListener, SipActionObject
 
         synchronized (requestListeners)
         {
-            ArrayList listeners = (ArrayList) requestListeners
+            ArrayList<RequestListener> listeners = requestListeners
                     .get(requestMethod);
             if (listeners != null)
             {

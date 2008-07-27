@@ -47,6 +47,7 @@ import javax.sip.header.HeaderFactory;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import javax.xml.bind.JAXBContext;
@@ -95,17 +96,17 @@ public class Subscription implements MessageListener, SipActionObject
      * Subscription buddy/watchee, indexed by the IDs received in the NOTIFY
      * tuples
      */
-    private HashMap devices = new HashMap();
+    private HashMap<String, PresenceDeviceInfo> devices = new HashMap<String, PresenceDeviceInfo>();
 
     /*
      * List of zero or more PresenceNote objects received in the NOTIFY body
      */
-    private ArrayList presenceNotes = new ArrayList();
+    private ArrayList<PresenceNote> presenceNotes = new ArrayList<PresenceNote>();
 
     /*
      * List of zero or more Object received in a NOTIFY message
      */
-    private ArrayList presenceExtensions = new ArrayList();
+    private ArrayList<Object> presenceExtensions = new ArrayList<Object>();
 
     private long projectedExpiry = 0;
 
@@ -136,17 +137,17 @@ public class Subscription implements MessageListener, SipActionObject
     /*
      * list of SipResponse
      */
-    private LinkedList receivedResponses = new LinkedList();
+    private LinkedList<SipResponse> receivedResponses = new LinkedList<SipResponse>();
 
     /*
      * list of SipRequest
      */
-    private LinkedList receivedRequests = new LinkedList();
+    private LinkedList<SipRequest> receivedRequests = new LinkedList<SipRequest>();
 
     /*
      * for wait operations
      */
-    private LinkedList reqEvents = new LinkedList();
+    private LinkedList<RequestEvent> reqEvents = new LinkedList<RequestEvent>();
 
     private BlockObject responseBlock = new BlockObject();
 
@@ -167,7 +168,7 @@ public class Subscription implements MessageListener, SipActionObject
 
     private boolean removalComplete = false;
 
-    private LinkedList eventErrors = new LinkedList();
+    private LinkedList<String> eventErrors = new LinkedList<String>();
 
     protected Subscription(String uri, SipPhone parent) throws ParseException
     {
@@ -425,7 +426,7 @@ public class Subscription implements MessageListener, SipActionObject
                 MaxForwardsHeader max_forwards = hdr_factory
                         .createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
 
-                ArrayList via_headers = parent.getViaHeaders();
+                ArrayList<ViaHeader> via_headers = parent.getViaHeaders();
 
                 req = parent.getMessageFactory().createRequest(request_uri,
                         method, callId, subscribeCSeq, from_header, to_header,
@@ -1165,13 +1166,13 @@ public class Subscription implements MessageListener, SipActionObject
                     dev.setStatusExtensions(t.getStatus().getAny());
                     dev.setTimestamp(t.getTimestamp());
 
-                    ArrayList notes = new ArrayList();
+                    ArrayList<PresenceNote> notes = new ArrayList<PresenceNote>();
                     if (t.getNote() != null)
                     {
-                        Iterator j = t.getNote().iterator();
+                        Iterator<Note> j = t.getNote().iterator();
                         while (j.hasNext())
                         {
-                            Note n = (Note) j.next();
+                            Note n = j.next();
                             notes.add(new PresenceNote(n.getLang(), n
                                     .getValue()));
                         }
@@ -1445,9 +1446,9 @@ public class Subscription implements MessageListener, SipActionObject
      *         indexed/keyed by the unique IDs received for each in the NOTIFY
      *         messages (tuple elements).
      */
-    public HashMap getPresenceDevices()
+    public HashMap<String, PresenceDeviceInfo> getPresenceDevices()
     {
-        return new HashMap(devices);
+        return new HashMap<String, PresenceDeviceInfo>(devices);
     }
 
     /**
@@ -1456,9 +1457,9 @@ public class Subscription implements MessageListener, SipActionObject
      * 
      * @return An ArrayList containing zero or more PresenceNote objects.
      */
-    public ArrayList getPresenceNotes()
+    public ArrayList<PresenceNote> getPresenceNotes()
     {
-        return new ArrayList(presenceNotes);
+        return new ArrayList<PresenceNote>(presenceNotes);
     }
 
     /**
@@ -1467,9 +1468,9 @@ public class Subscription implements MessageListener, SipActionObject
      * 
      * @return An ArrayList containing zero or more Object.
      */
-    public ArrayList getPresenceExtensions()
+    public ArrayList<Object> getPresenceExtensions()
     {
-        return new ArrayList(presenceExtensions);
+        return new ArrayList<Object>(presenceExtensions);
     }
 
     /**
@@ -1585,11 +1586,11 @@ public class Subscription implements MessageListener, SipActionObject
      * 
      * @see org.cafesip.sipunit.MessageListener#getAllReceivedResponses()
      */
-    public ArrayList getAllReceivedResponses()
+    public ArrayList<SipResponse> getAllReceivedResponses()
     {
         synchronized (responseBlock)
         {
-            return new ArrayList(receivedResponses);
+            return new ArrayList<SipResponse>(receivedResponses);
         }
     }
 
@@ -1601,11 +1602,11 @@ public class Subscription implements MessageListener, SipActionObject
      * 
      * @see org.cafesip.sipunit.MessageListener#getAllReceivedRequests()
      */
-    public ArrayList getAllReceivedRequests()
+    public ArrayList<SipRequest> getAllReceivedRequests()
     {
         synchronized (this)
         {
-            return new ArrayList(receivedRequests);
+            return new ArrayList<SipRequest>(receivedRequests);
         }
     }
 
@@ -1724,11 +1725,11 @@ public class Subscription implements MessageListener, SipActionObject
      * 
      * @return LinkedList (never null) of zero or more String
      */
-    public LinkedList getEventErrors()
+    public LinkedList<String> getEventErrors()
     {
         synchronized (eventErrors)
         {
-            return new LinkedList(eventErrors);
+            return new LinkedList<String>(eventErrors);
         }
     }
 
@@ -1747,7 +1748,7 @@ public class Subscription implements MessageListener, SipActionObject
     protected Response createNotifyResponse(RequestEvent request, int status,
             String reason)
     {
-        ArrayList additional_headers = null;
+        ArrayList<Header> additional_headers = null;
 
         if (status == SipResponse.UNSUPPORTED_MEDIA_TYPE)
         {
@@ -1755,7 +1756,7 @@ public class Subscription implements MessageListener, SipActionObject
             {
                 AcceptHeader ahdr = parent.getHeaderFactory()
                         .createAcceptHeader("application", "pidf+xml");
-                additional_headers = new ArrayList();
+                additional_headers = new ArrayList<Header>();
                 additional_headers.add(ahdr);
             }
             catch (Exception e)
@@ -1774,7 +1775,7 @@ public class Subscription implements MessageListener, SipActionObject
 
     // if returns null, returnCode and errorMessage already set
     protected Response createNotifyResponse(RequestEvent request, int status,
-            String reason, ArrayList additionalHeaders)
+            String reason, ArrayList<Header> additionalHeaders)
     // when used internally - WATCH OUT - retcode, errorMessage initialized here
     {
         initErrorInfo();
@@ -1810,10 +1811,10 @@ public class Subscription implements MessageListener, SipActionObject
 
             if (additionalHeaders != null)
             {
-                Iterator i = additionalHeaders.iterator();
+                Iterator<Header> i = additionalHeaders.iterator();
                 while (i.hasNext())
                 {
-                    response.addHeader((Header) i.next());
+                    response.addHeader(i.next());
                 }
             }
 
@@ -1941,7 +1942,7 @@ public class Subscription implements MessageListener, SipActionObject
     {
         synchronized (responseBlock)
         {
-            LinkedList events = transaction.getEvents();
+            LinkedList<EventObject> events = transaction.getEvents();
             if (events.size() == 0)
             {
                 try

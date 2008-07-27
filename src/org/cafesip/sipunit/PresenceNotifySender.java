@@ -42,6 +42,7 @@ import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.header.SupportedHeader;
 import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
@@ -114,12 +115,12 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * This method starts a thread that waits for up to 'timeout' milliseconds to
-     * receive a SUBSCRIBE and if received, it sends a response with
+     * This method starts a thread that waits for up to 'timeout' milliseconds
+     * to receive a SUBSCRIBE and if received, it sends a response with
      * 'statusCode' and 'reasonPhrase' (if not null). This method waits 500 ms
-     * before returning to allow the thread to get started and begin waiting
-     * for an incoming SUBSCRIBE. This method adds 500ms to the given timeout
-     * to account for this delay.
+     * before returning to allow the thread to get started and begin waiting for
+     * an incoming SUBSCRIBE. This method adds 500ms to the given timeout to
+     * account for this delay.
      * 
      * @param timeout -
      *            number of milliseconds to wait for the SUBSCRIBE
@@ -582,8 +583,8 @@ public class PresenceNotifySender implements MessageListener
                                     SipPhone.MAX_FORWARDS_DEFAULT);
                     req.setHeader(max_forwards);
 
-                    ArrayList via_headers = ub.getViaHeaders();
-                    Iterator i = via_headers.iterator();
+                    ArrayList<ViaHeader> via_headers = ub.getViaHeaders();
+                    Iterator<ViaHeader> i = via_headers.iterator();
                     while (i.hasNext())
                     {
                         req.addHeader((Header) i.next());
@@ -801,17 +802,17 @@ public class PresenceNotifySender implements MessageListener
     /*
      * Not implemented for this class. Returns empty ArrayList.
      */
-    public ArrayList getAllReceivedResponses()
+    public ArrayList<SipResponse> getAllReceivedResponses()
     {
-        return new ArrayList();
+        return new ArrayList<SipResponse>();
     }
 
     /*
      * Not implemented for this class. Returns empty ArrayList.
      */
-    public ArrayList getAllReceivedRequests()
+    public ArrayList<SipRequest> getAllReceivedRequests()
     {
-        return new ArrayList();
+        return new ArrayList<SipRequest>();
     }
 
     /*

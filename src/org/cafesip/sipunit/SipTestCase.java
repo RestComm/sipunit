@@ -176,7 +176,7 @@ import junit.framework.TestCase;
  * </code></pre>
  * 
  * @author aab
- *  
+ * 
  */
 public class SipTestCase extends TestCase
 {
@@ -275,11 +275,11 @@ public class SipTestCase extends TestCase
      *            the SIP message.
      * @param header
      *            the string identifying the header, as specified in RFC-3261.
-     *  
+     * 
      */
     public void assertHeaderPresent(SipMessage sipMessage, String header)
     {
-        assertHeaderPresent(null, sipMessage, header); //header is case
+        assertHeaderPresent(null, sipMessage, header); // header is case
         // sensitive?
     }
 
@@ -381,7 +381,7 @@ public class SipTestCase extends TestCase
             String header, String value)
     {
         assertNotNull("Null assert object passed in", sipMessage);
-        ListIterator l = sipMessage.getHeaders(header);
+        ListIterator<Header> l = sipMessage.getHeaders(header);
         while (l.hasNext())
         {
             String h = ((Header) l.next()).toString();
@@ -441,7 +441,7 @@ public class SipTestCase extends TestCase
             String header, String value)
     {
         assertNotNull("Null assert object passed in", sipMessage);
-        ListIterator l = sipMessage.getHeaders(header);
+        ListIterator<Header> l = sipMessage.getHeaders(header);
         while (l.hasNext())
         {
             String h = ((Header) l.next()).toString();
@@ -512,12 +512,12 @@ public class SipTestCase extends TestCase
 
     private boolean responseReceived(int statusCode, MessageListener obj)
     {
-        ArrayList responses = obj.getAllReceivedResponses();
+        ArrayList<SipResponse> responses = obj.getAllReceivedResponses();
 
-        Iterator i = responses.iterator();
+        Iterator<SipResponse> i = responses.iterator();
         while (i.hasNext())
         {
-            int response_code = ((SipResponse) i.next()).getStatusCode();
+            int response_code = (i.next()).getStatusCode();
             if (response_code == statusCode)
             {
                 return true;
@@ -555,12 +555,12 @@ public class SipTestCase extends TestCase
     private boolean responseReceived(int statusCode, String method,
             long sequenceNumber, MessageListener obj)
     {
-        ArrayList responses = obj.getAllReceivedResponses();
+        ArrayList<SipResponse> responses = obj.getAllReceivedResponses();
 
-        Iterator i = responses.iterator();
+        Iterator<SipResponse> i = responses.iterator();
         while (i.hasNext())
         {
-            SipResponse resp = (SipResponse) i.next();
+            SipResponse resp = i.next();
             if (resp.getStatusCode() == statusCode)
             {
                 CSeqHeader hdr = (CSeqHeader) resp.getMessage().getHeader(
@@ -590,7 +590,7 @@ public class SipTestCase extends TestCase
      *            SipResponse.RINGING)
      * @param obj
      *            The MessageListener object (ie, SipCall, Subscription, etc.).
-     *  
+     * 
      */
     public void assertResponseNotReceived(int statusCode, MessageListener obj)
     {
@@ -630,7 +630,7 @@ public class SipTestCase extends TestCase
      *            The CSeq sequence number to verify absent
      * @param obj
      *            The MessageListener object (ie, SipCall, Subscription, etc.).
-     *  
+     * 
      */
     public void assertResponseNotReceived(int statusCode, String method,
             long sequenceNumber, MessageListener obj)
@@ -715,12 +715,12 @@ public class SipTestCase extends TestCase
 
     private boolean requestReceived(String method, MessageListener obj)
     {
-        ArrayList requests = obj.getAllReceivedRequests();
+        ArrayList<SipRequest> requests = obj.getAllReceivedRequests();
 
-        Iterator i = requests.iterator();
+        Iterator<SipRequest> i = requests.iterator();
         while (i.hasNext())
         {
-            Request req = (Request) ((SipRequest) i.next()).getMessage();
+            Request req = (Request) i.next().getMessage();
             if (req != null)
             {
                 if (req.getMethod().equals(method))
@@ -757,12 +757,12 @@ public class SipTestCase extends TestCase
     private boolean requestReceived(String method, long sequenceNumber,
             MessageListener obj)
     {
-        ArrayList requests = obj.getAllReceivedRequests();
+        ArrayList<SipRequest> requests = obj.getAllReceivedRequests();
 
-        Iterator i = requests.iterator();
+        Iterator<SipRequest> i = requests.iterator();
         while (i.hasNext())
         {
-            Request req = (Request) ((SipRequest) i.next()).getMessage();
+            Request req = (Request) i.next().getMessage();
             if (req != null)
             {
                 CSeqHeader hdr = (CSeqHeader) req.getHeader(CSeqHeader.NAME);
@@ -790,7 +790,7 @@ public class SipTestCase extends TestCase
      *            The request method to verify absent (eg, SipRequest.BYE)
      * @param obj
      *            The MessageListener object (ie, SipCall, Subscription, etc.).
-     *  
+     * 
      */
     public void assertRequestNotReceived(String method, MessageListener obj)
     {
@@ -826,7 +826,7 @@ public class SipTestCase extends TestCase
      *            The CSeq sequence number to verify absent
      * @param obj
      *            The MessageListener object (ie, SipCall, Subscription, etc.).
-     *  
+     * 
      */
     public void assertRequestNotReceived(String method, long sequenceNumber,
             MessageListener obj)
@@ -1064,7 +1064,7 @@ public class SipTestCase extends TestCase
     /**
      * Asserts that the given Subscription has not encountered any errors while
      * processing received SUBSCRIBE responses and received NOTIFY requests. If
-     * the assertion fails, the encountered error(s) are included in the failure 
+     * the assertion fails, the encountered error(s) are included in the failure
      * output.
      * 
      * @param subscription
@@ -1089,15 +1089,16 @@ public class SipTestCase extends TestCase
     public void assertNoPresenceErrors(String msg, Subscription subscription)
     {
         assertNotNull("Null assert object passed in", subscription);
-        
-        StringBuffer buf = new StringBuffer(msg == null ? "Presence error(s)" : msg);
-        Iterator i = subscription.getEventErrors().iterator();
+
+        StringBuffer buf = new StringBuffer(msg == null ? "Presence error(s)"
+                : msg);
+        Iterator<String> i = subscription.getEventErrors().iterator();
         while (i.hasNext())
         {
             buf.append(" : ");
             buf.append((String) i.next());
         }
-        
+
         assertEquals(buf.toString(), 0, subscription.getEventErrors().size());
     }
 
@@ -1126,7 +1127,7 @@ public class SipTestCase extends TestCase
      * StackTraceElement[] elems = t.getStackTrace(); StackTraceElement[]
      * subElems = new StackTraceElement[elems.length-1]; System.arrayCopy(elems,
      * 1, subElems, 0, elems.length-1); t.setStackTrace(t); } }
-     *  
+     * 
      */
 
 }
