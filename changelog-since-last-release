@@ -1,10 +1,14 @@
+SipUnit 0.0.8b
+- TODO: see why we get NullPointerException out of 
+        gov.nist.javax.sip.stack.SIPServerTransaction.sendResponse(SIPServerTransaction.java:461)
+        on some no-proxy tests
+
 SipUnit 0.0.7b
 - CANCEL (Alcatel-Lucent)
 - Updated JAIN-SIP stack/sdp to version: 1.2.72 (June 16, 2008)
 - Misc. Bug fixes (M. Ranganathan, sipunit-extensions branch up to and including rev. 420)
 	- Use Dialog.createAck(long) to create the Ack
 	- Fix initialization to allow multiple stacks to run in a single app
-TODO: clean up warnings
 
 SipUnit 0.0.6b
 
