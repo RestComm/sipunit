@@ -2241,7 +2241,7 @@ public class SipSession implements SipListener, SipActionObject
      *             in the method name is misleading if the SipUnit test is
      *             running behind a NAT.
      * 
-     * @return
+     * @return A list of ViaHeader
      */
     public ArrayList<ViaHeader> getLocalViaHeaders()
     {
