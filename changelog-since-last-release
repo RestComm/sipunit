@@ -1,7 +1,5 @@
 SipUnit 0.0.8b
-- TODO: see why we get NullPointerException out of 
-        gov.nist.javax.sip.stack.SIPServerTransaction.sendResponse(SIPServerTransaction.java:461)
-        on some no-proxy tests
+- see SVN log since 0.0.7b release
 
 SipUnit 0.0.7b
 - CANCEL (Alcatel-Lucent)

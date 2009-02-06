@@ -63,7 +63,8 @@ public class SipTransaction
     /**
      * @return Returns the clientTransaction.
      */
-    protected ClientTransaction getClientTransaction()
+    public ClientTransaction getClientTransaction()
+    // TODO change this method back to protected when fix 2570642
     {
         return clientTransaction;
     }
@@ -114,7 +115,8 @@ public class SipTransaction
     /**
      * @return Returns the serverTransaction.
      */
-    protected ServerTransaction getServerTransaction()
+    public ServerTransaction getServerTransaction()
+    // TODO change this method back to protected when fix 2570642
     {
         return serverTransaction;
     }

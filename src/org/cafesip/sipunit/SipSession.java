@@ -191,6 +191,8 @@ public class SipSession implements SipListener, SipActionObject
 
     private BlockObject reqBlock = new BlockObject();
 
+    private BlockObject respBlock = new BlockObject();
+
     private HashMap<String, ArrayList<RequestListener>> requestListeners = new HashMap<String, ArrayList<RequestListener>>();
 
     // key = String request method, value = ArrayList of RequestListener
@@ -649,9 +651,9 @@ public class SipSession implements SipListener, SipActionObject
              * if (uri1.getMethodParam() != null) { if (uri2.getMethodParam() ==
              * null) { return false; }
              * 
-             * if (uri1.getMethodParam().equals(uri2.getMethodParam()) == false) {
-             * return false; } } else if (uri2.getMethodParam() != null) {
-             * return false; } /* next - incorporate the following remaining
+             * if (uri1.getMethodParam().equals(uri2.getMethodParam()) == false)
+             * { return false; } } else if (uri2.getMethodParam() != null) {
+             * return false; } / next - incorporate the following remaining
              * checks:
              * 
              * URI uri-parameter components are compared as follows: - Any
@@ -666,7 +668,6 @@ public class SipSession implements SipListener, SipActionObject
              * component MUST be present in both URIs and match for the URIs to
              * match. The matching rules are defined for each header field in
              * Section 20.
-             * 
              */
 
             return true;
@@ -1190,7 +1191,7 @@ public class SipSession implements SipListener, SipActionObject
                     .getNewClientTransaction(request);
             SipTransaction sip_trans = new SipTransaction();
             sip_trans.setClientTransaction(trans);
-            sip_trans.setBlock(reqBlock);
+            sip_trans.setBlock(respBlock);
             sip_trans.setClientListener(respListener);
 
             synchronized (respTransactions)

@@ -1838,7 +1838,6 @@ public class SipCall implements SipActionObject, MessageListener
          * set Request URI & route headers according to loose/strict routing -
          * Dialog.sendAck() does this for us? ACK: must have same credentials as
          * the succeeding invite.
-         * 
          */
 
         initErrorInfo();
@@ -2652,13 +2651,15 @@ public class SipCall implements SipActionObject, MessageListener
                 .getRequest();
     }
 
-    protected SipTransaction getTransaction()
+    public SipTransaction getTransaction()
+    // TODO - change this method back to protected when fix 2570642
     {
         return transaction;
     }
 
     /*
-     * @see org.cafesip.sipunit.MessageListener#processEvent(java.util.EventObject)
+     * @see
+     * org.cafesip.sipunit.MessageListener#processEvent(java.util.EventObject)
      */
     public void processEvent(EventObject event) // for asynchronous
     // (nonblocking) response

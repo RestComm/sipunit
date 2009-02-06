@@ -21,9 +21,11 @@ package org.cafesip.sipunit.test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventObject;
 import java.util.Properties;
 
+import javax.sip.Dialog;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.TimeoutEvent;
@@ -263,6 +265,326 @@ public class TestNoProxy extends SipTestCase
             // response(s) received, we're done
 
             ub.dispose();
+        }
+        catch (Exception e)
+        {
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+
+    }
+
+    /**
+     * Test program sends a request, expects a response followed by a request
+     * from the far end and checks for things in that order. The received
+     * request beats the received response in actuality. The test program should
+     * get both.
+     */
+    public void testRaceConditionRequestBeatsResponse()
+    {
+        final class PhoneB extends Thread
+        {
+            public void run()
+            {
+                try
+                {
+                    SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+                    ub.listenRequestMessage();
+                    SipCall b = ub.createSipCall();
+
+                    // wait for session establishment
+                    b.waitForIncomingCall(10000);
+                    assertLastOperationSuccess("b wait incoming call - "
+                            + b.format(), b);
+                    Dialog bDialog = b.getTransaction().getServerTransaction()
+                            .getDialog();
+
+                    Header allow = ub.getParent().getHeaderFactory()
+                            .createAllowHeader(Request.INFO);
+                    b.sendIncomingCallResponse(Response.OK,
+                            "Answer - Hello world", 0, new ArrayList<Header>(
+                                    Arrays.asList(allow)), null, null);
+                    assertLastOperationSuccess("b send OK - " + b.format(), b);
+
+                    // wait for INFO request
+                    RequestEvent inc_req = ub.waitRequest(2000);
+                    while (inc_req != null)
+                    {
+                        if (inc_req.getRequest().getMethod().equals(
+                                Request.INFO))
+                        {
+                            break;
+                        }
+                        inc_req = ub.waitRequest(2000);
+                    }
+                    if (inc_req == null)
+                    {
+                        fail("didn't get expected INFO message");
+                    }
+
+                    // first - send my INFO request before responding to
+                    // received INFO
+                    Request infoRequest = bDialog.createRequest(Request.INFO);
+
+                    SipTransaction bRespTrans = ub.sendRequestWithTransaction(
+                            infoRequest, false, bDialog);
+                    if (null == bRespTrans)
+                    {
+                        String msg = "B side failed sending INFO: "
+                                + ub.getErrorMessage();
+                        fail(msg);
+                    }
+
+                    // wait for some time, make sure it gets to other side
+                    Thread.sleep(5000);
+
+                    // second - send 200 OK for the received INFO
+                    Response response = ub.getParent().getMessageFactory()
+                            .createResponse(Response.OK, inc_req.getRequest());
+                    SipTransaction transb = ub.sendReply(inc_req, response);
+                    assertNotNull(ub.format(), transb);
+
+                    // wait disconnect
+                    b.waitForDisconnect(20000);
+                    assertLastOperationSuccess("b wait disc - " + b.format(), b);
+                    assertTrue(b.respondToDisconnect());
+
+                    Thread.sleep(1000);
+                    ub.dispose();
+
+                    return;
+                }
+                catch (Exception e)
+                {
+                    fail("Exception: " + e.getClass().getName() + ": "
+                            + e.getMessage());
+                }
+            }
+        }
+
+        try
+        {
+            PhoneB b = new PhoneB();
+            b.start();
+
+            ua.listenRequestMessage();
+            Thread.sleep(100);
+
+            SipCall a = ua.createSipCall();
+
+            // first establish the session
+
+            Header allow = ua.getParent().getHeaderFactory().createAllowHeader(
+                    Request.INFO);
+
+            a.initiateOutgoingCall("sip:amit@nist.gov", "sip:becky@nist.gov",
+                    properties.getProperty("javax.sip.IP_ADDRESS") + ':'
+                            + myPort + '/' + testProtocol,
+                    new ArrayList<Header>(Arrays.asList(allow)), null, null);
+            assertLastOperationSuccess("a initiate call - " + a.format(), a);
+            Dialog aDialog = a.getTransaction().getClientTransaction()
+                    .getDialog();
+
+            assertTrue(a.waitOutgoingCallResponse(10000));
+            assertEquals("Unexpected response received", Response.OK, a
+                    .getReturnCode());
+
+            a.sendInviteOkAck();
+            assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+
+            Thread.sleep(1000);
+
+            // do the test
+
+            Request infoRequest = aDialog.createRequest(Request.INFO);
+
+            SipTransaction responseTransaction = ua.sendRequestWithTransaction(
+                    infoRequest, false, aDialog);
+            if (null == responseTransaction)
+            {
+                String msg = "media server failed sending message: "
+                        + ua.getErrorMessage();
+                fail(msg);
+            }
+
+            // first wait for a 200 OK from the app
+            EventObject respEvent = ua.waitResponse(responseTransaction, 10000);
+            assertNotNull(
+                    "media server failed waiting for a 200 OK for the INFO message: "
+                            + ua.getErrorMessage(), respEvent);
+            assertTrue(respEvent instanceof ResponseEvent);
+            assertEquals(Response.OK, ((ResponseEvent) respEvent).getResponse()
+                    .getStatusCode());
+
+            // second - verify INFO was received by ua
+            RequestEvent inc_req = ua.waitRequest(2000);
+            assertNotNull(inc_req);
+            assertEquals(Request.INFO, inc_req.getRequest().getMethod());
+
+            // Tear down
+
+            a.disconnect();
+            assertLastOperationSuccess("a disc - " + a.format(), a);
+
+        }
+        catch (Exception e)
+        {
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+
+    }
+
+    /**
+     * Test program sends a request, expects a response preceded by a request
+     * from the far end and checks for things in that order. The received
+     * response beats the received request in actuality. The test program should
+     * get both.
+     */
+    public void testRaceConditionResponseBeatsRequest()
+    {
+        final class PhoneB extends Thread
+        {
+            public void run()
+            {
+                try
+                {
+                    SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+                    ub.listenRequestMessage();
+                    SipCall b = ub.createSipCall();
+
+                    // wait for session establishment
+                    b.waitForIncomingCall(10000);
+                    assertLastOperationSuccess("b wait incoming call - "
+                            + b.format(), b);
+                    Dialog bDialog = b.getTransaction().getServerTransaction()
+                            .getDialog();
+
+                    Header allow = ub.getParent().getHeaderFactory()
+                            .createAllowHeader(Request.INFO);
+                    b.sendIncomingCallResponse(Response.OK,
+                            "Answer - Hello world", 0, new ArrayList<Header>(
+                                    Arrays.asList(allow)), null, null);
+                    assertLastOperationSuccess("b send OK - " + b.format(), b);
+
+                    // wait for INFO request
+                    RequestEvent inc_req = ub.waitRequest(2000);
+                    while (inc_req != null)
+                    {
+                        if (inc_req.getRequest().getMethod().equals(
+                                Request.INFO))
+                        {
+                            break;
+                        }
+                        inc_req = ub.waitRequest(2000);
+                    }
+                    if (inc_req == null)
+                    {
+                        fail("didn't get expected INFO message");
+                    }
+
+                    // first - send 200 OK for the received INFO
+                    Response response = ub.getParent().getMessageFactory()
+                            .createResponse(Response.OK, inc_req.getRequest());
+                    SipTransaction transb = ub.sendReply(inc_req, response);
+                    assertNotNull(ub.format(), transb);
+
+                    // wait for some time, make sure it gets to other side
+                    Thread.sleep(5000);
+
+                    // second - send my INFO request before responding to
+                    // received INFO
+                    Request infoRequest = bDialog.createRequest(Request.INFO);
+
+                    SipTransaction bRespTrans = ub.sendRequestWithTransaction(
+                            infoRequest, false, bDialog);
+                    if (null == bRespTrans)
+                    {
+                        String msg = "B side failed sending INFO: "
+                                + ub.getErrorMessage();
+                        fail(msg);
+                    }
+
+                    // wait disconnect
+                    b.waitForDisconnect(20000);
+                    assertLastOperationSuccess("b wait disc - " + b.format(), b);
+                    assertTrue(b.respondToDisconnect());
+
+                    Thread.sleep(1000);
+                    ub.dispose();
+
+                    return;
+                }
+                catch (Exception e)
+                {
+                    fail("Exception: " + e.getClass().getName() + ": "
+                            + e.getMessage());
+                }
+            }
+        }
+
+        try
+        {
+            PhoneB b = new PhoneB();
+            b.start();
+
+            ua.listenRequestMessage();
+            Thread.sleep(100);
+
+            SipCall a = ua.createSipCall();
+
+            // first establish the session
+
+            Header allow = ua.getParent().getHeaderFactory().createAllowHeader(
+                    Request.INFO);
+
+            a.initiateOutgoingCall("sip:amit@nist.gov", "sip:becky@nist.gov",
+                    properties.getProperty("javax.sip.IP_ADDRESS") + ':'
+                            + myPort + '/' + testProtocol,
+                    new ArrayList<Header>(Arrays.asList(allow)), null, null);
+            assertLastOperationSuccess("a initiate call - " + a.format(), a);
+            Dialog aDialog = a.getTransaction().getClientTransaction()
+                    .getDialog();
+
+            assertTrue(a.waitOutgoingCallResponse(10000));
+            assertEquals("Unexpected response received", Response.OK, a
+                    .getReturnCode());
+
+            a.sendInviteOkAck();
+            assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+
+            Thread.sleep(1000);
+
+            // do the test
+
+            Request infoRequest = aDialog.createRequest(Request.INFO);
+
+            SipTransaction responseTransaction = ua.sendRequestWithTransaction(
+                    infoRequest, false, aDialog);
+            if (null == responseTransaction)
+            {
+                String msg = "media server failed sending message: "
+                        + ua.getErrorMessage();
+                fail(msg);
+            }
+
+            // first - verify INFO was received by ua
+            RequestEvent inc_req = ua.waitRequest(10000);
+            assertNotNull(inc_req);
+            assertEquals(Request.INFO, inc_req.getRequest().getMethod());
+
+            // second - wait for a 200 OK
+            EventObject respEvent = ua.waitResponse(responseTransaction, 10000);
+            assertNotNull(
+                    "media server failed waiting for a 200 OK for the INFO message: "
+                            + ua.getErrorMessage(), respEvent);
+            assertTrue(respEvent instanceof ResponseEvent);
+            assertEquals(Response.OK, ((ResponseEvent) respEvent).getResponse()
+                    .getStatusCode());
+
+            // Tear down
+
+            a.disconnect();
+            assertLastOperationSuccess("a disc - " + a.format(), a);
+
         }
         catch (Exception e)
         {
@@ -2544,8 +2866,9 @@ public class TestNoProxy extends SipTestCase
 
             addnl_str_hdrs.clear();
             replace_str_hdrs.clear();
-            addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(
-                    bogus_addr, "mytag").toString()); // verify ignored
+            addnl_str_hdrs.add(ub.getParent().getHeaderFactory()
+                    .createToHeader(bogus_addr, "mytag").toString()); // verify
+            // ignored
             replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
             // replacement
             replace_str_hdrs.add(ub.getParent().getHeaderFactory()
