@@ -574,8 +574,9 @@ public class Subscription implements MessageListener, SipActionObject
         return false;
 
     } /*
-         * @see org.cafesip.sipunit.MessageListener#processEvent(java.util.EventObject)
-         */
+       * @see
+       * org.cafesip.sipunit.MessageListener#processEvent(java.util.EventObject)
+       */
 
     public void processEvent(EventObject event)
     {
@@ -644,7 +645,7 @@ public class Subscription implements MessageListener, SipActionObject
 
         synchronized (this)
         {
-            receivedRequests.addLast(new SipRequest(request));
+            receivedRequests.addLast(new SipRequest(requestEvent));
             reqEvents.addLast(requestEvent);
             this.notify();
         }
@@ -669,8 +670,7 @@ public class Subscription implements MessageListener, SipActionObject
                 return;
             }
 
-            receivedResponses.addLast(new SipResponse(responseEvent
-                    .getResponse()));
+            receivedResponses.addLast(new SipResponse(responseEvent));
             transaction.getEvents().addLast(responseEvent);
             responseBlock.notifyEvent();
         }

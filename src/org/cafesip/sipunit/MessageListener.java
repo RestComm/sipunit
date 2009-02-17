@@ -39,6 +39,8 @@ public interface MessageListener extends RequestListener
      * called directly by a test program.
      * 
      * @return ArrayList of zero or more SipResponse objects.
+     * 
+     * @see See also getLastReceivedResponse().
      */
     public ArrayList<SipResponse> getAllReceivedResponses();
 
@@ -47,6 +49,8 @@ public interface MessageListener extends RequestListener
      * called directly by a test program.
      * 
      * @return ArrayList of zero or more SipRequest objects.
+     * 
+     * @see See also getLastReceivedRequest().
      */
     public ArrayList<SipRequest> getAllReceivedRequests();
 
@@ -56,6 +60,8 @@ public interface MessageListener extends RequestListener
      * 
      * @return A SipRequest object representing the last request message
      *         received, or null if none has been received.
+     * 
+     * @see See also getAllReceivedRequests().
      */
     public SipRequest getLastReceivedRequest();
 
@@ -65,6 +71,8 @@ public interface MessageListener extends RequestListener
      * 
      * @return A SipResponse object representing the last response message
      *         received, or null if none has been received.
+     * 
+     * @see See also getAllReceivedResponses().
      */
     public SipResponse getLastReceivedResponse();
 }

@@ -60,10 +60,10 @@ import javax.sip.message.Response;
 
 /**
  * Methods of this class provide the test program with low-level access to a SIP
- * session. Instead of using the SipPhone methods to communicate with other SIP
- * agents, the test program can use methods of this class to send and receive
- * SIP messages. Methods of this class can be accessed via the SipPhone object
- * returned by SipStack.createSipPhone().
+ * session. Instead of using the SipPhone and SipCall methods to communicate
+ * with other SIP agents, the test program can use methods of this class to send
+ * and receive SIP messages. Methods of this class can be accessed via the
+ * SipPhone object returned by SipStack.createSipPhone().
  * <p>
  * Many of the methods in this class return an object or true return value if
  * successful. In case of an error or caller-specified timeout, a null object or

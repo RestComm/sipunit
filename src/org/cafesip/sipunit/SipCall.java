@@ -303,7 +303,7 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         Request request = event.getRequest();
-        receivedRequests.add(new SipRequest(request));
+        receivedRequests.add(new SipRequest(event));
 
         while (request.getMethod().equals(Request.BYE) == false)
         {
@@ -319,7 +319,7 @@ public class SipCall implements SipActionObject, MessageListener
             }
 
             request = event.getRequest();
-            receivedRequests.add(new SipRequest(request));
+            receivedRequests.add(new SipRequest(event));
             continue;
         }
 
@@ -412,7 +412,7 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         Request request = event.getRequest();
-        receivedRequests.add(new SipRequest(request));
+        receivedRequests.add(new SipRequest(event));
 
         while (request.getMethod().equals(Request.INVITE) == false)
         {
@@ -428,7 +428,7 @@ public class SipCall implements SipActionObject, MessageListener
             }
 
             request = event.getRequest();
-            receivedRequests.add(new SipRequest(request));
+            receivedRequests.add(new SipRequest(event));
             continue;
         }
 
@@ -517,7 +517,7 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         Request request = event.getRequest();
-        receivedRequests.add(new SipRequest(request));
+        receivedRequests.add(new SipRequest(event));
 
         while (request.getMethod().equals(Request.ACK) == false)
         {
@@ -533,7 +533,7 @@ public class SipCall implements SipActionObject, MessageListener
             }
 
             request = event.getRequest();
-            receivedRequests.add(new SipRequest(request));
+            receivedRequests.add(new SipRequest(event));
             continue;
         }
 
@@ -776,7 +776,7 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         Request request = event.getRequest();
-        receivedRequests.add(new SipRequest(request));
+        receivedRequests.add(new SipRequest(event));
 
         while (request.getMethod().equals(Request.INVITE) == false)
         {
@@ -792,7 +792,7 @@ public class SipCall implements SipActionObject, MessageListener
             }
 
             request = event.getRequest();
-            receivedRequests.add(new SipRequest(request));
+            receivedRequests.add(new SipRequest(event));
             continue;
         }
 
@@ -2181,7 +2181,7 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         Response resp = ((ResponseEvent) response_event).getResponse();
-        receivedResponses.add(new SipResponse(resp));
+        receivedResponses.add(new SipResponse((ResponseEvent) response_event));
         SipStack.trace("Outgoing call response received: " + resp.toString());
 
         setReturnCode(resp.getStatusCode());
@@ -2272,7 +2272,7 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         Response resp = ((ResponseEvent) response_event).getResponse();
-        receivedResponses.add(new SipResponse(resp));
+        receivedResponses.add(new SipResponse((ResponseEvent) response_event));
         SipStack.trace("RE-INVITE response received: " + resp.toString());
 
         setReturnCode(resp.getStatusCode());
@@ -2570,10 +2570,12 @@ public class SipCall implements SipActionObject, MessageListener
     /**
      * This method returns the last response received on this call.
      * 
+     * See also SipCall methods getAllReceivedResponses(),
+     * findMostRecentResponse(statuscode).
+     * 
      * @return A SipResponse object representing the last response message
      *         received on this call, or null if none has been received.
      * 
-     * @see org.cafesip.sipunit.MessageListener#getLastReceivedResponse()
      */
     public SipResponse getLastReceivedResponse()
     {
@@ -2592,10 +2594,11 @@ public class SipCall implements SipActionObject, MessageListener
     /**
      * This method returns the last request received on this call.
      * 
+     * See also SipCall method getAllReceivedRequests().
+     * 
      * @return A SipRequest object representing the last request message
      *         received on this call, or null if none has been received.
      * 
-     * @see org.cafesip.sipunit.MessageListener#getLastReceivedRequest()
      */
     public SipRequest getLastReceivedRequest()
     {
@@ -2616,9 +2619,10 @@ public class SipCall implements SipActionObject, MessageListener
      * any that required re-initiation of the call (ie, authentication
      * challenge).
      * 
-     * @return ArrayList of zero or more SipResponse objects.
+     * See also SipCall methods getLastReceivedResponse(),
+     * findMostRecentResponse(statuscode).
      * 
-     * @see org.cafesip.sipunit.MessageListener#getAllReceivedResponses()
+     * @return ArrayList of zero or more SipResponse objects.
      */
     public ArrayList<SipResponse> getAllReceivedResponses()
     {
@@ -2628,9 +2632,9 @@ public class SipCall implements SipActionObject, MessageListener
     /**
      * This method returns all the requests received on this call.
      * 
-     * @return ArrayList of zero or more SipRequest objects.
+     * See also SipCall method getLastReceivedRequest().
      * 
-     * @see org.cafesip.sipunit.MessageListener#getAllReceivedRequests()
+     * @return ArrayList of zero or more SipRequest objects.
      */
     public ArrayList<SipRequest> getAllReceivedRequests()
     {
@@ -2651,8 +2655,30 @@ public class SipCall implements SipActionObject, MessageListener
                 .getRequest();
     }
 
-    public SipTransaction getTransaction()
-    // TODO - change this method back to protected when fix 2570642
+    /**
+     * Call this method if you need the JAIN SIP transaction for
+     * SipPhone.makeCall() or for SipCall operations that result in a sent
+     * request, before a response to the request has been received (see
+     * exception below). Once a response has been received you can call
+     * getLastReceivedResponse() and from the returned SipResponse object you
+     * can get the associated JAIN SIP response event which will have the JAIN
+     * SIP transaction.
+     * 
+     * This method can also be used if you need the JAIN SIP transaction for a
+     * received out-of-dialog INVITE or BYE request. Any other time, for
+     * received requests, call getLastReceivedRequest() and from the returned
+     * SipRequest object you can get the associated JAIN SIP request event which
+     * will have the JAIN SIP transaction.
+     * 
+     * *Exception for sent request cases: After calling sendCancel() or
+     * sendReinvite(), use the returned SipTransaction object to get the JAIN
+     * SIP transaction rather than calling this method.
+     * 
+     * @return A SipTransaction object on which the getClientTransaction() or
+     *         getServerTransaction() method can be called depending on the
+     *         context.
+     */
+    public SipTransaction getLastTransaction()
     {
         return transaction;
     }
@@ -2708,7 +2734,7 @@ public class SipCall implements SipActionObject, MessageListener
     private void processResponse(ResponseEvent responseEvent)
     {
         Response resp = responseEvent.getResponse();
-        receivedResponses.add(new SipResponse(resp));
+        receivedResponses.add(new SipResponse(responseEvent));
         SipStack.trace("Asynchronous response received: " + resp.toString());
 
         if (transaction == null)
@@ -3278,7 +3304,7 @@ public class SipCall implements SipActionObject, MessageListener
             branchId = event.getServerTransaction().getBranchId();
         }
 
-        receivedRequests.add(new SipRequest(request));
+        receivedRequests.add(new SipRequest(event));
 
         while ((request.getMethod().equals(Request.CANCEL) == false)
                 || (branchId.equals(transaction.getServerTransaction()
@@ -3303,7 +3329,7 @@ public class SipCall implements SipActionObject, MessageListener
                 branchId = event.getServerTransaction().getBranchId();
             }
 
-            receivedRequests.add(new SipRequest(request));
+            receivedRequests.add(new SipRequest(event));
             continue;
         }
 
@@ -3563,7 +3589,7 @@ public class SipCall implements SipActionObject, MessageListener
         }
 
         Response resp = ((ResponseEvent) response_event).getResponse();
-        receivedResponses.add(new SipResponse(resp));
+        receivedResponses.add(new SipResponse((ResponseEvent) response_event));
         SipStack.trace("CANCEL response received: " + resp.toString());
 
         setReturnCode(resp.getStatusCode());

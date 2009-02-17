@@ -20,6 +20,7 @@ package org.cafesip.sipunit;
 
 import java.util.HashMap;
 
+import javax.sip.ResponseEvent;
 import javax.sip.message.Response;
 
 /**
@@ -28,15 +29,17 @@ import javax.sip.message.Response;
  * from the network. With regard to the latter, this class is primarily used for
  * SipTestCase assertions dealing with SIP message body and headers. The test
  * program passes this object to these assert methods. The test program can
- * obtain this object by calling the getLastReceivedResponse() on the
- * MessageListener object (such as SipCall or Subscription) when using the
- * high-level API or it can create this object using the Response contained
- * within the ResponseEvent object returned by a waitXyz() method (such as
- * SipSession.waitResponse()) when using the low-level SipUnit API.
+ * obtain this object by calling the getLastReceivedResponse() or
+ * getAllReceivedResponses() on the MessageListener object (such as SipCall or
+ * Subscription) when using the high-level API or it can create this object
+ * using the ResponseEvent/Response object returned by a waitXyz() method (such
+ * as SipSession.waitResponse()) when using the low-level SipUnit API.
  * 
- * For further low level processing, a test program may call this object's
- * getMessage() method to get the underlying javax.sip.message.Message object.
- * Knowledge of JAIN SIP API is required at this level.
+ * A test program may call this object's getMessage() method to get the
+ * underlying javax.sip.message.Message object or call getResponseEvent() to get
+ * the associated javax.sip.ResponseEvent which provides access to related
+ * JAIN-SIP objects such ClientTransaction, Dialog, etc. Knowledge of JAIN SIP
+ * API is required at this level.
  * 
  * @author Becky McElroy
  * 
@@ -261,6 +264,8 @@ public class SipResponse extends SipMessage
                 "Session Not Acceptable");
     }
 
+    private ResponseEvent responseEvent;
+
     /**
      * A constructor for this class, applicable when using the low-level SipUnit
      * API. Call this method to create a SipResponse object after calling
@@ -275,6 +280,23 @@ public class SipResponse extends SipMessage
     public SipResponse(Response response)
     {
         super(response);
+    }
+
+    /**
+     * A constructor for this class used by SipUnit classes such as SipCall and
+     * Subscription to save the response event information so that the test
+     * program can get JAIN-SIP objects from it, if needed - ClientTransaction,
+     * Dialog, etc.
+     * 
+     * This constructor may also be used by a test program in lieu of the other
+     * constructor.
+     * 
+     * @param event
+     */
+    public SipResponse(ResponseEvent event)
+    {
+        super(event.getResponse());
+        this.responseEvent = event;
     }
 
     /**
@@ -306,5 +328,28 @@ public class SipResponse extends SipMessage
         }
 
         return ((Response) message).getStatusCode();
+    }
+
+    /**
+     * Use this method if you need the JAIN-SIP response event associated with a
+     * response received by high level SipUnit classes like SipCall and
+     * Subscription.
+     * 
+     * @return Returns the responseEvent.
+     */
+    public ResponseEvent getResponseEvent()
+    {
+        return responseEvent;
+    }
+
+    /**
+     * A setter for the response event.
+     * 
+     * @param responseEvent
+     *            The responseEvent to set.
+     */
+    public void setResponseEvent(ResponseEvent responseEvent)
+    {
+        this.responseEvent = responseEvent;
     }
 }

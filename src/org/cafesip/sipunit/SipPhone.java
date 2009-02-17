@@ -761,13 +761,14 @@ public class SipPhone extends SipSession implements SipActionObject,
      * leg. In a telephone call, there are two call legs. The outgoing call leg
      * is the connection from the phone making the call to the telephone
      * network. The incoming call leg is a connection from the telephone network
-     * to the phone being called. For a SIP call, the outbound leg is the UAC
-     * originating the call and the inbound leg is the UAC receiving the call.
-     * The test program can use this method to create a SipCall object for
-     * handling an incoming call leg or an outgoing call leg. Currently, only
-     * one SipCall object is supported per SipPhone. In future, when more than
-     * one SipCall per SipPhone is supported, this method can be called multiple
-     * times to create multiple call legs on the same SipPhone object.
+     * to the phone being called. For a SIP call, the outbound leg is the user
+     * agent originating the call and the inbound leg is the user agent
+     * receiving the call. The test program can use this method to create a
+     * SipCall object for handling an incoming call leg or an outgoing call leg.
+     * Currently, only one SipCall object is supported per SipPhone. In future,
+     * when more than one SipCall per SipPhone is supported, this method can be
+     * called multiple times to create multiple call legs on the same SipPhone
+     * object.
      * 
      * @return A SipCall object unless an error is encountered.
      */
@@ -1046,9 +1047,9 @@ public class SipPhone extends SipSession implements SipActionObject,
      * error/timeout has occured, getReturnCode() - to see the last response
      * code received so far, getLastReceivedResponse() - to see the details of
      * the last response received so far, getAllReceivedResponses() - to see the
-     * details of all the responses received so far, waitForAnswer() - BLOCKING -
-     * when your test program is done with its tasks and can be blocked until OK
-     * is received - it returns immediately if OK already received,
+     * details of all the responses received so far, waitForAnswer() - BLOCKING
+     * - when your test program is done with its tasks and can be blocked until
+     * OK is received - it returns immediately if OK already received,
      * waitOutgoingCallResponse() - BLOCKING - when your test program is done
      * with its tasks and can be blocked until the next response is received (if
      * you are interested in something other than OK) - use this only if you
@@ -1404,7 +1405,8 @@ public class SipPhone extends SipSession implements SipActionObject,
     }
 
     /*
-     * @see org.cafesip.sipunit.RequestListener#processEvent(java.util.EventObject)
+     * @see
+     * org.cafesip.sipunit.RequestListener#processEvent(java.util.EventObject)
      */
     public void processEvent(EventObject event)
     {

@@ -18,6 +18,7 @@
  */
 package org.cafesip.sipunit;
 
+import javax.sip.RequestEvent;
 import javax.sip.message.Request;
 
 /**
@@ -25,15 +26,17 @@ import javax.sip.message.Request;
  * received from the network. It is primarily used for SipTestCase assertions
  * dealing with SIP message body and headers. The test program passes this
  * object to these assert methods. The test program can obtain this object by
- * calling the getLastReceivedRequest() on the MessageListener object (such as
- * SipCall or Subscription) when using the high-level API or it can create this
- * object using the Request contained within the RequestEvent object returned by
- * a waitXyz() method (such as SipSession.waitRequest()) when using the
- * low-level SipUnit API.
+ * calling the getLastReceivedRequest() or getAllReceivedRequests() on the
+ * MessageListener object (such as SipCall or Subscription) when using the
+ * high-level API or it can create this object using the RequestEvent/request
+ * object returned by a waitXyz() method (such as SipSession.waitRequest()) when
+ * using the low-level SipUnit API.
  * 
- * For further low level processing, a test program may call this object's
- * getMessage() method to get the underlying javax.sip.message.Message object.
- * Knowledge of JAIN SIP API is required at this level.
+ * A test program may call this object's getMessage() method to get the
+ * underlying javax.sip.message.Message object or call getRequestEvent() to get
+ * the associated javax.sip.RequestEvent which provides access to related
+ * JAIN-SIP objects such ServerTransaction, Dialog, etc. Knowledge of JAIN SIP
+ * API is required at this level.
  * 
  * @author Becky McElroy
  * 
@@ -68,6 +71,8 @@ public class SipRequest extends SipMessage
 
     public static final String UPDATE = Request.UPDATE;
 
+    private RequestEvent requestEvent;
+
     /**
      * A constructor for this class, applicable when using the low-level SipUnit
      * API. Call this method to create a SipRequest object after calling
@@ -82,6 +87,23 @@ public class SipRequest extends SipMessage
     public SipRequest(Request request)
     {
         super(request);
+    }
+
+    /**
+     * A constructor for this class used by SipUnit classes such as SipCall and
+     * Subscription to save the request event information so that the test
+     * program can get JAIN-SIP objects from it, if needed - ServerTransaction,
+     * Dialog, etc.
+     * 
+     * This constructor may also be used by a test program in lieu of the other
+     * constructor.
+     * 
+     * @param event
+     */
+    public SipRequest(RequestEvent event)
+    {
+        super(event.getRequest());
+        this.requestEvent = event;
     }
 
     /**
@@ -191,5 +213,28 @@ public class SipRequest extends SipMessage
         }
 
         return (((Request) message).getMethod().equals(Request.SUBSCRIBE));
+    }
+
+    /**
+     * Use this method if you need the JAIN-SIP request event associated with a
+     * request received by high level SipUnit classes like SipCall and
+     * Subscription.
+     * 
+     * @return Returns the requestEvent.
+     */
+    public RequestEvent getRequestEvent()
+    {
+        return requestEvent;
+    }
+
+    /**
+     * A setter for the request event.
+     * 
+     * @param requestEvent
+     *            The requestEvent to set.
+     */
+    public void setRequestEvent(RequestEvent requestEvent)
+    {
+        this.requestEvent = requestEvent;
     }
 }
