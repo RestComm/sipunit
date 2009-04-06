@@ -50,8 +50,9 @@ import org.cafesip.sipunit.SipTransaction;
  * 
  * Tests in this class require that a Proxy/registrar server be running with
  * authentication turned on. The Authentication scheme is Digest. Defaults:
- * proxy host = 192.168.1.102, port = 5060, protocol = udp; user amit password
- * a1b2c3d4 and user becky password a1b2c3d4 defined at the proxy.
+ * proxy host = 192.168.1.103, port = 5060, protocol = udp; user amit password
+ * a1b2c3d4 and user becky password a1b2c3d4 defined at the proxy for domain
+ * cafesip.org. The sipunit test stack uses port 9091.
  * 
  * Example open-source Proxy/registrars include SipExchange (cafesip.org) and
  * nist.gov's JAIN-SIP Proxy for the People
@@ -104,7 +105,7 @@ public class TestWithProxyAuthentication extends SipTestCase
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
         defaultProperties.setProperty("sipunit.test.domain", "cafesip.org");
-        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.102");
+        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.101");
         defaultProperties.setProperty("sipunit.proxy.port", "5060");
     }
 

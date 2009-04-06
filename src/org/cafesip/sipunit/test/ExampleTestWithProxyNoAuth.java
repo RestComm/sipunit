@@ -85,7 +85,7 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
         defaultProperties.setProperty("sipunit.test.domain", "cafesip.org");
-        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.102");
+        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.101");
         defaultProperties.setProperty("sipunit.proxy.port", "5060");
     }
 

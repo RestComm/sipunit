@@ -65,7 +65,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
 
     private String thisHostAddr;
 
-    private static String PROXY_HOST = "192.168.1.102";
+    private static String PROXY_HOST = "192.168.1.101";
 
     private static int PROXY_PORT = 5060;
 
@@ -652,14 +652,14 @@ public class TestWithProxyNoAuthentication extends SipTestCase
              * .createURI("sip:becky@cafesip.org"));
              * invite.addHeader(hdr_factory.createToHeader(to_address, null));
              * 
-             * Address contact_address = addr_factory.createAddress("sip:amit@" +
-             * thisHostAddr + ":5061");
-             * invite.addHeader(hdr_factory.createContactHeader(contact_address));
+             * Address contact_address = addr_factory.createAddress("sip:amit@"
+             * + thisHostAddr + ":5061");
+             * invite.addHeader(hdr_factory.createContactHeader
+             * (contact_address));
              * 
              * invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
              * ArrayList via_headers = ua.getMyViaHeaders();
              * invite.addHeader((ViaHeader) via_headers.get(0));
-             * 
              */
 
             ua.sendUnidirectionalRequest(invite.toString(), false);

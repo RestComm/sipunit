@@ -68,7 +68,7 @@ import org.cafesip.sipunit.Subscription;
  * running this test, and have the URIs used here in the list of users at the
  * proxy, all with password a1b2c3d4 - these URIs include: sip:becky@nist.gov,
  * sip:amit@nist.gov, sip:tom@nist.gov, sip:vidya@nist.gov. By default, the
- * proxy host is 127.0.0.1 and its listening port is 4000.
+ * proxy host is 127.0.0.1 and its listening port is 5060.
  * 
  * AFter a few test runs of this class, the JAIN-SIP proxy starts throwing
  * TransactionUnavailable exceptions (TODO, investigate further) - restarting
@@ -121,7 +121,7 @@ public class TestPresenceWithProxy extends SipTestCase
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
         defaultProperties.setProperty("sipunit.test.domain", "cafesip.org");
-        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.102");
+        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.101");
         defaultProperties.setProperty("sipunit.proxy.port", "5060");
     }
 
@@ -1435,12 +1435,12 @@ public class TestPresenceWithProxy extends SipTestCase
      * .createSipPhone(properties.getProperty("sipunit.proxy.host"),
      * testProtocol, proxyPort, buddy)); // SEQUENCE OF EVENTS // prepare far
      * end to receive SUBSCRIBE // do something with a buddy - sends SUBSCRIBE,
-     * gets response // check the return info // process the received response //
-     * check the response processing results // tell far end to send a NOTIFY //
-     * get the NOTIFY // process the NOTIFY // check the processing results //
-     * check PRESENCE info - devices/tuples // check PRESENCE info - top-level
-     * extensions // check PRESENCE info - top-level notes // reply to the
-     * NOTIFY // prepare far end to receive SUBSCRIBE
+     * gets response // check the return info // process the received response
+     * // check the response processing results // tell far end to send a NOTIFY
+     * // get the NOTIFY // process the NOTIFY // check the processing results
+     * // check PRESENCE info - devices/tuples // check PRESENCE info -
+     * top-level extensions // check PRESENCE info - top-level notes // reply to
+     * the NOTIFY // prepare far end to receive SUBSCRIBE
      * assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK")); // do
      * something with a buddy - sends SUBSCRIBE, gets response Subscription s =
      * ua.addBuddy(buddy, 2000); // check the return info assertNotNull(s);
@@ -1448,18 +1448,19 @@ public class TestPresenceWithProxy extends SipTestCase
      * response assertTrue(s.processSubscribeResponse(1000)); // check the
      * response processing results assertTrue(s.isSubscriptionActive());
      * assertTrue(s.getTimeLeft() <= 3600); // tell far end to send a NOTIFY
-     * String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence
-     * entity=\"sip:becky@" + properties.getProperty("sipunit.test.domain") +
-     * "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
-     * assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+     * String notify_body = "<?xml version=\"1.0\"
+     * encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@" +
+     * properties.getProperty("sipunit.test.domain") +
+     * "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>"
+     * ; assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
      * notify_body, 2400, true)); // get the NOTIFY RequestEvent reqevent =
      * s.waitNotify(500); assertNotNull(reqevent); assertNoPresenceErrors(s); //
      * process the NOTIFY Response response = s.processNotify(reqevent);
      * assertNotNull(response); // check the processing results
      * assertTrue(s.isSubscriptionActive());
      * assertNull(s.getTerminationReason()); assertTrue(s.getTimeLeft() <=
-     * 2400); assertEquals(SipResponse.OK, s.getReturnCode()); // response code //
-     * check PRESENCE info - devices/tuples //
+     * 2400); assertEquals(SipResponse.OK, s.getReturnCode()); // response code
+     * // check PRESENCE info - devices/tuples //
      * ----------------------------------------------- HashMap devices =
      * s.getPresenceDevices(); assertEquals(1, devices.size());
      * PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
@@ -1471,8 +1472,8 @@ public class TestPresenceWithProxy extends SipTestCase
      * assertEquals(0, dev.getStatusExtensions().size());
      * assertNull(dev.getTimestamp()); // check PRESENCE info - top-level
      * extensions // -----------------------------------------------
-     * assertEquals(0, s.getPresenceExtensions().size()); // check PRESENCE info -
-     * top-level notes // -----------------------------------------------
+     * assertEquals(0, s.getPresenceExtensions().size()); // check PRESENCE info
+     * - top-level notes // -----------------------------------------------
      * assertEquals(0, s.getPresenceNotes().size()); // reply to the NOTIFY
      * assertTrue(s.replyToNotify(reqevent, response)); } catch (Exception e) {
      * e.printStackTrace(); fail("Exception: " + e.getClass().getName() + ": " +

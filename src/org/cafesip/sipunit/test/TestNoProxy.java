@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.EventObject;
 import java.util.Properties;
 
+import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
@@ -3387,9 +3388,9 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
-    public void testReceiveRequestResponseEvents()
+    public void testReceivedRequestResponseEvents()
     {
-        SipStack.trace("testReceiveRequestResponseEvents");
+        SipStack.trace("testReceivedRequestResponseEvents");
 
         try
         {
@@ -3405,7 +3406,9 @@ public class TestNoProxy extends SipTestCase
                     + ':' + myPort + '/' + testProtocol);
             assertLastOperationSuccess(ua.format(), ua);
 
-            // TODO here - call a.getLastClientTransaction, save it and dialog
+            ClientTransaction aTransaction = a.getLastTransaction()
+                    .getClientTransaction();
+            Dialog aDialog = aTransaction.getDialog();
 
             assertTrue(b.waitForIncomingCall(5000));
             // verify RequestEvent is accessible
@@ -3430,7 +3433,9 @@ public class TestNoProxy extends SipTestCase
             assertEquals(response.getResponseEvent().getResponse(), response
                     .getMessage());
             assertAnswered(a);
-            // TODO compare aDialog
+            assertEquals(aTransaction, response.getResponseEvent()
+                    .getClientTransaction());
+            assertEquals(aDialog, response.getResponseEvent().getDialog());
 
             assertTrue(a.sendInviteOkAck());
             Thread.sleep(300);
@@ -3449,6 +3454,7 @@ public class TestNoProxy extends SipTestCase
             SipTransaction siptrans_b = b.sendReinvite(null, null,
                     "my reinvite", "app", "subapp");
             assertNotNull(siptrans_b);
+            assertEquals(bDialog, siptrans_b.getClientTransaction().getDialog());
             SipTransaction siptrans_a = a.waitForReinvite(1000);
             assertNotNull(siptrans_a);
             // verify RequestEvent
@@ -3458,7 +3464,8 @@ public class TestNoProxy extends SipTestCase
             assertEquals(request.getRequestEvent().getRequest(), request
                     .getMessage());
             assertTrue(request.isInvite());
-            // TODO compare aDialog
+            assertEquals(aDialog, siptrans_a.getServerTransaction().getDialog());
+            assertEquals(aDialog, request.getRequestEvent().getDialog());
 
             // spot check request message received
             String bContactURI = ((ContactHeader) request.getMessage()
@@ -3500,7 +3507,6 @@ public class TestNoProxy extends SipTestCase
             assertEquals(request.getRequestEvent().getRequest(), request
                     .getMessage());
             assertTrue(request.isAck());
-            // TODO compare aDialog
 
             // done, finish up
             a.listenForDisconnect();
@@ -3508,6 +3514,8 @@ public class TestNoProxy extends SipTestCase
 
             b.disconnect();
             assertLastOperationSuccess("b disc - " + b.format(), b);
+            assertEquals(bDialog, b.getLastTransaction().getClientTransaction()
+                    .getDialog());
 
             a.waitForDisconnect(5000);
             assertLastOperationSuccess("a wait disc - " + a.format(), a);
@@ -3519,7 +3527,6 @@ public class TestNoProxy extends SipTestCase
             assertEquals(request.getRequestEvent().getRequest(), request
                     .getMessage());
             assertTrue(request.isBye());
-            // TODO compare aDialog
 
             a.respondToDisconnect();
 
@@ -3549,8 +3556,14 @@ public class TestNoProxy extends SipTestCase
                     .getProperty("javax.sip.IP_ADDRESS")
                     + ':' + myPort + '/' + testProtocol);
             assertLastOperationSuccess(ua.format(), ua);
+            Dialog aDialog = a.getLastTransaction().getClientTransaction()
+                    .getDialog();
+            ClientTransaction aTransaction = a.getLastTransaction()
+                    .getClientTransaction();
 
             assertTrue(b.waitForIncomingCall(5000));
+            Dialog bDialog = b.getLastTransaction().getServerTransaction()
+                    .getDialog();
             assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing",
                     -1));
             assertLastOperationSuccess("b send RINGING - " + b.format(), b);
@@ -3563,20 +3576,33 @@ public class TestNoProxy extends SipTestCase
             Thread.sleep(500);
             SipTransaction cancel = a.sendCancel();
             assertNotNull(cancel);
+            assertEquals(aDialog, cancel.getClientTransaction().getDialog());
 
-            // Respond to the Cancel
+            // Receive/Respond to the Cancel
             SipTransaction trans1 = b.waitForCancel(2000);
             b.stopListeningForRequests();
-            // TODO b here req
-
             assertNotNull(trans1);
+            assertEquals(bDialog, trans1.getServerTransaction().getDialog());
+            assertEquals(trans1.getRequest(), b.getLastReceivedRequest()
+                    .getMessage());
+            assertEquals(trans1.getServerTransaction(), b
+                    .getLastReceivedRequest().getRequestEvent()
+                    .getServerTransaction());
             assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
             assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
 
-            a.waitForCancelResponse(cancel, 5000);
+            assertTrue(a.waitForCancelResponse(cancel, 5000));
             Thread.sleep(500);
-            // TODO a here resp for cancel
-
+            SipResponse response = a.getAllReceivedResponses().get(
+                    a.getAllReceivedResponses().size() - 1);
+            assertNotNull(response);
+            assertNotNull(response.getResponseEvent());
+            assertEquals(response.getResponseEvent().getResponse(), response
+                    .getMessage());
+            assertEquals(cancel.getClientTransaction(), a
+                    .getLastReceivedResponse().getResponseEvent()
+                    .getClientTransaction());
+            assertEquals(aDialog, cancel.getClientTransaction().getDialog());
             assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
             Thread.sleep(500);
 
@@ -3586,7 +3612,13 @@ public class TestNoProxy extends SipTestCase
             Thread.sleep(500);
             assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
                     SipResponse.REQUEST_TERMINATED, a);
-            // TODO a here resp for invite
+            response = a.getLastReceivedResponse();
+            assertNotNull(response);
+            assertNotNull(response.getResponseEvent());
+            assertEquals(response.getResponseEvent().getResponse(), response
+                    .getMessage());
+            assertEquals(aTransaction, response.getResponseEvent()
+                    .getClientTransaction());
 
             // done, finish up
             a.listenForDisconnect();
@@ -3608,5 +3640,4 @@ public class TestNoProxy extends SipTestCase
             fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
-
 }

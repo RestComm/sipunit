@@ -36,19 +36,20 @@ import org.cafesip.sipunit.SipTestCase;
  * 
  * @author Becky McElroy
  * 
- * sample ant script to run it outside of IDE: <?xml version="1.0"?> <project
- * name="siptest" basedir="c:/sw/eclipse-workspace/sipunit" default="test">
+ *         sample ant script to run it outside of IDE: <?xml version="1.0"?>
+ *         <project name="siptest" basedir="c:/sw/eclipse-workspace/sipunit"
+ *         default="test">
  * 
- * <target name="test" description="Run test test"> <ant
- * dir="c:/jain-sip-presence-proxy" target="run-text-proxy" inheritAll="false"/>
- * <antcall target="runtest"/> </target>
+ *         <target name="test" description="Run test test"> <ant
+ *         dir="c:/jain-sip-presence-proxy" target="run-text-proxy"
+ *         inheritAll="false"/> <antcall target="runtest"/> </target>
  * 
- * <target name="runtest" description="Execute JUNit test"> <path
- * id="test.classpath"> <fileset dir="lib"> <include name="*.jar" /> </fileset>
- * <pathelement location="src"/> </path> <junit fork="false"> <test
- * name="org.cafesip.sipunit.test.TestSipStacksWithProxyNoAuth"/> <formatter
- * type="brief" usefile="false"/> <classpath refid="test.classpath" /> </junit>
- * </target> </project>
+ *         <target name="runtest" description="Execute JUNit test"> <path
+ *         id="test.classpath"> <fileset dir="lib"> <include name="*.jar" />
+ *         </fileset> <pathelement location="src"/> </path> <junit fork="false">
+ *         <test name="org.cafesip.sipunit.test.TestSipStacksWithProxyNoAuth"/>
+ *         <formatter type="brief" usefile="false"/> <classpath
+ *         refid="test.classpath" /> </junit> </target> </project>
  * 
  */
 public class TestSipStacksWithProxyNoAuth extends SipTestCase
@@ -58,7 +59,7 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
 
     private SipStack sipStack2;
 
-    private static String PROXY_HOST = "192.168.1.102";
+    private static String PROXY_HOST = "192.168.1.101";
 
     private static int PROXY_PORT = 5060;
 
@@ -74,7 +75,6 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
     {
         super(arg0);
 
-        properties1.setProperty("javax.sip.IP_ADDRESS", "192.168.1.102");
         properties1.setProperty("javax.sip.RETRANSMISSION_FILTER", "true");
         properties1.setProperty("javax.sip.STACK_NAME", "testAgent");
         properties1.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
@@ -84,7 +84,6 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
                 "testAgent_log.txt");
         properties1.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
 
-        properties2.setProperty("javax.sip.IP_ADDRESS", "192.168.1.103");
         properties2.setProperty("javax.sip.RETRANSMISSION_FILTER", "true");
         properties2.setProperty("javax.sip.STACK_NAME", "testAgent2");
         properties2.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");

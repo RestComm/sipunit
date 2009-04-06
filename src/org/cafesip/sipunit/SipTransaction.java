@@ -26,13 +26,18 @@ import javax.sip.ServerTransaction;
 import javax.sip.message.Request;
 
 /**
- * SipTransaction is used internally by the SipUnit API to manage some SIP
- * operations. The user program doesn't need to do anything with a
+ * SipTransaction is primarily used by the SipUnit API classes to manage some
+ * SIP operations. The user program doesn't need to do anything with a
  * SipTransaction if returned by the API other than pass it in to a related,
- * subsequent API call as instructed on a per-operation basis. The user program
- * MAY call getRequest() to get the javax.sip.message.Request object that
- * created this transaction. However, knowledge of JAIN SIP API is required to
- * use the Request object.
+ * subsequent API call as instructed on a per-operation basis.
+ * 
+ * The user program MAY call methods on this object to get related JAIN SIP API
+ * objects. One of the methods is getRequest() to get the
+ * javax.sip.message.Request object that created this transaction. The others
+ * include the getClientTransaction() or getServerTransaction() method - only
+ * one of these should be called for a given SipTransaction depending on the
+ * context of the transaction (request sending vs. receiving). Knowledge of JAIN
+ * SIP API is required to use the returned objects.
  * 
  * @author Amit Chatterjee
  * 
@@ -61,10 +66,11 @@ public class SipTransaction
     }
 
     /**
-     * @return Returns the clientTransaction.
+     * @return Returns the JAIN SIP ClientTransaction. Use this method only
+     *         within the context of a sent request. Knowledge of JAIN SIP API
+     *         is required to use the returned object.
      */
     public ClientTransaction getClientTransaction()
-    // TODO change this method back to protected when fix 2570642
     {
         return clientTransaction;
     }
@@ -113,10 +119,11 @@ public class SipTransaction
     }
 
     /**
-     * @return Returns the serverTransaction.
+     * @return Returns the JAIN SIP ServerTransaction. Use this method only
+     *         within the context of a received request. Knowledge of JAIN SIP
+     *         API is required to use the returned object.
      */
     public ServerTransaction getServerTransaction()
-    // TODO change this method back to protected when fix 2570642
     {
         return serverTransaction;
     }

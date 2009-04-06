@@ -77,16 +77,12 @@
 
 	<target name="test-no-proxy-twostacks" depends="init" description="Run multiple stack (on one machine) tests with no proxy involved">
 		<junit fork="no" haltonfailure="yes" printsummary="no">
-			<test name="org.cafesip.sipunit.test.TestTwoSipStacksNoProxy" />
+			<test name="org.cafesip.sipunit.test.TestTwoOrMoreSipStacksNoProxy" />
 
 			<!-- This test class receives SipUnit-specific properties only -->
 
-			<sysproperty key="sipunit.ipaddress.1" value="192.168.1.102" />
 			<sysproperty key="sipunit.testport.1" value="5061" />
-
-			<sysproperty key="sipunit.ipaddress.2" value="192.168.1.102" />
 			<sysproperty key="sipunit.testport.2" value="5091" />
-
 			<sysproperty key="sipunit.trace" value="false" />
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
@@ -107,7 +103,7 @@
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
 			<sysproperty key="sipunit.test.domain" value="cafesip.org" />
-			<sysproperty key="sipunit.proxy.host" value="192.168.1.102" />
+			<sysproperty key="sipunit.proxy.host" value="192.168.1.101" />
 			<sysproperty key="sipunit.proxy.port" value="5060" />
 
 			<formatter type="brief" usefile="false" />
@@ -127,7 +123,7 @@
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
 			<sysproperty key="sipunit.test.domain" value="cafesip.org" />
-			<sysproperty key="sipunit.proxy.host" value="192.168.1.102" />
+			<sysproperty key="sipunit.proxy.host" value="192.168.1.101" />
 			<sysproperty key="sipunit.proxy.port" value="5060" />
 
 			<formatter type="brief" usefile="false" />

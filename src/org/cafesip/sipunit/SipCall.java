@@ -2657,9 +2657,9 @@ public class SipCall implements SipActionObject, MessageListener
 
     /**
      * Call this method if you need the JAIN SIP transaction for
-     * SipPhone.makeCall() or for SipCall operations that result in a sent
+     * SipPhone.makeCall() or for other SipCall operations that result in a sent
      * request, before a response to the request has been received (see
-     * exception below). Once a response has been received you can call
+     * exception* below). Once a response has been received you can call
      * getLastReceivedResponse() and from the returned SipResponse object you
      * can get the associated JAIN SIP response event which will have the JAIN
      * SIP transaction.
@@ -2676,7 +2676,11 @@ public class SipCall implements SipActionObject, MessageListener
      * 
      * @return A SipTransaction object on which the getClientTransaction() or
      *         getServerTransaction() method can be called depending on the
-     *         context.
+     *         context. If the returned object is null, it may be because the
+     *         last outbound message sending attempt failed (you should be
+     *         checking the return value for SipCall/SipPhone methods that send
+     *         requests so you would know it) or if there was a response timeout
+     *         for the last sent request.
      */
     public SipTransaction getLastTransaction()
     {
