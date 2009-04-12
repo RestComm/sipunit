@@ -1070,7 +1070,7 @@ public class SipTestCase extends TestCase
      * @param subscription
      *            the Subscription in question.
      */
-    public void assertNoPresenceErrors(Subscription subscription)
+    public void assertNoPresenceErrors(SubscriptionSubscriber subscription)
     {
         assertNoPresenceErrors(null, subscription);
     }
@@ -1086,7 +1086,7 @@ public class SipTestCase extends TestCase
      * @param subscription
      *            the Subscription in question.
      */
-    public void assertNoPresenceErrors(String msg, Subscription subscription)
+    public void assertNoPresenceErrors(String msg, SubscriptionSubscriber subscription)
     {
         assertNotNull("Null assert object passed in", subscription);
 

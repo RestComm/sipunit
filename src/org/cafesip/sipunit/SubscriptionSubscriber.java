@@ -18,11 +18,9 @@
  */
 package org.cafesip.sipunit;
 
-import java.io.ByteArrayInputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.EventObject;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -39,7 +37,6 @@ import javax.sip.header.AcceptHeader;
 import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
-import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
 import javax.sip.header.FromHeader;
 import javax.sip.header.Header;
@@ -50,67 +47,43 @@ import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-import javax.xml.bind.JAXBContext;
-
-import org.cafesip.sipunit.presenceparser.pidf.Contact;
-import org.cafesip.sipunit.presenceparser.pidf.Note;
-import org.cafesip.sipunit.presenceparser.pidf.Presence;
-import org.cafesip.sipunit.presenceparser.pidf.Tuple;
 
 /**
- * The Subscription class represents a buddy from a SipPhone buddy list or a
- * single-shot fetch performed by a SipPhone. The Subscription object is used by
- * a test program to proceed through the SUBSCRIBE-NOTIFY sequence(s) and to
+ * The SubscriptionSubscriber class represents a generic subscription conforming
+ * to the event subscription and asynchronous notification framework defined by
+ * RFC-3265. This class is used for the Subscriber-side perspective as opposed
+ * to the NOTIFY sending side.
+ * <p>
+ * This object is created as the result of an initial outbound SUBSCRIBE message
+ * or REFER message. This object is used indirectly by a test program to proceed
+ * through the subscribing side SUBSCRIBE or REFER <-> NOTIFY sequence(s) and to
  * find out details at any given time about the subscription such as the
  * subscription state, amount of time left on the subscription if still active,
- * termination reason if terminated, current or last known presence
- * status/information (tuples/devices, notes, etc.), errors encountered during
- * received NOTIFY message validation, and details of received responses and
- * requests if needed.
+ * termination reason if terminated, errors encountered during received
+ * SUBSCRIBE/REFER response and incoming NOTIFY message validation, and details
+ * of any received responses and requests if needed.
  * <p>
- * Please read the SipUnit User Guide, Presence section (at least the operation
- * overview part) for information on how to use SipUnit presence capabilities.
- * <p>
- * As in the case of other objects like SipPhone, SipCall, etc.,
- * operation-invoking methods of this class return an object or true if
- * successful. In case of an error or caller-specified timeout, a null object or
- * a false is returned. The getErrorMessage(), getReturnCode() and
- * getException() methods may be used for further diagnostics. See SipPhone or
- * SipActionObject javadoc for more details on using these methods.
+ * Event package-specific handling/information is handled by the classes
+ * extending this class. The user test programs use those subclasses directly.
  * 
  * @author Becky McElroy
  * 
  */
-public class Subscription implements MessageListener, SipActionObject
+public class SubscriptionSubscriber implements MessageListener, SipActionObject
 {
-    private String buddyUri; // The buddy's URI string (ex: sip:bob@nist.gov)
+    protected String targetUri; // The subscription target (ie,
 
-    private Address buddyAddress;
+    // sip:bob@nist.gov)
+
+    protected Address targetAddress;
 
     private String subscriptionState = SubscriptionStateHeader.PENDING;
 
     private String terminationReason;
 
-    /*
-     * List of zero or more PresenceDeviceInfo objects (active devices) for this
-     * Subscription buddy/watchee, indexed by the IDs received in the NOTIFY
-     * tuples
-     */
-    private HashMap<String, PresenceDeviceInfo> devices = new HashMap<String, PresenceDeviceInfo>();
-
-    /*
-     * List of zero or more PresenceNote objects received in the NOTIFY body
-     */
-    private ArrayList<PresenceNote> presenceNotes = new ArrayList<PresenceNote>();
-
-    /*
-     * List of zero or more Object received in a NOTIFY message
-     */
-    private ArrayList<Object> presenceExtensions = new ArrayList<Object>();
-
     private long projectedExpiry = 0;
 
-    private SipPhone parent;
+    protected SipPhone parent;
 
     private Dialog dialog;
 
@@ -151,7 +124,7 @@ public class Subscription implements MessageListener, SipActionObject
 
     private BlockObject responseBlock = new BlockObject();
 
-    private ResponseEvent currentSubscribeResponse;
+    private ResponseEvent currentResponse;
 
     /*
      * misc
@@ -159,7 +132,7 @@ public class Subscription implements MessageListener, SipActionObject
 
     private Request lastSentRequest;
 
-    private Object lastSubscribeLock = new Object(); // lock object for
+    private Object lastSentRequestLock = new Object(); // lock object for
 
     // lastSentRequest - test
     // program side writes to and reads
@@ -170,22 +143,23 @@ public class Subscription implements MessageListener, SipActionObject
 
     private LinkedList<String> eventErrors = new LinkedList<String>();
 
-    protected Subscription(String uri, SipPhone parent) throws ParseException
+    protected SubscriptionSubscriber(String uri, SipPhone parent)
+            throws ParseException
     {
-        this.buddyUri = uri.trim();
+        this.targetUri = uri.trim();
         this.parent = parent;
         myTag = parent.generateNewTag();
-
-        buddyAddress = parent.getAddressFactory().createAddress(this.buddyUri);
+        targetAddress = parent.getAddressFactory()
+                .createAddress(this.targetUri);
     }
 
     protected boolean startSubscription(Request req, long timeout,
             boolean viaProxy)
     {
         initErrorInfo();
-        SipStack.trace("Starting Subscription for URI " + buddyUri);
+        SipStack.trace("Starting subscription for URI " + targetUri);
 
-        if (sendSubscribe(req, viaProxy) == true)
+        if (sendRequest(req, viaProxy) == true)
         {
             if (waitNextPositiveResponse(timeout) == true)
             {
@@ -205,13 +179,14 @@ public class Subscription implements MessageListener, SipActionObject
         return false;
     }
 
-    protected boolean refresh(Request req, long timeout, boolean viaProxy)
+    protected boolean refreshSubscription(Request req, long timeout,
+            boolean viaProxy)
     {
         initErrorInfo();
-        SipStack.trace("Refreshing Subscription for URI " + buddyUri
+        SipStack.trace("Refreshing subscription for URI " + targetUri
                 + ", previous time left = " + getTimeLeft());
 
-        if (sendSubscribe(req, viaProxy) == true)
+        if (sendRequest(req, viaProxy) == true)
         {
             if (waitNextPositiveResponse(timeout) == true)
             {
@@ -230,9 +205,10 @@ public class Subscription implements MessageListener, SipActionObject
 
                 subscriptionState = SubscriptionStateHeader.TERMINATED;
 
-                SipStack.trace("Terminating Subscription for URI " + buddyUri
-                        + " due to received SUBSCRIBE response code = "
-                        + getReturnCode());
+                SipStack
+                        .trace("Terminating subscription for URI " + targetUri
+                                + " due to received response code = "
+                                + getReturnCode());
             }
 
             /*
@@ -250,7 +226,7 @@ public class Subscription implements MessageListener, SipActionObject
     }
 
     protected boolean endSubscription(Request req, long timeout,
-            boolean viaProxy)
+            boolean viaProxy, String reason)
     {
         initErrorInfo();
         setRemovalComplete(true);
@@ -258,13 +234,13 @@ public class Subscription implements MessageListener, SipActionObject
         if ((subscriptionState.equals(SubscriptionStateHeader.ACTIVE))
                 || (subscriptionState.equals(SubscriptionStateHeader.PENDING)))
         {
-            SipStack.trace("Ending subscription for URI " + buddyUri
+            SipStack.trace("Ending subscription for URI " + targetUri
                     + ", time left = " + getTimeLeft());
 
             subscriptionState = SubscriptionStateHeader.TERMINATED;
-            terminationReason = "Buddy removed from contact list";
+            terminationReason = reason;
 
-            if (sendSubscribe(req, viaProxy) == true)
+            if (sendRequest(req, viaProxy) == true)
             {
                 if (waitNextPositiveResponse(timeout) == true)
                 {
@@ -286,12 +262,13 @@ public class Subscription implements MessageListener, SipActionObject
             boolean viaProxy)
     {
         initErrorInfo();
-        SipStack.trace("Fetching presence information for URI " + buddyUri);
+        SipStack
+                .trace("Fetching subscription information for URI " + targetUri);
 
         subscriptionState = SubscriptionStateHeader.TERMINATED;
-        terminationReason = "Presence fetch";
+        terminationReason = "Fetch";
 
-        if (sendSubscribe(req, viaProxy) == true)
+        if (sendRequest(req, viaProxy) == true)
         {
             if (waitNextPositiveResponse(timeout) == true)
             {
@@ -313,7 +290,7 @@ public class Subscription implements MessageListener, SipActionObject
 
     private boolean waitNextPositiveResponse(long timeout)
     {
-        EventObject event = waitSubscribeResponse(timeout);
+        EventObject event = waitResponse(timeout);
         if (event != null)
         {
             if (event instanceof TimeoutEvent)
@@ -323,10 +300,10 @@ public class Subscription implements MessageListener, SipActionObject
             }
             else if (event instanceof ResponseEvent)
             {
-                ResponseEvent resp_event = (ResponseEvent) event;
-                int status = resp_event.getResponse().getStatusCode();
+                ResponseEvent respEvent = (ResponseEvent) event;
+                int status = respEvent.getResponse().getStatusCode();
                 setReturnCode(status);
-                setCurrentSubscribeResponse(resp_event);
+                setCurrentResponse(respEvent);
 
                 if ((status / 100 == 1) || (status == Response.UNAUTHORIZED)
                         || (status == Response.PROXY_AUTHENTICATION_REQUIRED)
@@ -340,7 +317,7 @@ public class Subscription implements MessageListener, SipActionObject
 
                 setErrorMessage("SUBSCRIBE response status: " + status
                         + ", reason: "
-                        + resp_event.getResponse().getReasonPhrase());
+                        + respEvent.getResponse().getReasonPhrase());
             }
         }
 
@@ -353,31 +330,30 @@ public class Subscription implements MessageListener, SipActionObject
 
     /**
      * This method creates and returns to the caller the next SUBSCRIBE message
-     * that would be sent out, so that the user can modify it before it gets
-     * sent out (ie, to introduce errors - insert incorrect content, remove
-     * content, etc.). The idea is to call this method which will create the
-     * SUBSCRIBE request correctly, then modify the returned request yourself,
-     * then call one of the SipPhone buddy methods (refreshBuddy(),
-     * removeBuddy()) that take Request as a parameter, which will result in the
-     * request being sent out.
+     * that would be sent out for this subscription, so that the user can modify
+     * it before it gets sent (ie, to introduce errors - insert incorrect
+     * content, remove content, etc.). The idea is to call this method which
+     * will create the SUBSCRIBE request correctly, then modify the returned
+     * request yourself, then call one of the subscription-related methods (for
+     * example: SipPhone methods refreshBuddy(), removeBuddy()) that take
+     * Request as a parameter, which will result in the request being sent out.
      * <p>
      * If you don't need to modify the next SUBSCRIBE request to introduce
      * errors, don't bother with this method and just call one of the
-     * alternative SipPhone buddy methods (refreshBuddy(), removeBuddy(), etc.)
-     * that doesn't take a Request parameter - it will create and send the
-     * request in one step.
+     * alternative subscription-related methods that doesn't take a Request
+     * parameter - it will create and send the request in one step.
      * <p>
      * Effective use of this method requires knowledge of the JAIN SIP API
      * Request and Header classes. Use those to modify the request returned by
      * this method.
      * <p>
-     * Note that the SipPhone methods addBuddy() and fetchPresenceInfo() do not
-     * have any signatures that take Request as a parameter. The reason is
-     * because a correct initial SUBSCRIBE request is needed to initialize the
-     * Subscription object properly. If you want to send out a bad initial
-     * SUBSCRIBE message to see what your test target does, use the SipPhone's
-     * base class SipSession (low-level) methods to send the bad request and get
-     * the resulting response (and that should be the end of that test method).
+     * Note that subscription-creating methods like SipPhone.addBuddy() and
+     * SipPhone.refer() do not have any signatures that take Request as a
+     * parameter. The reason is because a correct initial SUBSCRIBE request is
+     * needed to initialize the Subscription object properly. If you want to
+     * send out a bad initial SUBSCRIBE message to see what your test target
+     * does, use the SipPhone's base class SipSession (low-level) methods to
+     * send the bad request and get the resulting response.
      * 
      * @param duration
      *            the duration in seconds to put in the SUBSCRIBE message.
@@ -389,10 +365,14 @@ public class Subscription implements MessageListener, SipActionObject
      *            SUBSCRIBEs) unless changed by the caller later on another
      *            SipPhone buddy method call (refreshBuddy(), removeBuddy(),
      *            fetch, etc.).
+     * @param eventType
+     *            the eventType value (for example: "presence") to use in the
+     *            EventHeader and AllowEventsHeader
      * @return a SUBSCRIBE Request object if creation is successful, null
      *         otherwise.
      */
-    public Request createSubscribeMessage(int duration, String eventId)
+    public Request createSubscribeMessage(int duration, String eventId,
+            String eventType)
     {
         initErrorInfo();
 
@@ -400,60 +380,60 @@ public class Subscription implements MessageListener, SipActionObject
         {
             SipStack.trace("Creating SUBSCRIBE message with duration "
                     + duration + ", event id = " + eventId);
-            AddressFactory addr_factory = parent.getAddressFactory();
-            HeaderFactory hdr_factory = parent.getHeaderFactory();
+            AddressFactory addrFactory = parent.getAddressFactory();
+            HeaderFactory hdrFactory = parent.getHeaderFactory();
 
             Request req = null;
-            Request last_sent_request = getLastSentRequest();
+            Request lastSentRequest = getLastSentRequest();
 
-            if (last_sent_request == null) // first time sending a request
+            if (lastSentRequest == null) // first time sending a request
             {
                 // build the request
 
-                URI request_uri = addr_factory.createURI(buddyUri);
+                URI requestUri = addrFactory.createURI(targetUri);
                 callId = parent.getNewCallIdHeader(); // get a new call Id
                 String method = Request.SUBSCRIBE;
 
-                FromHeader from_header = hdr_factory.createFromHeader(parent
+                FromHeader fromHeader = hdrFactory.createFromHeader(parent
                         .getAddress(), myTag);
-                ToHeader to_header = hdr_factory.createToHeader(buddyAddress,
+                ToHeader toHeader = hdrFactory.createToHeader(targetAddress,
                         null);
 
-                subscribeCSeq = hdr_factory.createCSeqHeader(
+                subscribeCSeq = hdrFactory.createCSeqHeader(
                         subscribeCSeq == null ? 1 : (subscribeCSeq
                                 .getSeqNumber() + 1), method);
 
-                MaxForwardsHeader max_forwards = hdr_factory
+                MaxForwardsHeader maxForwards = hdrFactory
                         .createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
 
-                ArrayList<ViaHeader> via_headers = parent.getViaHeaders();
+                ArrayList<ViaHeader> viaHeaders = parent.getViaHeaders();
 
-                req = parent.getMessageFactory().createRequest(request_uri,
-                        method, callId, subscribeCSeq, from_header, to_header,
-                        via_headers, max_forwards);
+                req = parent.getMessageFactory().createRequest(requestUri,
+                        method, callId, subscribeCSeq, fromHeader, toHeader,
+                        viaHeaders, maxForwards);
 
                 req.addHeader((ContactHeader) parent.getContactInfo()
                         .getContactHeader().clone());
 
-                String proxy_host = parent.getProxyHost();
-                if (proxy_host == null)
+                String proxyHost = parent.getProxyHost();
+                if (proxyHost == null)
                 {
                     // local: add a route header to loop the message back to our
                     // stack
-                    SipURI route_uri = parent.getAddressFactory().createSipURI(
+                    SipURI routeUri = parent.getAddressFactory().createSipURI(
                             null, parent.getStackAddress());
-                    route_uri.setLrParam();
-                    route_uri.setPort(parent.getParent().getSipProvider()
+                    routeUri.setLrParam();
+                    routeUri.setPort(parent.getParent().getSipProvider()
                             .getListeningPoints()[0].getPort());
-                    route_uri.setTransportParam(parent.getParent()
+                    routeUri.setTransportParam(parent.getParent()
                             .getSipProvider().getListeningPoints()[0]
                             .getTransport());
-                    route_uri.setSecure(((SipURI) request_uri).isSecure());
+                    routeUri.setSecure(((SipURI) requestUri).isSecure());
 
-                    Address route_address = parent.getAddressFactory()
-                            .createAddress(route_uri);
+                    Address routeAddress = parent.getAddressFactory()
+                            .createAddress(routeUri);
                     req.addHeader(parent.getHeaderFactory().createRouteHeader(
-                            route_address));
+                            routeAddress));
                 }
 
                 SipStack.trace("We have created this first SUBSCRIBE: " + req);
@@ -461,9 +441,9 @@ public class Subscription implements MessageListener, SipActionObject
             else if (dialog.getState() == null) // we've sent before but not
             // heard back
             {
-                req = (Request) last_sent_request.clone();
+                req = (Request) lastSentRequest.clone();
 
-                subscribeCSeq = hdr_factory.createCSeqHeader(subscribeCSeq
+                subscribeCSeq = hdrFactory.createCSeqHeader(subscribeCSeq
                         .getSeqNumber() + 1, Request.SUBSCRIBE);
                 req.setHeader(subscribeCSeq);
 
@@ -479,15 +459,15 @@ public class Subscription implements MessageListener, SipActionObject
             }
 
             // set other needed request info
-            EventHeader hdr = hdr_factory.createEventHeader("presence");
+            EventHeader hdr = hdrFactory.createEventHeader(eventType);
             if (eventId != null)
             {
                 hdr.setEventId(eventId);
             }
             req.setHeader(hdr);
 
-            req.addHeader(hdr_factory.createAllowEventsHeader("presence"));
-            req.setExpires(hdr_factory.createExpiresHeader(duration));
+            req.addHeader(hdrFactory.createAllowEventsHeader(eventType));
+            req.setExpires(hdrFactory.createExpiresHeader(duration));
             parent.addAuthorizations(callId.getCallId(), req);
 
             return req;
@@ -503,12 +483,12 @@ public class Subscription implements MessageListener, SipActionObject
         return null;
     }
 
-    private boolean sendSubscribe(Request req, boolean viaProxy)
+    private boolean sendRequest(Request req, boolean viaProxy)
     {
         if (req == null)
         {
             setReturnCode(SipSession.INVALID_ARGUMENT);
-            setErrorMessage("Null request given for SUBSCRIBE message");
+            setErrorMessage("Null subscription request message given");
             return false;
         }
 
@@ -555,9 +535,9 @@ public class Subscription implements MessageListener, SipActionObject
                     }
                 }
 
-                SipStack.trace("Sent SUBSCRIBE to "
+                SipStack.trace("Sent subscription request to "
                         + dialog.getRemoteParty().getURI().toString() + " for "
-                        + buddyUri);
+                        + targetUri);
 
                 return true;
             }
@@ -610,14 +590,13 @@ public class Subscription implements MessageListener, SipActionObject
 
         // check CSEQ# - if no higher than current CSEQ, discard message
 
-        CSeqHeader rcv_seq_hdr = (CSeqHeader) request
-                .getHeader(CSeqHeader.NAME);
-        if (rcv_seq_hdr == null)
+        CSeqHeader rcvSeqHdr = (CSeqHeader) request.getHeader(CSeqHeader.NAME);
+        if (rcvSeqHdr == null)
         {
-            Subscription.sendResponse(parent, requestEvent,
+            SubscriptionSubscriber.sendResponse(parent, requestEvent,
                     SipResponse.BAD_REQUEST, "no CSEQ header received");
 
-            String err = "*** NOTIFY REQUEST ERROR ***  (" + buddyUri
+            String err = "*** NOTIFY REQUEST ERROR ***  (" + targetUri
                     + ") - no CSEQ header received";
             synchronized (eventErrors)
             {
@@ -629,19 +608,19 @@ public class Subscription implements MessageListener, SipActionObject
 
         if (notifyCSeq != null) // This is not the first NOTIFY
         {
-            if (rcv_seq_hdr.getSeqNumber() <= notifyCSeq.getSeqNumber())
+            if (rcvSeqHdr.getSeqNumber() <= notifyCSeq.getSeqNumber())
             {
-                Subscription.sendResponse(parent, requestEvent, SipResponse.OK,
-                        "OK");
+                SubscriptionSubscriber.sendResponse(parent, requestEvent,
+                        SipResponse.OK, "OK");
 
                 SipStack.trace("Received NOTIFY CSEQ "
-                        + rcv_seq_hdr.getSeqNumber()
+                        + rcvSeqHdr.getSeqNumber()
                         + " not new, discarding message");
                 return;
             }
         }
 
-        notifyCSeq = rcv_seq_hdr;
+        notifyCSeq = rcvSeqHdr;
 
         synchronized (this)
         {
@@ -658,7 +637,7 @@ public class Subscription implements MessageListener, SipActionObject
             if (transaction == null)
             {
                 String errstring = "*** SUBSCRIBE RESPONSE ERROR ***  ("
-                        + buddyUri
+                        + targetUri
                         + ") : unexpected null transaction at response reception for request: "
                         + responseEvent.getClientTransaction().getRequest()
                                 .toString();
@@ -686,7 +665,7 @@ public class Subscription implements MessageListener, SipActionObject
             if (transaction == null)
             {
                 String errstring = "*** SUBSCRIBE RESPONSE ERROR ***  ("
-                        + buddyUri
+                        + targetUri
                         + ") : unexpected null transaction at event timeout for request: "
                         + timeout.getClientTransaction().getRequest()
                                 .toString();
@@ -717,8 +696,8 @@ public class Subscription implements MessageListener, SipActionObject
      * <p>
      * If a success indication is returned by this method, you may call other
      * methods on this object to find out the result of the SUBSCRIBE sequence:
-     * isSubscriptionXyz() for subscription state information, getTimeLeft()
-     * which is set based on the received response.
+     * isSubscriptionActive/Pending/Terminated() for subscription state
+     * information, getTimeLeft() which is set based on the received response.
      * <p>
      * The next step is to call waitNotify() to retrieve/wait for the NOTIFY
      * request from the server.
@@ -730,28 +709,28 @@ public class Subscription implements MessageListener, SipActionObject
      * @return true if the response(s) received were valid and no errors were
      *         encountered, false otherwise.
      */
-    public boolean processSubscribeResponse(long timeout)
+    public boolean processResponse(long timeout)
     {
         initErrorInfo();
-        String cseq_str = "";
+        String cseqStr = "";
 
         try
         {
-            if (currentSubscribeResponse == null)
+            if (currentResponse == null)
             {
-                throw new StatusReport(SipSession.INVALID_OPERATION,
+                throw new SubscriptionError(SipSession.INVALID_OPERATION,
                         "There is no outstanding subscribe response to process");
             }
 
-            Response response = currentSubscribeResponse.getResponse();
+            Response response = currentResponse.getResponse();
             int status = response.getStatusCode();
-            cseq_str = "CSEQ "
+            cseqStr = "CSEQ "
                     + ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
                             .getSeqNumber();
 
-            SipStack.trace("Processing SUBSCRIBE " + cseq_str
+            SipStack.trace("Processing SUBSCRIBE " + cseqStr
                     + " response with status code " + status + " from "
-                    + buddyUri);
+                    + targetUri);
 
             while (status != SipResponse.OK)
             {
@@ -765,20 +744,20 @@ public class Subscription implements MessageListener, SipActionObject
                     if (waitNextPositiveResponse(timeout) == false)
                     {
                         SipStack.trace("*** SUBSCRIBE RESPONSE ERROR ***  ("
-                                + cseq_str + ", " + buddyUri + ") - "
+                                + cseqStr + ", " + targetUri + ") - "
                                 + getErrorMessage());
                         return false;
                     }
 
-                    response = currentSubscribeResponse.getResponse();
+                    response = currentResponse.getResponse();
                     status = response.getStatusCode();
-                    cseq_str = "CSEQ "
+                    cseqStr = "CSEQ "
                             + ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
                                     .getSeqNumber();
 
-                    SipStack.trace("Processing SUBSCRIBE " + cseq_str
+                    SipStack.trace("Processing SUBSCRIBE " + cseqStr
                             + " response with status code " + status + " from "
-                            + buddyUri);
+                            + targetUri);
 
                     continue;
                 }
@@ -792,27 +771,27 @@ public class Subscription implements MessageListener, SipActionObject
                     if (waitNextPositiveResponse(timeout) == false)
                     {
                         SipStack.trace("*** SUBSCRIBE RESPONSE ERROR ***  ("
-                                + cseq_str + ", " + buddyUri + ") - "
+                                + cseqStr + ", " + targetUri + ") - "
                                 + getErrorMessage());
                         return false;
                     }
 
-                    response = currentSubscribeResponse.getResponse();
+                    response = currentResponse.getResponse();
                     status = response.getStatusCode();
-                    cseq_str = "CSEQ "
+                    cseqStr = "CSEQ "
                             + ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
                                     .getSeqNumber();
 
-                    SipStack.trace("Processing SUBSCRIBE " + cseq_str
+                    SipStack.trace("Processing SUBSCRIBE " + cseqStr
                             + " response with status code " + status + " from "
-                            + buddyUri);
+                            + targetUri);
 
                     continue;
                 }
                 else
                 {
-                    throw new StatusReport(SipSession.FAR_END_ERROR,
-                            "Unexpected SUBSCRIBE response code encountered : "
+                    throw new SubscriptionError(SipSession.FAR_END_ERROR,
+                            "Unexpected response code encountered from far end : "
                                     + status);
                 }
             }
@@ -828,7 +807,7 @@ public class Subscription implements MessageListener, SipActionObject
 
             if (response.getExpires() == null)
             {
-                throw new StatusReport(SipSession.FAR_END_ERROR,
+                throw new SubscriptionError(SipSession.FAR_END_ERROR,
                         "no expires header received");
             }
 
@@ -836,7 +815,7 @@ public class Subscription implements MessageListener, SipActionObject
             validateExpires(expires, false);
 
             // use the received expiry time as the subscription duration
-            SipStack.trace(buddyUri + ": received expiry = " + expires
+            SipStack.trace(targetUri + ": received expiry = " + expires
                     + ", updating current expiry which was " + getTimeLeft());
 
             setTimeLeft(expires);
@@ -849,10 +828,10 @@ public class Subscription implements MessageListener, SipActionObject
 
             return true;
         }
-        catch (StatusReport e)
+        catch (SubscriptionError e)
         {
-            String err = "*** SUBSCRIBE RESPONSE ERROR ***  (" + cseq_str
-                    + ", " + buddyUri + ") - " + e.getReason();
+            String err = "*** SUBSCRIPTION RESPONSE ERROR ***  (" + cseqStr
+                    + ", " + targetUri + ") - " + e.getReason();
             SipStack.trace(err);
 
             setReturnCode(e.getStatusCode());
@@ -864,14 +843,14 @@ public class Subscription implements MessageListener, SipActionObject
     }
 
     private void authorizeSubscribe(Response resp, Request msg)
-            throws StatusReport
+            throws SubscriptionError
     {
         // modify the request to include user authorization info and resend
 
         msg = parent.processAuthChallenge(resp, msg);
         if (msg == null)
         {
-            throw new StatusReport(parent.getReturnCode(),
+            throw new SubscriptionError(parent.getReturnCode(),
                     "error responding to authentication challenge: "
                             + parent.getErrorMessage());
         }
@@ -890,7 +869,7 @@ public class Subscription implements MessageListener, SipActionObject
 
                 if (transaction == null)
                 {
-                    throw new StatusReport(parent.getReturnCode(),
+                    throw new SubscriptionError(parent.getReturnCode(),
                             "error resending SUBSCRIBE with authorization: "
                                     + parent.getErrorMessage());
                 }
@@ -900,13 +879,13 @@ public class Subscription implements MessageListener, SipActionObject
                 SipStack.trace("Resent REQUEST: " + msg.toString());
                 SipStack.trace("Resent SUBSCRIBE to "
                         + dialog.getRemoteParty().getURI().toString() + " for "
-                        + buddyUri);
+                        + targetUri);
             }
         }
         catch (Exception ex)
         {
             transaction = null;
-            throw new StatusReport(SipSession.EXCEPTION_ENCOUNTERED,
+            throw new SubscriptionError(SipSession.EXCEPTION_ENCOUNTERED,
                     "exception resending SUBSCRIBE with authorization: "
                             + ex.getClass().getName() + ": " + ex.getMessage());
         }
@@ -950,22 +929,28 @@ public class Subscription implements MessageListener, SipActionObject
      * to the NOTIFY. You can call getReturnCode() to find out the status code
      * contained in the returned response (or you can examine the response in
      * detail using JAIN-SIP API). A return code of 200 OK means that the
-     * received NOTIFY had correct content and the presence information stored
-     * in this Subscription object has been updated with the NOTIFY message
-     * contents. Call methods getPresenceDevices(), getPresenceExtensions(),
-     * getPresenceNotes(), isSubscriptionXyz(), getTerminationReason() and/or
-     * getTimeLeft() to see the newly updated presence information.
+     * received NOTIFY had correct content and the event information stored in
+     * this Subscription object has been updated with the NOTIFY message
+     * contents. In this case you can call methods
+     * isSubscriptionActive/Pending/Terminated(), getTerminationReason() and/or
+     * getTimeLeft() for updated subscription information, and for
+     * event-specific information that may have been updated by the received
+     * NOTIFY, call the appropriate Subscription subclass methods.
      * <p>
-     * The next step is to invoke replyToNotify() to send a response to the
-     * network. The caller may modify (corrupt) the response returned by this
-     * method (using the JAIN-SIP API) before passing it to replyToNotify().
+     * The next step after this is to invoke replyToNotify() to send the
+     * response to the network. You may modify (corrupt) the response returned
+     * by this method (using the JAIN-SIP API) before passing it to
+     * replyToNotify() or pass your own Response to replyToNotify().
      * <p>
-     * Validation performed by this method includes: event header present, event
-     * type correct ("presence"), event ID matches sent SUBSCRIBE, subscription
-     * state header present, received expiry not greater than that sent in
-     * SUBSCRIBE, reception of NOTIFY request without having sent a SUBSCRIBE,
-     * supported content type/subtype, matching (correct) presentity in NOTIFY
-     * body, correctly formed xml body document, valid document content.
+     * Validation performed by this method includes: event header existence,
+     * correct event type (done by the event-specific subclass), NOTIFY event ID
+     * matches that in the sent request (SUBSCRIBE, REFER), subscription state
+     * header existence, received expiry not greater than that sent in the
+     * request (SUBSCRIBE, REFER), catch illegal reception of NOTIFY request
+     * without having sent a request, supported content type/subtype in NOTIFY
+     * (done by the event-specific subclass), and other event-specific
+     * validation (such as, for presence: matching (correct) presentity in
+     * NOTIFY body, correctly formed xml body document, valid document content).
      * 
      * @param requestEvent
      *            the NOTIFY request event obtained from waitNotify()
@@ -975,7 +960,7 @@ public class Subscription implements MessageListener, SipActionObject
     public Response processNotify(RequestEvent requestEvent)
     {
         initErrorInfo();
-        String cseq_str = "CSEQ x";
+        String cseqStr = "CSEQ x";
 
         try
         {
@@ -987,12 +972,12 @@ public class Subscription implements MessageListener, SipActionObject
             }
 
             Request request = requestEvent.getRequest();
-            cseq_str = "CSEQ "
+            cseqStr = "CSEQ "
                     + ((CSeqHeader) request.getHeader(CSeqHeader.NAME))
                             .getSeqNumber();
 
-            SipStack.trace("Processing NOTIFY " + cseq_str
-                    + " request for Subscription to " + buddyUri);
+            SipStack.trace("Processing NOTIFY " + cseqStr
+                    + " request for subscription to " + targetUri);
 
             // validate received event header against the one sent
 
@@ -1003,11 +988,11 @@ public class Subscription implements MessageListener, SipActionObject
 
             // get subscription state info from message
 
-            SubscriptionStateHeader subs_hdr = (SubscriptionStateHeader) request
+            SubscriptionStateHeader subsHdr = (SubscriptionStateHeader) request
                     .getHeader(SubscriptionStateHeader.NAME);
-            if (subs_hdr == null)
+            if (subsHdr == null)
             {
-                throw new StatusReport(SipResponse.BAD_REQUEST,
+                throw new SubscriptionError(SipResponse.BAD_REQUEST,
                         "no subscription state header received");
             }
 
@@ -1015,12 +1000,12 @@ public class Subscription implements MessageListener, SipActionObject
 
             if (subscriptionState.equals(SubscriptionStateHeader.TERMINATED) == false)
             {
-                subscriptionState = subs_hdr.getState();
+                subscriptionState = subsHdr.getState();
             }
 
             if (subscriptionState.equals(SubscriptionStateHeader.TERMINATED))
             {
-                terminationReason = subs_hdr.getReasonCode();
+                terminationReason = subsHdr.getReasonCode();
 
                 // this is the last NOTIFY for this subscription, whether we
                 // terminated
@@ -1032,7 +1017,7 @@ public class Subscription implements MessageListener, SipActionObject
 
                 setLastSentRequest(null);
 
-                updatePresenceInfo(request);
+                updateEventInfo(request);
 
                 Response response = createNotifyResponse(requestEvent,
                         SipResponse.OK, terminationReason);
@@ -1046,16 +1031,16 @@ public class Subscription implements MessageListener, SipActionObject
 
             // active or pending state: check expiry & update time left
 
-            int expires = subs_hdr.getExpires();
+            int expires = subsHdr.getExpires();
             // SIP list TODO - it's optional - how to know if didn't get it?
 
             validateExpires(expires, true);
 
-            SipStack.trace(buddyUri + ": received expiry = " + expires
+            SipStack.trace(targetUri + ": received expiry = " + expires
                     + ", updating current expiry which was " + getTimeLeft());
 
             setTimeLeft(expires);
-            updatePresenceInfo(request);
+            updateEventInfo(request);
 
             Response response = createNotifyResponse(requestEvent,
                     SipResponse.OK, "OK");
@@ -1066,10 +1051,10 @@ public class Subscription implements MessageListener, SipActionObject
 
             return response;
         }
-        catch (StatusReport e)
+        catch (SubscriptionError e)
         {
-            String err = "*** NOTIFY REQUEST ERROR ***  (" + cseq_str + ", "
-                    + buddyUri + ") - " + e.getReason();
+            String err = "*** NOTIFY REQUEST ERROR ***  (" + cseqStr + ", "
+                    + targetUri + ") - " + e.getReason();
             SipStack.trace(err);
 
             Response response = createNotifyResponse(requestEvent, e
@@ -1082,136 +1067,6 @@ public class Subscription implements MessageListener, SipActionObject
 
             return response;
         }
-    }
-
-    private void updatePresenceInfo(Request request) throws StatusReport
-    {
-        // parse the presence info contained in the message, if any
-
-        byte[] body_bytes = request.getRawContent();
-        if (body_bytes == null)
-        {
-            return;
-        }
-
-        // check for supported content type, currently supporting only the
-        // package default
-
-        ContentTypeHeader ct = (ContentTypeHeader) request
-                .getHeader(ContentTypeHeader.NAME);
-
-        if (ct == null)
-        {
-            throw new StatusReport(SipResponse.BAD_REQUEST,
-                    "NOTIFY body has bytes but no content type header was received");
-        }
-
-        if (ct.getContentType().equals("application") == false)
-        {
-            throw new StatusReport(SipResponse.UNSUPPORTED_MEDIA_TYPE,
-                    "received NOTIFY body with unsupported content type = "
-                            + ct.getContentType());
-        }
-        else if (ct.getContentSubType().equals("pidf+xml") == false)
-        {
-            throw new StatusReport(SipResponse.UNSUPPORTED_MEDIA_TYPE,
-                    "received NOTIFY body with unsupported content subtype = "
-                            + ct.getContentSubType());
-        }
-
-        // parse and get info from the xml body
-
-        try
-        {
-            Presence doc = (Presence) JAXBContext.newInstance(
-                    "org.cafesip.sipunit.presenceparser.pidf")
-                    .createUnmarshaller().unmarshal(
-                            new ByteArrayInputStream(body_bytes));
-
-            // is it the correct presentity?
-
-            if (!buddyUri.equals(doc.getEntity()))
-            {
-                throw new StatusReport(SipResponse.BAD_REQUEST,
-                        "received NOTIFY body with wrong presentity = "
-                                + doc.getEntity());
-            }
-
-            // finally, update our presence information
-
-            devices.clear();
-            if (doc.getTuple() != null)
-            {
-                Iterator i = doc.getTuple().iterator();
-                while (i.hasNext())
-                {
-                    Tuple t = (Tuple) i.next();
-
-                    PresenceDeviceInfo dev = new PresenceDeviceInfo();
-                    dev.setBasicStatus(t.getStatus().getBasic());
-
-                    Contact contact = t.getContact();
-                    if (contact != null)
-                    {
-                        if (contact.getPriority() != null)
-                        {
-                            dev.setContactPriority(contact.getPriority()
-                                    .doubleValue());
-                        }
-                        dev.setContactValue(contact.getValue());
-                    }
-
-                    dev.setDeviceExtensions(t.getAny());
-                    dev.setId(t.getId());
-                    dev.setStatusExtensions(t.getStatus().getAny());
-                    dev.setTimestamp(t.getTimestamp());
-
-                    ArrayList<PresenceNote> notes = new ArrayList<PresenceNote>();
-                    if (t.getNote() != null)
-                    {
-                        Iterator<Note> j = t.getNote().iterator();
-                        while (j.hasNext())
-                        {
-                            Note n = j.next();
-                            notes.add(new PresenceNote(n.getLang(), n
-                                    .getValue()));
-                        }
-                    }
-                    dev.setDeviceNotes(notes);
-
-                    devices.put(t.getId(), dev);
-                }
-            }
-
-            presenceNotes.clear();
-            if (doc.getNote() != null)
-            {
-                Iterator i = doc.getNote().iterator();
-                while (i.hasNext())
-                {
-                    Note n = (Note) i.next();
-                    presenceNotes.add(new PresenceNote(n.getLang(), n
-                            .getValue()));
-                }
-            }
-
-            presenceExtensions.clear();
-            if (doc.getAny() != null)
-            {
-                presenceExtensions.addAll(doc.getAny());
-            }
-
-            SipStack
-                    .trace("Successfully processed NOTIFY message body for Subscription to "
-                            + buddyUri);
-        }
-        catch (Exception e)
-        {
-            throw new StatusReport(SipResponse.BAD_REQUEST,
-                    "NOTIFY body parsing error : " + e.getMessage());
-        }
-
-        return;
     }
 
     /**
@@ -1281,9 +1136,9 @@ public class Subscription implements MessageListener, SipActionObject
          * header field.
          */
 
-        Request last_subscribe = getLastSentRequest();
+        Request lastSubscribe = getLastSentRequest();
 
-        if (last_subscribe == null)
+        if (lastSubscribe == null)
         {
             return false;
         }
@@ -1294,19 +1149,19 @@ public class Subscription implements MessageListener, SipActionObject
             return false;
         }
 
-        CallIdHeader sent_hdr = (CallIdHeader) last_subscribe
+        CallIdHeader sentHdr = (CallIdHeader) lastSubscribe
                 .getHeader(CallIdHeader.NAME);
-        if (sent_hdr == null)
+        if (sentHdr == null)
         {
             return false;
         }
 
-        if ((hdr.getCallId() == null) || (sent_hdr.getCallId() == null))
+        if ((hdr.getCallId() == null) || (sentHdr.getCallId() == null))
         {
             return false;
         }
 
-        if (hdr.getCallId().equals(sent_hdr.getCallId()) == false)
+        if (hdr.getCallId().equals(sentHdr.getCallId()) == false)
         {
             return false;
         }
@@ -1321,40 +1176,40 @@ public class Subscription implements MessageListener, SipActionObject
             return false;
         }
 
-        String to_tag = tohdr.getTag();
-        if (to_tag == null)
+        String toTag = tohdr.getTag();
+        if (toTag == null)
         {
             return false;
         }
 
-        FromHeader sent_from = (FromHeader) last_subscribe
+        FromHeader sentFrom = (FromHeader) lastSubscribe
                 .getHeader(FromHeader.NAME);
-        if (sent_from == null)
+        if (sentFrom == null)
         {
             return false;
         }
 
-        String from_tag = sent_from.getTag();
-        if (from_tag == null)
+        String fromTag = sentFrom.getTag();
+        if (fromTag == null)
         {
             return false;
         }
 
-        if (to_tag.equals(from_tag) == false)
+        if (toTag.equals(fromTag) == false)
         {
             return false;
         }
 
         EventHeader eventhdr = (EventHeader) msg.getHeader(EventHeader.NAME);
-        EventHeader sent_eventhdr = (EventHeader) last_subscribe
+        EventHeader sentEventhdr = (EventHeader) lastSubscribe
                 .getHeader(EventHeader.NAME);
 
-        if ((eventhdr == null) || (sent_eventhdr == null))
+        if ((eventhdr == null) || (sentEventhdr == null))
         {
             return false;
         }
 
-        if (eventhdr.equals(sent_eventhdr) == false)
+        if (eventhdr.equals(sentEventhdr) == false)
         {
             return false;
         }
@@ -1362,115 +1217,72 @@ public class Subscription implements MessageListener, SipActionObject
         return true;
     }
 
-    private void validateEventHeader(EventHeader received_hdr,
-            EventHeader sent_hdr) throws StatusReport
+    private void validateEventHeader(EventHeader receivedHdr,
+            EventHeader sentHdr) throws SubscriptionError
     {
-        if (received_hdr == null)
+        if (receivedHdr == null)
         {
-            throw new StatusReport(SipResponse.BAD_REQUEST,
+            throw new SubscriptionError(SipResponse.BAD_REQUEST,
                     "no event header received");
         }
 
-        // check event type
-
-        String event = received_hdr.getEventType();
-        if (event.equals("presence") == false)
-        {
-            throw new StatusReport(SipResponse.BAD_EVENT,
-                    "received an event header containing unknown event = "
-                            + event);
-        }
+        checkEventType(receivedHdr);
 
         // verify matching eventIds
 
-        String last_sent_id = null;
-        if (sent_hdr != null)
+        String lastSentId = null;
+        if (sentHdr != null)
         {
-            last_sent_id = sent_hdr.getEventId();
+            lastSentId = sentHdr.getEventId();
         }
 
         // get the one we just received
-        String event_id = received_hdr.getEventId();
-        if (event_id == null)
+        String eventId = receivedHdr.getEventId();
+        if (eventId == null)
         {
-            if (last_sent_id != null)
+            if (lastSentId != null)
             {
-                throw new StatusReport(SipResponse.BAD_REQUEST,
+                throw new SubscriptionError(SipResponse.BAD_REQUEST,
                         "event id mismatch, received null, last sent "
-                                + last_sent_id);
+                                + lastSentId);
             }
         }
         else
         {
-            if (last_sent_id == null)
+            if (lastSentId == null)
             {
-                throw new StatusReport(SipResponse.BAD_REQUEST,
+                throw new SubscriptionError(SipResponse.BAD_REQUEST,
                         "event id mismatch, last sent null, received "
-                                + event_id);
+                                + eventId);
             }
             else
             {
-                if (event_id.equals(last_sent_id) == false)
+                if (eventId.equals(lastSentId) == false)
                 {
-                    throw new StatusReport(SipResponse.BAD_REQUEST,
-                            "event id mismatch, received " + event_id
-                                    + ", last sent " + last_sent_id);
+                    throw new SubscriptionError(SipResponse.BAD_REQUEST,
+                            "event id mismatch, received " + eventId
+                                    + ", last sent " + lastSentId);
                 }
             }
         }
     }
 
     private void validateExpires(int expires, boolean isNotify)
-            throws StatusReport
+            throws SubscriptionError
     {
         // expiry may be shorter, can't be longer than what we sent
 
-        int sent_expires = getLastSentRequest().getExpires().getExpires();
+        int sentExpires = getLastSentRequest().getExpires().getExpires();
 
-        if (expires > sent_expires)
+        if (expires > sentExpires)
         {
-            throw new StatusReport((isNotify == true ? SipResponse.BAD_REQUEST
-                    : SipSession.FAR_END_ERROR),
+            throw new SubscriptionError(
+                    (isNotify == true ? SipResponse.BAD_REQUEST
+                            : SipSession.FAR_END_ERROR),
                     "received expiry > expiry in sent SUBSCRIBE (" + expires
-                            + " > " + sent_expires + ')');
+                            + " > " + sentExpires + ')');
         }
 
-    }
-
-    /**
-     * Gets the list of known devices for this Subscription (buddy, watchee).
-     * This list represents the list of 'tuple's received in the last NOTIFY
-     * message.
-     * 
-     * @return A HashMap containing zero or more PresenceDeviceInfo objects,
-     *         indexed/keyed by the unique IDs received for each in the NOTIFY
-     *         messages (tuple elements).
-     */
-    public HashMap<String, PresenceDeviceInfo> getPresenceDevices()
-    {
-        return new HashMap<String, PresenceDeviceInfo>(devices);
-    }
-
-    /**
-     * Gets the list of notes pertaining to this Subscription as received in the
-     * last NOTIFY message (at the top 'presence' element level).
-     * 
-     * @return An ArrayList containing zero or more PresenceNote objects.
-     */
-    public ArrayList<PresenceNote> getPresenceNotes()
-    {
-        return new ArrayList<PresenceNote>(presenceNotes);
-    }
-
-    /**
-     * Gets the list of extensions pertaining to this Subscription as received
-     * in the last NOTIFY message (at the top 'presence' element level).
-     * 
-     * @return An ArrayList containing zero or more Object.
-     */
-    public ArrayList<Object> getPresenceExtensions()
-    {
-        return new ArrayList<Object>(presenceExtensions);
     }
 
     /**
@@ -1580,7 +1392,7 @@ public class Subscription implements MessageListener, SipActionObject
      * This method returns all the responses received on this subscription,
      * including any that required re-initiation of the subscription (ie,
      * authentication challenge). Not included are out-of-sequence (late)
-     * SUBSCRIBE responses.
+     * responses.
      * 
      * @return ArrayList of zero or more SipResponse objects.
      * 
@@ -1697,21 +1509,21 @@ public class Subscription implements MessageListener, SipActionObject
      * 
      * @return The user's URI.
      */
-    public String getBuddyUri()
+    public String getTargetUri()
     {
-        return buddyUri;
+        return targetUri;
     }
 
     /**
-     * This method returns any errors accumulated during collection of SUBSCRIBE
-     * responses and NOTIFY requests. Since this happens automatically,
-     * asynchronous of the test program activity, there's not a handy way like a
-     * method call return code to report these errors if they happen. They are
-     * errors like: No CSEQ header in received NOTIFY, error or exception
-     * resending SUBSCRIBE with authorization header, unexpected null
-     * transaction object at response timeout, etc. You should at various points
-     * call SipTestCase.assertNoEventErrors() during a test to verify none have
-     * been encountered.
+     * This method returns any errors accumulated during collection of responses
+     * and NOTIFY requests. Since this happens automatically, asynchronous of
+     * the test program activity, there's not a handy way like a method call
+     * return code to report these errors if they happen. They are errors like:
+     * No CSEQ header in received NOTIFY, error or exception resending request
+     * with authorization header, unexpected null transaction object at response
+     * timeout, etc. You should at various points call
+     * SipTestCase.assertNoEventErrors() during a test to verify none have been
+     * encountered.
      * <p>
      * The case where a NOTIFY is received by a SipPhone but there is no
      * matching subscription results in 481 response being sent back and an
@@ -1734,8 +1546,8 @@ public class Subscription implements MessageListener, SipActionObject
     }
 
     /**
-     * This method clears errors accumulated while collecting SUBSCRIBE
-     * responses and NOTIFY requests. See related method getEventErrors().
+     * This method clears errors accumulated while collecting responses and
+     * NOTIFY requests. See related method getEventErrors().
      */
     public void clearEventErrors()
     {
@@ -1748,16 +1560,15 @@ public class Subscription implements MessageListener, SipActionObject
     protected Response createNotifyResponse(RequestEvent request, int status,
             String reason)
     {
-        ArrayList<Header> additional_headers = null;
+        ArrayList<Header> additionalHeaders = null;
 
         if (status == SipResponse.UNSUPPORTED_MEDIA_TYPE)
         {
             try
             {
-                AcceptHeader ahdr = parent.getHeaderFactory()
-                        .createAcceptHeader("application", "pidf+xml");
-                additional_headers = new ArrayList<Header>();
-                additional_headers.add(ahdr);
+                AcceptHeader ahdr = getUnsupportedMediaAcceptHeader();
+                additionalHeaders = new ArrayList<Header>();
+                additionalHeaders.add(ahdr);
             }
             catch (Exception e)
             {
@@ -1770,7 +1581,10 @@ public class Subscription implements MessageListener, SipActionObject
             }
         }
 
-        return createNotifyResponse(request, status, reason, additional_headers);
+        // here we may need an overridable method with parm status, so
+        // subclasses may included other additional headers
+
+        return createNotifyResponse(request, status, reason, additionalHeaders);
     }
 
     // if returns null, returnCode and errorMessage already set
@@ -1788,9 +1602,9 @@ public class Subscription implements MessageListener, SipActionObject
         }
 
         Request req = request.getRequest();
-        String cseq_str = "CSEQ "
+        String cseqStr = "CSEQ "
                 + ((CSeqHeader) req.getHeader(CSeqHeader.NAME)).getSeqNumber();
-        SipStack.trace("Creating NOTIFY " + cseq_str
+        SipStack.trace("Creating NOTIFY " + cseqStr
                 + " response with status code " + status + ", reason phrase = "
                 + reason);
 
@@ -1833,14 +1647,14 @@ public class Subscription implements MessageListener, SipActionObject
 
     protected String getEventId()
     {
-        Request last_subscribe = getLastSentRequest();
+        Request lastSubscribe = getLastSentRequest();
 
-        if (last_subscribe == null)
+        if (lastSubscribe == null)
         {
             return null;
         }
 
-        EventHeader evt = (EventHeader) last_subscribe
+        EventHeader evt = (EventHeader) lastSubscribe
                 .getHeader(EventHeader.NAME);
         if (evt == null)
         {
@@ -1920,8 +1734,8 @@ public class Subscription implements MessageListener, SipActionObject
     }
 
     /**
-     * The waitSubscribeResponse() method waits for a response for a previously
-     * sent SUBSCRIBE request message.
+     * The waitResponse() method waits for a response for a previously sent
+     * subscription request message (SUBSCRIBE, REFER, ...).
      * <p>
      * This method blocks until one of the following occurs: 1) A
      * javax.sip.ResponseEvent is received. This is the object returned by this
@@ -1938,7 +1752,7 @@ public class Subscription implements MessageListener, SipActionObject
      *         getReturnCode() and/or getErrorMessage() and, if applicable,
      *         getException() for further diagnostics.
      */
-    protected EventObject waitSubscribeResponse(long timeout)
+    protected EventObject waitResponse(long timeout)
     {
         synchronized (responseBlock)
         {
@@ -1948,10 +1762,10 @@ public class Subscription implements MessageListener, SipActionObject
                 try
                 {
                     SipStack
-                            .trace("Subscription.waitSubscribeResponse() - about to block, waiting");
+                            .trace("Subscription.waitResponse() - about to block, waiting");
                     responseBlock.waitForEvent(timeout);
                     SipStack
-                            .trace("Subscription.waitSubscribeResponse() - we've come out of the block");
+                            .trace("Subscription.waitResponse() - we've come out of the block");
                 }
                 catch (Exception ex)
                 {
@@ -1964,12 +1778,12 @@ public class Subscription implements MessageListener, SipActionObject
             }
 
             SipStack
-                    .trace("Subscription.waitSubscribeResponse() - either we got the response, or timed out");
+                    .trace("Subscription.waitResponse() - either we got the response, or timed out");
 
             if (events.size() == 0)
             {
                 setReturnCode(SipSession.TIMEOUT_OCCURRED);
-                setErrorMessage("The maximum amount of time to wait for a SUBSCRIBE response message has elapsed.");
+                setErrorMessage("The maximum amount of time to wait for a response message has elapsed.");
                 return null;
             }
 
@@ -1977,62 +1791,24 @@ public class Subscription implements MessageListener, SipActionObject
         }
     }
 
-    private class StatusReport extends Exception
-    {
-        /**
-         * Comment for <code>serialVersionUID</code>
-         */
-        private static final long serialVersionUID = 1L;
-
-        private int statusCode = -1;
-
-        private String reason;
-
-        public StatusReport(int statusCode, String reason)
-        {
-            this.statusCode = statusCode;
-            this.reason = reason;
-        }
-
-        public String getReason()
-        {
-            return reason;
-        }
-
-        public void setReason(String reason)
-        {
-            this.reason = reason;
-        }
-
-        public int getStatusCode()
-        {
-            return statusCode;
-        }
-
-        public void setStatusCode(int statusCode)
-        {
-            this.statusCode = statusCode;
-        }
-    }
-
     /**
-     * This method returns the most recent SUBSCRIBE response received from the
-     * network for this subscription. Knowledge of JAIN-SIP API is required to
-     * examine the object returned from this method. Alternately, call
+     * This method returns the most recent response received from the network
+     * for this subscription. Knowledge of JAIN-SIP API is required to examine
+     * the object returned from this method. Alternately, call
      * getLastReceivedResponse() to see the primary values (status, reason)
      * contained in the last received response.
      * 
-     * @return javax.sip.ResponseEvent - last received SUBSCRIBE response.
+     * @return javax.sip.ResponseEvent - last received response to a previously
+     *         sent subscription request.
      */
-    public ResponseEvent getCurrentSubscribeResponse()
+    public ResponseEvent getCurrentResponse()
     {
-        return currentSubscribeResponse;
+        return currentResponse;
     }
 
-    protected void setCurrentSubscribeResponse(
-            ResponseEvent currentSubscribeResponse)
+    protected void setCurrentResponse(ResponseEvent currentResponse)
     {
-        this.currentSubscribeResponse = currentSubscribeResponse;
+        this.currentResponse = currentResponse;
     }
 
     protected void addEventError(String err)
@@ -2044,14 +1820,14 @@ public class Subscription implements MessageListener, SipActionObject
     }
 
     /**
-     * This method returns the last SUBSCRIBE request that was sent out for this
-     * Subscription.
+     * This method returns the last request that was sent out for this
+     * subscription.
      * 
      * @return javax.sip.message.Request last sent out
      */
     public Request getLastSentRequest()
     {
-        synchronized (lastSubscribeLock)
+        synchronized (lastSentRequestLock)
         {
             return lastSentRequest;
         }
@@ -2059,19 +1835,22 @@ public class Subscription implements MessageListener, SipActionObject
 
     protected void setLastSentRequest(Request lastSentRequest)
     {
-        synchronized (lastSubscribeLock)
+        synchronized (lastSentRequestLock)
         {
             this.lastSentRequest = lastSentRequest;
         }
     }
 
     /**
-     * This method, called after removing a buddy from the buddy list, indicates
-     * if an unsubscribe sequence was initiated due to the removal or not.
+     * This method, called after an operation that ends a subscription (such as
+     * SipPhone.removeBuddy()), indicates if an unsubscribe sequence was
+     * initiated due to the operation or not. If so, you need to proceed forward
+     * with the SUBSCRIBE/NOTIFY sequence processing to complete the unsubscribe
+     * sequence.
      * 
      * @return true if unsubscribe was not necessary (because the subscription
      *         was already terminated) and false if a SUBSCRIBE/NOTIFY sequence
-     *         was initiated due to the removal of the buddy from the list.
+     *         was initiated due to the subscription-ending operation.
      */
     public boolean isRemovalComplete()
     {
@@ -2082,6 +1861,51 @@ public class Subscription implements MessageListener, SipActionObject
     {
         this.removalComplete = removalComplete;
     }
+
+    /**
+     * This method must be overridden by the event-specific subclass.
+     * 
+     * @param receivedHdr
+     *            Header from received request
+     * @throws SubscriptionError
+     */
+    protected void checkEventType(EventHeader receivedHdr)
+            throws SubscriptionError
+    {
+        // TODO subclass override
+    }
+
+    /**
+     * This method must be overridden by the event-specific subclass.
+     * 
+     * @param request
+     *            Received request
+     * @throws SubscriptionError
+     */
+    protected void updateEventInfo(Request request) throws SubscriptionError
+    {
+        // TODO subclass override
+    }
+
+    /**
+     * This method must be overridden by the event-specific subclass. It is
+     * called after the event-specific subclass method updateEventInfo() throws
+     * an exception with SipResponse.UNSUPPORTED_MEDIA_TYPE because an invalid
+     * content type/subtype was received in a NOTIFY. This method must return
+     * the appropriate AcceptHeader to go into the outbound NOTIFY response
+     * message.
+     * 
+     * @return AcceptHeader to put in the NOTIFY response after receiving an
+     *         invalid type/subtype in a NOTIFY request.
+     * @throws ParseException
+     */
+    protected AcceptHeader getUnsupportedMediaAcceptHeader()
+            throws ParseException
+    {
+        // TODO subclass override
+        return null;
+    }
+
 }
 
 /*

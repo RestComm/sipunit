@@ -38,6 +38,7 @@ import javax.sip.message.Response;
 import org.cafesip.sipunit.PresenceDeviceInfo;
 import org.cafesip.sipunit.PresenceNote;
 import org.cafesip.sipunit.PresenceNotifySender;
+import org.cafesip.sipunit.PresenceSubscriber;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
@@ -45,7 +46,6 @@ import org.cafesip.sipunit.SipSession;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTestCase;
 import org.cafesip.sipunit.SipTransaction;
-import org.cafesip.sipunit.Subscription;
 
 /**
  * This class tests SipUnit presence functionality. Focus is on the "subscriber"
@@ -181,35 +181,37 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(0, ua.getBuddyList().size()); // my list empty
 
             // add the buddy to the buddy list - sends SUBSCRIBE, gets response
-            Subscription s = ua.addBuddy(buddy, 2000);
+            PresenceSubscriber s = ua.addBuddy(buddy, 2000);
 
             // check the return info
             assertNotNull(s);
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertEquals(buddy, s.getBuddyUri());
+            assertEquals(buddy, s.getTargetUri());
             assertNotNull(ua.getBuddyInfo(buddy)); // call anytime to get
             // Subscription
-            assertEquals(s.getBuddyUri(), ua.getBuddyInfo(buddy).getBuddyUri());
+            assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
+                    .getTargetUri());
             assertTrue(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionActive());
             assertFalse(s.isSubscriptionTerminated()); // call anytime
             assertEquals(SipResponse.OK, s.getReturnCode());
-            ResponseEvent resp_event = s.getCurrentSubscribeResponse();
+            ResponseEvent resp_event = s.getCurrentResponse();
             Response response = resp_event.getResponse();
             assertEquals("OK", response.getReasonPhrase());
             assertEquals(3600, response.getExpires().getExpires());
             assertEquals(response.toString(), s.getLastReceivedResponse() // call
                     // anytime
                     .getMessage().toString());
-            ArrayList received_responses = s.getAllReceivedResponses(); // call
+            ArrayList<SipResponse> received_responses = s
+                    .getAllReceivedResponses(); // call
             // anytime
             assertEquals(1, received_responses.size());
             assertEquals(response.toString(), received_responses.get(0)
                     .toString());
 
             // process the received response
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
 
             // check the response processing results
             assertTrue(s.isSubscriptionActive());
@@ -235,7 +237,8 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(Request.NOTIFY, request.getMethod());
             assertEquals(2400, ((SubscriptionStateHeader) request
                     .getHeader(SubscriptionStateHeader.NAME)).getExpires());
-            ArrayList received_requests = s.getAllReceivedRequests();
+            ArrayList<SipRequest> received_requests = s
+                    .getAllReceivedRequests();
             assertEquals(1, received_requests.size());
             SipRequest req = s.getLastReceivedRequest();
             assertNotNull(req);
@@ -263,9 +266,10 @@ public class TestPresenceNoProxy extends SipTestCase
 
             // check PRESENCE info - devices/tuples
             // -----------------------------------------------
-            HashMap devices = s.getPresenceDevices();
+            HashMap<String, PresenceDeviceInfo> devices = s
+                    .getPresenceDevices();
             assertEquals(1, devices.size());
-            PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
+            PresenceDeviceInfo dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
@@ -335,7 +339,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // -----------------------------------------------
             devices = s.getPresenceDevices();
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("2");
+            dev = devices.get("2");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
@@ -377,12 +381,13 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(0, ua.getRetiredBuddies().size());
             assertNoPresenceErrors(s);
             assertNotNull(ua.getBuddyInfo(buddy));
-            assertEquals(s.getBuddyUri(), ua.getBuddyInfo(buddy).getBuddyUri());
+            assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
+                    .getTargetUri());
             assertTrue(s.isSubscriptionActive());
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionTerminated());
             assertEquals(SipResponse.OK, s.getReturnCode());
-            resp_event = s.getCurrentSubscribeResponse();
+            resp_event = s.getCurrentResponse();
             response = resp_event.getResponse();
             assertEquals("Okey dokey", response.getReasonPhrase());
             assertEquals(3600, response.getExpires().getExpires());
@@ -394,7 +399,7 @@ public class TestPresenceNoProxy extends SipTestCase
                     .toString());
 
             // process the received response
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
 
             // check the response processing results
             assertTrue(s.isSubscriptionActive());
@@ -435,7 +440,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // -----------------------------------------------
             devices = s.getPresenceDevices();
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
@@ -490,7 +495,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // -----------------------------------------------
             devices = s.getPresenceDevices();
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
@@ -534,9 +539,9 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
 
             // do the SUBSCRIBE sequence
-            Subscription s = ua.addBuddy(buddy, 2000);
+            PresenceSubscriber s = ua.addBuddy(buddy, 2000);
             assertNotNull(s);
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
             assertTrue(s.isSubscriptionActive());
 
             // do the NOTIFY sequence
@@ -551,9 +556,10 @@ public class TestPresenceNoProxy extends SipTestCase
             assertTrue(s.isSubscriptionActive());
 
             // check PRESENCE info
-            HashMap devices = s.getPresenceDevices();
+            HashMap<String, PresenceDeviceInfo> devices = s
+                    .getPresenceDevices();
             assertEquals(1, devices.size());
-            PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
+            PresenceDeviceInfo dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
             assertEquals(0, s.getPresenceExtensions().size());
@@ -583,7 +589,8 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(1, ua.getRetiredBuddies().size());
             assertNoPresenceErrors(s);
             assertNotNull(ua.getBuddyInfo(buddy)); // can still be found
-            assertEquals(s.getBuddyUri(), ua.getBuddyInfo(buddy).getBuddyUri());
+            assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
+                    .getTargetUri());
             assertFalse(s.isSubscriptionActive());
             assertFalse(s.isSubscriptionPending());
             assertTrue(s.isSubscriptionTerminated());
@@ -592,19 +599,20 @@ public class TestPresenceNoProxy extends SipTestCase
 
             // check the return info
             assertEquals(SipResponse.OK, s.getReturnCode());
-            ResponseEvent resp_event = s.getCurrentSubscribeResponse();
+            ResponseEvent resp_event = s.getCurrentResponse();
             response = resp_event.getResponse();
             assertEquals("OK Ended", response.getReasonPhrase());
             assertEquals(0, response.getExpires().getExpires());
             assertEquals(response.toString(), s.getLastReceivedResponse()
                     .getMessage().toString());
-            ArrayList received_responses = s.getAllReceivedResponses();
+            ArrayList<SipResponse> received_responses = s
+                    .getAllReceivedResponses();
             assertEquals(2, received_responses.size());
             assertEquals(response.toString(), received_responses.get(1)
                     .toString());
 
             // process the received response
-            assertTrue(s.processSubscribeResponse(300));
+            assertTrue(s.processResponse(300));
 
             // check the response processing results
             assertFalse(s.isSubscriptionActive());
@@ -644,7 +652,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // -----------------------------------------------
             devices = s.getPresenceDevices();
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
@@ -704,39 +712,41 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
 
             // do something with a buddy - sends SUBSCRIBE, gets response
-            Subscription s = ua.fetchPresenceInfo(buddy, 2000);
+            PresenceSubscriber s = ua.fetchPresenceInfo(buddy, 2000);
 
             // check the return info
             assertNotNull(s);
             assertEquals(0, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
-            assertEquals(buddy, s.getBuddyUri());
+            assertEquals(buddy, s.getTargetUri());
             assertNotNull(ua.getBuddyInfo(buddy));
-            assertEquals(s.getBuddyUri(), ua.getBuddyInfo(buddy).getBuddyUri());
+            assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
+                    .getTargetUri());
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionActive());
             assertTrue(s.isSubscriptionTerminated());
             assertEquals(SipResponse.OK, s.getReturnCode());
-            ResponseEvent resp_event = s.getCurrentSubscribeResponse();
+            ResponseEvent resp_event = s.getCurrentResponse();
             Response response = resp_event.getResponse();
             assertEquals("OK", response.getReasonPhrase());
             assertEquals(0, response.getExpires().getExpires());
             assertEquals(response.toString(), s.getLastReceivedResponse()
                     .getMessage().toString());
-            ArrayList received_responses = s.getAllReceivedResponses();
+            ArrayList<SipResponse> received_responses = s
+                    .getAllReceivedResponses();
             assertEquals(1, received_responses.size());
             assertEquals(response.toString(), received_responses.get(0)
                     .toString());
             assertEquals(0, s.getTimeLeft());
-            assertEquals("Presence fetch", s.getTerminationReason());
+            assertEquals("Fetch", s.getTerminationReason());
 
             // process the received response
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
 
             // verify results still correct
             assertTrue(s.isSubscriptionTerminated());
             assertEquals(0, s.getTimeLeft());
-            assertEquals("Presence fetch", s.getTerminationReason());
+            assertEquals("Fetch", s.getTerminationReason());
 
             // tell far end to send a NOTIFY
             String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
@@ -747,7 +757,8 @@ public class TestPresenceNoProxy extends SipTestCase
             RequestEvent reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
             assertNoPresenceErrors(s);
-            HashMap devices = s.getPresenceDevices();
+            HashMap<String, PresenceDeviceInfo> devices = s
+                    .getPresenceDevices();
             assertTrue(devices.isEmpty());
 
             // process the NOTIFY
@@ -764,7 +775,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // -----------------------------------------------
             devices = s.getPresenceDevices();
             assertEquals(1, devices.size());
-            PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
+            PresenceDeviceInfo dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
@@ -790,7 +801,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(0, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
             assertNotNull(ua.getBuddyInfo(buddy));
-            assertEquals(buddy, ua.getBuddyInfo(buddy).getBuddyUri());
+            assertEquals(buddy, ua.getBuddyInfo(buddy).getTargetUri());
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionActive());
             assertTrue(s.isSubscriptionTerminated());
@@ -809,14 +820,15 @@ public class TestPresenceNoProxy extends SipTestCase
             assertNotNull(s);
             assertEquals(0, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
-            assertEquals(buddy, s.getBuddyUri());
+            assertEquals(buddy, s.getTargetUri());
             assertNotNull(ua.getBuddyInfo(buddy));
-            assertEquals(s.getBuddyUri(), ua.getBuddyInfo(buddy).getBuddyUri());
+            assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
+                    .getTargetUri());
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionActive());
             assertTrue(s.isSubscriptionTerminated());
             assertEquals(SipResponse.OK, s.getReturnCode());
-            resp_event = s.getCurrentSubscribeResponse();
+            resp_event = s.getCurrentResponse();
             response = resp_event.getResponse();
             assertEquals("OKay", response.getReasonPhrase());
             assertEquals(0, response.getExpires().getExpires());
@@ -827,15 +839,15 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(response.toString(), received_responses.get(0)
                     .toString());
             assertEquals(0, s.getTimeLeft());
-            assertEquals("Presence fetch", s.getTerminationReason());
+            assertEquals("Fetch", s.getTerminationReason());
 
             // process the received response
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
 
             // verify results still correct
             assertTrue(s.isSubscriptionTerminated());
             assertEquals(0, s.getTimeLeft());
-            assertEquals("Presence fetch", s.getTerminationReason());
+            assertEquals("Fetch", s.getTerminationReason());
 
             // tell far end to send a NOTIFY
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>open</basic></status></tuple></presence>";
@@ -863,7 +875,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // -----------------------------------------------
             devices = s.getPresenceDevices();
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("1");
+            dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
@@ -889,7 +901,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(0, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
             assertNotNull(ua.getBuddyInfo(buddy));
-            assertEquals(buddy, ua.getBuddyInfo(buddy).getBuddyUri());
+            assertEquals(buddy, ua.getBuddyInfo(buddy).getTargetUri());
             assertFalse(s.isSubscriptionPending());
             assertFalse(s.isSubscriptionActive());
             assertTrue(s.isSubscriptionTerminated());
@@ -919,19 +931,20 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
 
             // do something with a buddy - sends SUBSCRIBE, gets response
-            Subscription s = ua.fetchPresenceInfo(buddy, 2000);
+            PresenceSubscriber s = ua.fetchPresenceInfo(buddy, 2000);
 
             // check the return info
             assertNotNull(s);
-            ResponseEvent resp_event = s.getCurrentSubscribeResponse();
-            ArrayList received_responses = s.getAllReceivedResponses();
+            ResponseEvent resp_event = s.getCurrentResponse();
+            ArrayList<SipResponse> received_responses = s
+                    .getAllReceivedResponses();
             assertEquals(1, received_responses.size());
             assertEquals(resp_event.getClientTransaction(),
                     ((SipResponse) received_responses.get(0))
                             .getResponseEvent().getClientTransaction());
 
             // process the received response
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
 
             // tell far end to send a NOTIFY
             String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
@@ -971,9 +984,9 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
 
             // add the buddy to the buddy list - sends SUBSCRIBE, gets response
-            Subscription s = ua.addBuddy(buddy, 2000);
+            PresenceSubscriber s = ua.addBuddy(buddy, 2000);
             assertNotNull(s);
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
             assertTrue(s.isSubscriptionActive());
 
             // tell far end to send a bad NOTIFY
@@ -991,7 +1004,8 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(Request.NOTIFY, request.getMethod());
             assertEquals(3800, ((SubscriptionStateHeader) request
                     .getHeader(SubscriptionStateHeader.NAME)).getExpires());
-            ArrayList received_requests = s.getAllReceivedRequests();
+            ArrayList<SipRequest> received_requests = s
+                    .getAllReceivedRequests();
             assertTrue(received_requests.size() > 0);
             assertEquals(((SipRequest) received_requests.get(0)).getMessage()
                     .toString(), request.toString());
@@ -1028,7 +1042,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
     public void testErrors()
     {
-        Subscription s = ua.refreshBuddy("sip:ddd@aaa.bbb", 100);
+        PresenceSubscriber s = ua.refreshBuddy("sip:ddd@aaa.bbb", 100);
         assertNull(s);
         assertEquals(SipSession.INVALID_ARGUMENT, ua.getReturnCode());
 
@@ -1053,10 +1067,10 @@ public class TestPresenceNoProxy extends SipTestCase
             // do the SUBSCRIBE sequence
             s = ua.addBuddy(buddy, 2300, "myevent-id", 2000);
             assertNotNull(s);
-            ResponseEvent resp = s.getCurrentSubscribeResponse();
+            ResponseEvent resp = s.getCurrentResponse();
             assertEquals("myevent-id", ((EventHeader) (resp.getResponse()
                     .getHeader(EventHeader.NAME))).getEventId());
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
             assertTrue(s.isSubscriptionActive());
             assertTrue(s.getTimeLeft() <= 2300);
 
@@ -1074,9 +1088,10 @@ public class TestPresenceNoProxy extends SipTestCase
             assertTrue(s.getTimeLeft() <= 1200);
 
             // check PRESENCE info
-            HashMap devices = s.getPresenceDevices();
+            HashMap<String, PresenceDeviceInfo> devices = s
+                    .getPresenceDevices();
             assertEquals(1, devices.size());
-            PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
+            PresenceDeviceInfo dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
             assertEquals(0, s.getPresenceExtensions().size());
@@ -1108,7 +1123,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // check PRESENCE info unchanged
             devices = s.getPresenceDevices();
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("1");
+            dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
             assertEquals(0, s.getPresenceExtensions().size());
@@ -1142,14 +1157,14 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
 
             // do something with a buddy - sends SUBSCRIBE, gets response
-            Subscription s = ua.addBuddy(buddy, 2000);
+            PresenceSubscriber s = ua.addBuddy(buddy, 2000);
 
             // check the return info
             assertNotNull(s);
             assertEquals(SipResponse.OK, s.getReturnCode());
 
             // process the received response
-            assertTrue(s.processSubscribeResponse(1000));
+            assertTrue(s.processResponse(1000));
 
             // check the response processing results
             assertTrue(s.isSubscriptionActive());
@@ -1218,32 +1233,32 @@ public class TestPresenceNoProxy extends SipTestCase
 
             // check PRESENCE info - devices
             // -----------------------------------------------
-            HashMap devices = s.getPresenceDevices();
+            HashMap<String, PresenceDeviceInfo> devices = s
+                    .getPresenceDevices();
             assertEquals(3, devices.size());
             assertNull(devices.get("dummy"));
 
-            PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("bs35r9");
+            PresenceDeviceInfo dev = devices.get("bs35r9");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
-            List statusext = dev.getStatusExtensions();
+            List<Object> statusext = dev.getStatusExtensions();
             assertEquals(0, statusext.size());
             assertEquals(0.8, dev.getContactPriority(), 0.001);
             assertEquals("im:someone@mobilecarrier.net", dev.getContactURI());
             assertEquals(0, dev.getDeviceExtensions().size());
-            List notes = dev.getDeviceNotes();
+            List<PresenceNote> notes = dev.getDeviceNotes();
             assertEquals(2, notes.size());
-            assertEquals("Don't Disturb Please!", ((PresenceNote) notes.get(0))
+            assertEquals("Don't Disturb Please!", (notes.get(0)).getValue());
+            assertEquals("en", (notes.get(0)).getLanguage());
+            assertEquals("Ne derangez pas, s'il vous plait", (notes.get(1))
                     .getValue());
-            assertEquals("en", ((PresenceNote) notes.get(0)).getLanguage());
-            assertEquals("Ne derangez pas, s'il vous plait",
-                    ((PresenceNote) notes.get(1)).getValue());
-            assertEquals("fr", ((PresenceNote) notes.get(1)).getLanguage());
+            assertEquals("fr", (notes.get(1)).getLanguage());
             assertEquals("bs35r9", dev.getId());
             Calendar timestamp = dev.getTimestamp();
             assertEquals(2001, timestamp.get(Calendar.YEAR));
             assertEquals(49, timestamp.get(Calendar.MINUTE));
 
-            dev = (PresenceDeviceInfo) devices.get("doodah");
+            dev = devices.get("doodah");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
             statusext = dev.getStatusExtensions();
@@ -1253,15 +1268,15 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(0, dev.getDeviceExtensions().size());
             notes = dev.getDeviceNotes();
             assertEquals(1, notes.size());
-            assertEquals("Ne derangez pas, s'il vous plait",
-                    ((PresenceNote) notes.get(0)).getValue());
-            assertEquals("fr", ((PresenceNote) notes.get(0)).getLanguage());
+            assertEquals("Ne derangez pas, s'il vous plait", (notes.get(0))
+                    .getValue());
+            assertEquals("fr", (notes.get(0)).getLanguage());
             assertEquals("doodah", dev.getId());
             timestamp = dev.getTimestamp();
             assertEquals(2002, timestamp.get(Calendar.YEAR));
             assertEquals(48, timestamp.get(Calendar.MINUTE));
 
-            dev = (PresenceDeviceInfo) devices.get("eg92n8");
+            dev = devices.get("eg92n8");
             assertNotNull(dev);
             assertEquals(null, dev.getBasicStatus());
             assertEquals(0, dev.getStatusExtensions().size());
@@ -1276,10 +1291,10 @@ public class TestPresenceNoProxy extends SipTestCase
             // check PRESENCE info - top-level notes
             // ---------------------------------------
             assertEquals(2, s.getPresenceNotes().size());
-            PresenceNote note = (PresenceNote) s.getPresenceNotes().get(0);
+            PresenceNote note = s.getPresenceNotes().get(0);
             assertEquals("I'll be in Tokyo next week", note.getValue());
             assertNull(note.getLanguage());
-            note = (PresenceNote) s.getPresenceNotes().get(1);
+            note = s.getPresenceNotes().get(1);
             assertEquals("I'll be in Tahiti after that", note.getValue());
             assertEquals("en", note.getLanguage());
 
@@ -1471,10 +1486,10 @@ public class TestPresenceNoProxy extends SipTestCase
             // repeat w/2 buddies using wrong presentity. Verify
             // presence event on both
             setUpTwoBuddies(ua, buddy, "open", buddy2, "open");
-            Subscription s1 = ua.getBuddyInfo(buddy);
+            PresenceSubscriber s1 = ua.getBuddyInfo(buddy);
             assertNotNull(s1);
             assertEquals(0, s1.getEventErrors().size());
-            Subscription s2 = ua.getBuddyInfo(buddy2);
+            PresenceSubscriber s2 = ua.getBuddyInfo(buddy2);
             assertNotNull(s2);
             assertEquals(0, s2.getEventErrors().size());
 
@@ -1583,11 +1598,12 @@ public class TestPresenceNoProxy extends SipTestCase
 
             assertTrue(buddy1.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
             Thread.sleep(500);
-            Subscription s1 = ua.addBuddy(buddyone, 2000); // send SUBSCRIBE,
+            PresenceSubscriber s1 = ua.addBuddy(buddyone, 2000); // send
+            // SUBSCRIBE,
             // get response
             assertNotNull(s1);
             assertEquals(SipResponse.OK, s1.getReturnCode());
-            assertTrue(s1.processSubscribeResponse(1000));
+            assertTrue(s1.processResponse(1000));
             String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\""
                     + buddyone
                     + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
@@ -1602,9 +1618,10 @@ public class TestPresenceNoProxy extends SipTestCase
             assertTrue(s1.getTimeLeft() <= 2400);
             assertEquals(SipResponse.OK, s1.getReturnCode());
             assertTrue(s1.replyToNotify(reqevent, response)); // send reply
-            HashMap devices = s1.getPresenceDevices(); // check presence info
+            HashMap<String, PresenceDeviceInfo> devices = s1
+                    .getPresenceDevices(); // check presence info
             assertEquals(1, devices.size());
-            PresenceDeviceInfo dev = (PresenceDeviceInfo) devices.get("1");
+            PresenceDeviceInfo dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
 
@@ -1617,18 +1634,18 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
             assertTrue(buddy3.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
             Thread.sleep(500);
-            Subscription s2 = ua.addBuddy(buddytwo, 2000);
+            PresenceSubscriber s2 = ua.addBuddy(buddytwo, 2000);
             assertEquals(2, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            Subscription s3 = ua.addBuddy(buddythree, 3700, 2000);
+            PresenceSubscriber s3 = ua.addBuddy(buddythree, 3700, 2000);
             assertEquals(SipResponse.OK, s2.getReturnCode());
             assertEquals(SipResponse.OK, s3.getReturnCode());
             assertEquals(3, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
             assertNotNull(s2);
             assertNotNull(s3);
-            assertTrue(s2.processSubscribeResponse(1000));
-            assertTrue(s3.processSubscribeResponse(1000));
+            assertTrue(s2.processResponse(1000));
+            assertTrue(s3.processResponse(1000));
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\""
                     + buddytwo
                     + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
@@ -1670,19 +1687,19 @@ public class TestPresenceNoProxy extends SipTestCase
 
             devices = s2.getPresenceDevices(); // check presence info on 2
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("1");
+            dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
 
             devices = s3.getPresenceDevices(); // check presence info on 3
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
 
             devices = s1.getPresenceDevices(); // re-check presence info on 1
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("1");
+            dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
 
@@ -1700,7 +1717,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(3, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
             assertEquals(SipResponse.OK, s2.getReturnCode());
-            assertTrue(s2.processSubscribeResponse(1000));
+            assertTrue(s2.processResponse(1000));
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\""
                     + buddytwo
                     + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"3\"><status><basic>open</basic></status></tuple></presence>";
@@ -1738,23 +1755,23 @@ public class TestPresenceNoProxy extends SipTestCase
 
             devices = s2.getPresenceDevices(); // check presence info on 2
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
 
             devices = s3.getPresenceDevices(); // check presence info on 3
             assertEquals(2, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
-            dev = (PresenceDeviceInfo) devices.get("4");
+            dev = devices.get("4");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
-            assertNull((PresenceDeviceInfo) devices.get("5"));
+            assertNull(devices.get("5"));
 
             devices = s1.getPresenceDevices(); // re-check presence info on 1
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("1");
+            dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
 
@@ -1776,7 +1793,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(s3.toString(), ua.getBuddyInfo(buddythree).toString());
 
             assertEquals(SipResponse.OK, s1.getReturnCode());
-            assertTrue(s1.processSubscribeResponse(1000));
+            assertTrue(s1.processResponse(1000));
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\""
                     + buddyone
                     + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"2\"><status><basic>open</basic></status></tuple></presence>";
@@ -1792,7 +1809,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertTrue(s1.replyToNotify(reqevent, response)); // send reply
             devices = s1.getPresenceDevices(); // check presence info
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("2");
+            dev = devices.get("2");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
 
@@ -1801,16 +1818,16 @@ public class TestPresenceNoProxy extends SipTestCase
 
             devices = s2.getPresenceDevices(); // re-check presence info on 2
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
 
             devices = s3.getPresenceDevices(); // re-check presence info on 3
             assertEquals(2, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
-            dev = (PresenceDeviceInfo) devices.get("4");
+            dev = devices.get("4");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
 
@@ -1831,7 +1848,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(s3.toString(), ua.getBuddyInfo(buddythree).toString());
 
             assertEquals(SipResponse.OK, s1.getReturnCode());
-            assertTrue(s1.processSubscribeResponse(1000));
+            assertTrue(s1.processResponse(1000));
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\""
                     + buddyone
                     + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"></presence>";
@@ -1853,16 +1870,16 @@ public class TestPresenceNoProxy extends SipTestCase
 
             devices = s2.getPresenceDevices(); // re-check presence info on 2
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
 
             devices = s3.getPresenceDevices(); // re-check presence info on 3
             assertEquals(2, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("3");
+            dev = devices.get("3");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
-            dev = (PresenceDeviceInfo) devices.get("4");
+            dev = devices.get("4");
             assertNotNull(dev);
             assertEquals("closed", dev.getBasicStatus());
 
@@ -1884,8 +1901,8 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(s1.toString(), ua.getBuddyInfo(buddyone).toString());
             assertEquals(s2.toString(), ua.getBuddyInfo(buddytwo).toString());
             assertEquals(s3.toString(), ua.getBuddyInfo(buddythree).toString());
-            assertTrue(s2.processSubscribeResponse(1000));
-            assertTrue(s3.processSubscribeResponse(1000));
+            assertTrue(s2.processResponse(1000));
+            assertTrue(s3.processResponse(1000));
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\""
                     + buddytwo
                     + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>open</basic></status></tuple></presence>";
@@ -1923,13 +1940,13 @@ public class TestPresenceNoProxy extends SipTestCase
 
             devices = s2.getPresenceDevices(); // check presence info on 2
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("1");
+            dev = devices.get("1");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
 
             devices = s3.getPresenceDevices(); // check presence info on 3
             assertEquals(1, devices.size());
-            dev = (PresenceDeviceInfo) devices.get("7");
+            dev = devices.get("7");
             assertNotNull(dev);
             assertEquals("open", dev.getBasicStatus());
 
@@ -1961,14 +1978,14 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
             assertTrue(buddy2.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
             Thread.sleep(500);
-            Subscription s1 = ua.addBuddy(b1, 2000);
-            Subscription s2 = ua.addBuddy(b2, 2000);
+            PresenceSubscriber s1 = ua.addBuddy(b1, 2000);
+            PresenceSubscriber s2 = ua.addBuddy(b2, 2000);
             assertNotNull(s1);
             assertNotNull(s2);
             assertEquals(SipResponse.OK, s1.getReturnCode());
             assertEquals(SipResponse.OK, s2.getReturnCode());
-            assertTrue(s1.processSubscribeResponse(1000));
-            assertTrue(s2.processSubscribeResponse(1000));
+            assertTrue(s1.processResponse(1000));
+            assertTrue(s2.processResponse(1000));
             String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\""
                     + b1
                     + "\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>"
@@ -2023,12 +2040,12 @@ public class TestPresenceNoProxy extends SipTestCase
      * "OK")); // do something with a buddy - sends SUBSCRIBE, gets response
      * Subscription s = ua.addBuddy(buddy, 2000); // check the return info
      * assertNotNull(s); assertEquals(SipResponse.OK, s.getReturnCode()); //
-     * process the received response
-     * assertTrue(s.processSubscribeResponse(1000)); // check the response
-     * processing results assertTrue(s.isSubscriptionActive());
-     * assertTrue(s.getTimeLeft() <= 3600); // tell far end to send a NOTIFY
-     * String notify_body = "<?xml version=\"1.0\"
-     * encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\"
+     * process the received response assertTrue(s.processResponse(1000)); //
+     * check the response processing results
+     * assertTrue(s.isSubscriptionActive()); assertTrue(s.getTimeLeft() <=
+     * 3600); // tell far end to send a NOTIFY String notify_body = "<?xml
+     * version=\"1.0\" encoding=\"UTF-8\"?>\n<presence
+     * entity=\"sip:becky@cafesip.org\"
      * xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple
      * id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
      * assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,

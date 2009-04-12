@@ -97,7 +97,7 @@ public class SipPhone extends SipSession implements SipActionObject,
 
     private ArrayList<SipCall> callList = new ArrayList<SipCall>();
 
-    private Hashtable<String, Subscription> buddyList = new Hashtable<String, Subscription>();
+    private Hashtable<String, PresenceSubscriber> buddyList = new Hashtable<String, PresenceSubscriber>();
 
     // These are the buddies that have been added to the buddy list by the test
     // program.
@@ -106,7 +106,7 @@ public class SipPhone extends SipSession implements SipActionObject,
     // the list only by the test program. Buddies in the list may have their
     // subscriptions kept alive (re-subscribed) automatically - TODO.
 
-    private Hashtable<String, Subscription> buddyTerminatedList = new Hashtable<String, Subscription>();
+    private Hashtable<String, PresenceSubscriber> buddyTerminatedList = new Hashtable<String, PresenceSubscriber>();
 
     // This list contains Subscriptions that are not in the buddy list - they
     // get here
@@ -321,7 +321,7 @@ public class SipPhone extends SipSession implements SipActionObject,
             // update our contact info with that of the server response -
             // server may have reset our contact expiry
 
-            ListIterator contacts = response.getHeaders(ContactHeader.NAME);
+            ListIterator<?> contacts = response.getHeaders(ContactHeader.NAME);
             if (contacts != null)
             {
                 while (contacts.hasNext())
@@ -596,7 +596,7 @@ public class SipPhone extends SipSession implements SipActionObject,
     {
         initErrorInfo();
 
-        ListIterator challenges = null;
+        ListIterator<?> challenges = null;
         if (response.getStatusCode() == Response.UNAUTHORIZED)
         {
             challenges = response.getHeaders(WWWAuthenticateHeader.NAME);
@@ -1430,7 +1430,7 @@ public class SipPhone extends SipSession implements SipActionObject,
 
         if (request.getMethod().equals(Request.NOTIFY) == false)
         {
-            Subscription.sendResponse(this, requestEvent,
+            SubscriptionSubscriber.sendResponse(this, requestEvent,
                     SipResponse.SERVER_INTERNAL_ERROR,
                     "Expected to receive a NOTIFY request, but instead got: "
                             + request.getMethod());
@@ -1444,12 +1444,14 @@ public class SipPhone extends SipSession implements SipActionObject,
             return;
         }
 
-        // find the Subscription that this message is for - get the buddy uri
-        // from the message
+        // find the SubscriptionSubscriber that this message is for - get the
+        // subscription target uri from the message
 
         FromHeader from = (FromHeader) request.getHeader(FromHeader.NAME);
 
-        Subscription subs = getBuddyInfo(from.getAddress().getURI().toString());
+        // TODO check EventHeader event type to see what kind of subscription
+        PresenceSubscriber subs = getBuddyInfo(from.getAddress().getURI()
+                .toString());
         if (subs != null)
         {
             if (subs.messageForMe(request) == true)
@@ -1463,7 +1465,7 @@ public class SipPhone extends SipSession implements SipActionObject,
         String err = "Received orphan NOTIFY message (no matching subscription) from "
                 + from.getAddress().getURI().toString();
 
-        Subscription.sendResponse(this, requestEvent,
+        SubscriptionSubscriber.sendResponse(this, requestEvent,
                 SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST, err);
 
         String error = "*** NOTIFY REQUEST ERROR ***  ("
@@ -1476,24 +1478,27 @@ public class SipPhone extends SipSession implements SipActionObject,
     }
 
     private void distributeEventError(String err)
-    // to all the Subscriptions - test program will need to see the error
+    // to all the appropriate Subscriptions - test program will need to see the
+    // error
     {
-        ArrayList<Subscription> buddies = new ArrayList<Subscription>();
+        ArrayList<SubscriptionSubscriber> subscriptions = new ArrayList<SubscriptionSubscriber>();
 
+        // TODO, pass in EventHeader and use event type to get the approriate
+        // subscriptions
         synchronized (buddyList)
         {
             if (!buddyList.isEmpty())
             {
-                buddies.addAll(buddyList.values());
+                subscriptions.addAll(buddyList.values());
             }
 
             if (!buddyTerminatedList.isEmpty())
             {
-                buddies.addAll(buddyTerminatedList.values());
+                subscriptions.addAll(buddyTerminatedList.values());
             }
         }
 
-        Iterator<Subscription> i = buddies.iterator();
+        Iterator<SubscriptionSubscriber> i = subscriptions.iterator();
         while (i.hasNext())
         {
             i.next().addEventError(err);
@@ -1503,9 +1508,9 @@ public class SipPhone extends SipSession implements SipActionObject,
     /**
      * This method adds a buddy to the buddy list and starts an ongoing
      * subscription for purposes of tracking the buddy's presence information.
-     * Please read the SipUnit User Guide webpage Presence section (at least the
-     * operation overview part) for information on how to use SipUnit presence
-     * capabilities.
+     * Please read the SipUnit User Guide webpage Event Subscription (at least
+     * the operation overview part) for information on how to use SipUnit
+     * presence capabilities.
      * <p>
      * This method creates a SUBSCRIBE request message, sends it out, and waits
      * for a response to be received. It saves the received response and checks
@@ -1518,32 +1523,31 @@ public class SipPhone extends SipSession implements SipActionObject,
      * This method blocks until one of the above outcomes is reached.
      * <p>
      * In the case of a positive response status code, this method returns a
-     * Subscription object that will represent the buddy for the life of the
-     * subscription and puts the Subscription object in this SipPhone's buddy
-     * list. You can save the returned Subscription object yourself or retrieve
-     * it anytime later by calling this SipPhone's getBuddyInfo(buddy-uri). You
-     * will use the returned Subscription object to proceed through the
-     * remainder of this SUBSCRIBE-NOTIFY sequence as well as future
-     * SUBSCRIBE-NOTIFY sequences and to find out details at any given time such
-     * as the subscription state, amount of time left on the subscription,
-     * termination reason, presence information, details of received responses
-     * and requests, etc.
+     * PresenceSubscriber object that will represent the buddy for the life of
+     * the subscription and puts the PresenceSubscriber object in this
+     * SipPhone's buddy list. You can save the returned PresenceSubscriber
+     * object yourself or retrieve it anytime later by calling this SipPhone's
+     * getBuddyInfo(buddy-uri). You will use the returned PresenceSubscriber
+     * object to proceed through the remainder of this SUBSCRIBE-NOTIFY sequence
+     * as well as future SUBSCRIBE-NOTIFY sequences and to find out details at
+     * any given time such as the subscription state, amount of time left on the
+     * subscription, termination reason, presence information, details of
+     * received responses and requests, etc.
      * <p>
      * In the case of a positive response status code (a non-null object is
      * returned), you may find out more about the response that was just
-     * received by calling the Subscription methods getReturnCode() and
-     * getCurrentSubscribeResponse()/getLastReceivedResponse(). Your next step
-     * at this point will be to call the Subscription's
-     * processSubscribeResponse() method to proceed with the SUBSCRIBE
-     * processing.
+     * received by calling the PresenceSubscriber methods getReturnCode() and
+     * getCurrentResponse()/getLastReceivedResponse(). Your next step at this
+     * point will be to call the PresenceSubscriber's processResponse() method
+     * to proceed with the SUBSCRIBE processing.
      * <p>
-     * In the case of a fatal outcome, no Subscription is created and null is
-     * returned. In this case, call the usual SipUnit failed-operation methods
-     * to find out what happened (ie, call this SipPhone's getErrorMessage(),
-     * getReturnCode(), and/or getException() methods). The getReturnCode()
-     * method will tell you the response status code that was received from the
-     * network (unless it is an internal SipUnit error code, see the SipSession
-     * javadoc for more on that).
+     * In the case of a fatal outcome, no subscription object is created and
+     * null is returned. In this case, call the usual SipUnit failed-operation
+     * methods to find out what happened (ie, call this SipPhone's
+     * getErrorMessage(), getReturnCode(), and/or getException() methods). The
+     * getReturnCode() method will tell you the response status code that was
+     * received from the network (unless it is an internal SipUnit error code,
+     * see the SipSession javadoc for more on that).
      * 
      * @param uri
      *            the URI (ie, sip:bob@nist.gov) of the buddy to be added to the
@@ -1563,11 +1567,11 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return Subscription object representing the buddy if the operation is
-     *         successful so far, null otherwise.
+     * @return PresenceSubscriber object representing the buddy if the operation
+     *         is successful so far, null otherwise.
      */
-    public Subscription addBuddy(String uri, int duration, String eventId,
-            long timeout)
+    public PresenceSubscriber addBuddy(String uri, int duration,
+            String eventId, long timeout)
     {
         initErrorInfo();
 
@@ -1580,7 +1584,7 @@ public class SipPhone extends SipSession implements SipActionObject,
 
         try
         {
-            Subscription sub = new Subscription(uri, this);
+            PresenceSubscriber sub = new PresenceSubscriber(uri, this);
             Request req = sub.createSubscribeMessage(duration, eventId);
 
             if (req != null)
@@ -1633,10 +1637,10 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return Subscription object representing the buddy if the operation is
-     *         successful so far, null otherwise.
+     * @return PresenceSubscriber object representing the buddy if the operation
+     *         is successful so far, null otherwise.
      */
-    public Subscription addBuddy(String uri, long timeout)
+    public PresenceSubscriber addBuddy(String uri, long timeout)
     {
         return addBuddy(uri, DEFAULT_SUBSCRIBE_DURATION, null, timeout);
     }
@@ -1655,10 +1659,10 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return Subscription object representing the buddy if the operation is
-     *         successful so far, null otherwise.
+     * @return PresenceSubscriber object representing the buddy if the operation
+     *         is successful so far, null otherwise.
      */
-    public Subscription addBuddy(String uri, int duration, long timeout)
+    public PresenceSubscriber addBuddy(String uri, int duration, long timeout)
     {
         return addBuddy(uri, duration, null, timeout);
     }
@@ -1678,10 +1682,10 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return Subscription object representing the buddy if the operation is
-     *         successful so far, null otherwise.
+     * @return PresenceSubscriber object representing the buddy if the operation
+     *         is successful so far, null otherwise.
      */
-    public Subscription addBuddy(String uri, String eventId, long timeout)
+    public PresenceSubscriber addBuddy(String uri, String eventId, long timeout)
     {
         return addBuddy(uri, DEFAULT_SUBSCRIBE_DURATION, eventId, timeout);
     }
@@ -1689,7 +1693,7 @@ public class SipPhone extends SipSession implements SipActionObject,
     /**
      * This method performs a presence 'fetch' on the given user, to get a
      * one-time report on the user's presence status and information. Please
-     * read the SipUnit User Guide webpage Presence section (at least the
+     * read the SipUnit User Guide webpage Event Subscription (at least the
      * operation overview part) for information on how to use SipUnit presence
      * capabilities.
      * <p>
@@ -1705,31 +1709,31 @@ public class SipPhone extends SipSession implements SipActionObject,
      * This method blocks until one of the above outcomes is reached.
      * <p>
      * In the case of a positive response status code, this method returns a
-     * Subscription object representing the user and puts the Subscription
-     * object in this SipPhone's retired buddy list. The retired buddy list
-     * consists of subscriptions resulting from a fetch or from removing a buddy
-     * from the buddy list. You can save the returned Subscription object
-     * yourself or retrieve it anytime later by calling this SipPhone's
-     * getBuddyInfo(buddy-uri). You will use the returned Subscription object to
-     * proceed through the remainder of the SUBSCRIBE-NOTIFY sequence and to
-     * find out details such as the subscription state, termination reason,
-     * presence information, details of received responses and requests, etc.
+     * PresenceSubscriber object representing the user and puts the object in
+     * this SipPhone's retired buddy list. The retired buddy list consists of
+     * subscriptions resulting from a fetch or from removing a buddy from the
+     * buddy list. You can save the returned PresenceSubscriber object yourself
+     * or retrieve it anytime later by calling this SipPhone's
+     * getBuddyInfo(buddy-uri). You will use the returned PresenceSubscriber
+     * object to proceed through the remainder of the SUBSCRIBE-NOTIFY sequence
+     * and to find out details such as the subscription state, termination
+     * reason, presence information, details of received responses and requests,
+     * etc.
      * <p>
      * In the case of a positive response status code (a non-null object is
      * returned), you may find out more about the response that was just
-     * received by calling the Subscription methods getReturnCode() and
-     * getCurrentSubscribeResponse()/getLastReceivedResponse(). Your next step
-     * at this point will be to call the Subscription's
-     * processSubscribeResponse() method to proceed with the SUBSCRIBE
-     * processing.
+     * received by calling the PresenceSubscriber methods getReturnCode() and
+     * getCurrentResponse()/getLastReceivedResponse(). Your next step at this
+     * point will be to call the PresenceSubscriber's processResponse() method
+     * to proceed with the SUBSCRIBE processing.
      * <p>
-     * In the case of a fatal outcome, no Subscription is created and null is
-     * returned. In this case, call the usual SipUnit failed-operation methods
-     * to find out what happened (ie, call this SipPhone's getErrorMessage(),
-     * getReturnCode(), and/or getException() methods). The getReturnCode()
-     * method will tell you the response status code that was received from the
-     * network (unless it is an internal SipUnit error code, see the SipSession
-     * javadoc for more on that).
+     * In the case of a fatal outcome, no Subscription object is created and
+     * null is returned. In this case, call the usual SipUnit failed-operation
+     * methods to find out what happened (ie, call this SipPhone's
+     * getErrorMessage(), getReturnCode(), and/or getException() methods). The
+     * getReturnCode() method will tell you the response status code that was
+     * received from the network (unless it is an internal SipUnit error code,
+     * see the SipSession javadoc for more on that).
      * 
      * @param uri
      *            the URI (ie, sip:bob@nist.gov) of the user whose presence info
@@ -1742,10 +1746,10 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return Subscription object representing the user fetch if the operation
-     *         is successful so far, null otherwise.
+     * @return PresenceSubscriber object representing the user fetch if the
+     *         operation is successful so far, null otherwise.
      */
-    public Subscription fetchPresenceInfo(String uri, String eventId,
+    public PresenceSubscriber fetchPresenceInfo(String uri, String eventId,
             long timeout)
     {
         initErrorInfo();
@@ -1759,7 +1763,7 @@ public class SipPhone extends SipSession implements SipActionObject,
                 return null;
             }
 
-            Subscription sub = new Subscription(uri, this);
+            PresenceSubscriber sub = new PresenceSubscriber(uri, this);
             synchronized (buddyList)
             {
                 buddyTerminatedList.put(uri, sub);
@@ -1816,17 +1820,17 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return Subscription object representing the user fetch if the operation
-     *         is successful so far, null otherwise.
+     * @return PresenceSubscriber object representing the user fetch if the
+     *         operation is successful so far, null otherwise.
      */
-    public Subscription fetchPresenceInfo(String uri, long timeout)
+    public PresenceSubscriber fetchPresenceInfo(String uri, long timeout)
     {
         return fetchPresenceInfo(uri, null, timeout);
     }
 
     /**
-     * This method returns the Subscription object representing a buddy or user
-     * whose presence information was fetched at some previous point. The
+     * This method returns the PresenceSubscriber object representing a buddy or
+     * user whose presence information was fetched at some previous point. The
      * returned object contains the most recently obtained presence information
      * for the given user. Status, presence device info, received requests
      * (NOTIFY's) and SUBSCRIBE responses, etc. for this user's subscription can
@@ -1838,21 +1842,21 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param uri
      *            the URI (ie, sip:bob@nist.gov) of the user whose subscription
      *            object is to be returned.
-     * @return A Subscription object that contains information about the user's
-     *         last obtained presence status and other info, or null if there
-     *         was never any status fetch done for this user and this user was
-     *         never in the buddy list.
+     * @return A PresenceSubscriber object that contains information about the
+     *         user's last obtained presence status and other info, or null if
+     *         there was never any status fetch done for this user and this user
+     *         was never in the buddy list.
      * 
      */
-    public Subscription getBuddyInfo(String uri)
+    public PresenceSubscriber getBuddyInfo(String uri)
     {
         synchronized (buddyList)
         {
-            Subscription s = (Subscription) buddyList.get(uri);
+            PresenceSubscriber s = buddyList.get(uri);
 
             if (s == null)
             {
-                s = (Subscription) buddyTerminatedList.get(uri);
+                s = buddyTerminatedList.get(uri);
             }
 
             return s;
@@ -1863,11 +1867,12 @@ public class SipPhone extends SipSession implements SipActionObject,
      * This method updates the presence information of a buddy in the buddy list
      * by initiating a SUBSCRIBE/NOTIFY sequence. It is virtually the same as
      * addBuddy(uri, duration, eventId, timeout) except that the buddy list
-     * content is not changed by this operation and the existing Subscription
-     * object for this buddy continues to be used (no new one is created). For a
-     * test program, stepping through and processing the SUBSCRIBE/NOTIFY
-     * sequence for a refresh is the same as it is for the addBuddy() case.
-     * Please read the addBuddy(uri, duration, eventId, timeout) javadoc.
+     * content is not changed by this operation and the existing
+     * PresenceSubscriber object for this buddy continues to be used (no new one
+     * is created). For a test program, stepping through and processing the
+     * SUBSCRIBE/NOTIFY sequence for a refresh is the same as it is for the
+     * addBuddy() case. Please read the addBuddy(uri, duration, eventId,
+     * timeout) javadoc.
      * <p>
      * The subscription duration is reset to the passed in value. If the passed
      * in duration is 0, this is an unsubscribe. Note, the buddy stays in the
@@ -1890,18 +1895,19 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         refresh operation is successful so far, null otherwise. Null just
-     *         means this SUBSCRIBE sequence failed, the buddy's Subscription
-     *         object still exists as before (you can get it by calling
-     *         SipPhone.getBuddyInfo() if you need it). If this method returns
-     *         null, call this SipPhone's getReturnCode(), getErrorMessage()
-     *         and/or getException() methods to see why the operation failed.
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the refresh operation is successful so far, null otherwise. Null
+     *         just means this SUBSCRIBE sequence failed, the buddy's
+     *         PresenceSubscriber object still exists as before (you can get it
+     *         by calling SipPhone.getBuddyInfo() if you need it). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
+     *         getErrorMessage() and/or getException() methods to see why the
+     *         operation failed.
      */
-    public Subscription refreshBuddy(String uri, int duration, String eventId,
-            long timeout)
+    public PresenceSubscriber refreshBuddy(String uri, int duration,
+            String eventId, long timeout)
     {
-        Subscription sub = (Subscription) buddyList.get(uri);
+        PresenceSubscriber sub = buddyList.get(uri);
         if (sub != null)
         {
             Request req = sub.createSubscribeMessage(duration, eventId);
@@ -1942,17 +1948,19 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         refresh operation is successful so far, null otherwise. Null just
-     *         means this SUBSCRIBE sequence failed, the buddy's Subscription
-     *         object still exists as before (you can get it by calling
-     *         SipPhone.getBuddyInfo() if you need it). If this method returns
-     *         null, call this SipPhone's getReturnCode(), getErrorMessage()
-     *         and/or getException() methods to see why the operation failed.
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the refresh operation is successful so far, null otherwise. Null
+     *         just means this SUBSCRIBE sequence failed, the buddy's
+     *         PresenceSubscriber object still exists as before (you can get it
+     *         by calling SipPhone.getBuddyInfo() if you need it). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
+     *         getErrorMessage() and/or getException() methods to see why the
+     *         operation failed.
      */
-    public Subscription refreshBuddy(String uri, String eventId, long timeout)
+    public PresenceSubscriber refreshBuddy(String uri, String eventId,
+            long timeout)
     {
-        Subscription sub = (Subscription) buddyList.get(uri);
+        PresenceSubscriber sub = buddyList.get(uri);
         if (sub != null)
         {
             return refreshBuddy(uri, sub.getTimeLeft(), eventId, timeout);
@@ -1978,17 +1986,19 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         refresh operation is successful so far, null otherwise. Null just
-     *         means this SUBSCRIBE sequence failed, the buddy's Subscription
-     *         object still exists as before (you can get it by calling
-     *         SipPhone.getBuddyInfo() if you need it). If this method returns
-     *         null, call this SipPhone's getReturnCode(), getErrorMessage()
-     *         and/or getException() methods to see why the operation failed.
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the refresh operation is successful so far, null otherwise. Null
+     *         just means this SUBSCRIBE sequence failed, the buddy's
+     *         PresenceSubscriber object still exists as before (you can get it
+     *         by calling SipPhone.getBuddyInfo() if you need it). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
+     *         getErrorMessage() and/or getException() methods to see why the
+     *         operation failed.
      */
-    public Subscription refreshBuddy(String uri, int duration, long timeout)
+    public PresenceSubscriber refreshBuddy(String uri, int duration,
+            long timeout)
     {
-        Subscription sub = (Subscription) buddyList.get(uri);
+        PresenceSubscriber sub = buddyList.get(uri);
         if (sub != null)
         {
             String eventid = sub.getEventId();
@@ -2015,17 +2025,18 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         refresh operation is successful so far, null otherwise. Null just
-     *         means this SUBSCRIBE sequence failed, the buddy's Subscription
-     *         object still exists as before (you can get it by calling
-     *         SipPhone.getBuddyInfo() if you need it). If this method returns
-     *         null, call this SipPhone's getReturnCode(), getErrorMessage()
-     *         and/or getException() methods to see why the operation failed.
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the refresh operation is successful so far, null otherwise. Null
+     *         just means this SUBSCRIBE sequence failed, the buddy's
+     *         PresenceSubscriber object still exists as before (you can get it
+     *         by calling SipPhone.getBuddyInfo() if you need it). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
+     *         getErrorMessage() and/or getException() methods to see why the
+     *         operation failed.
      */
-    public Subscription refreshBuddy(String uri, long timeout)
+    public PresenceSubscriber refreshBuddy(String uri, long timeout)
     {
-        Subscription sub = (Subscription) buddyList.get(uri);
+        PresenceSubscriber sub = buddyList.get(uri);
         if (sub != null)
         {
             return refreshBuddy(uri, sub.getTimeLeft(), sub.getEventId(),
@@ -2042,12 +2053,12 @@ public class SipPhone extends SipSession implements SipActionObject,
     /**
      * This method is the same as refreshBuddy(uri, duration, eventId, timeout)
      * except that instead of creating the SUBSCRIBE request from parameters
-     * passed in, the provided request parameter is used for sending out the
-     * SUBSCRIBE message.
+     * passed in, the provided request message parameter is used for sending out
+     * the SUBSCRIBE message.
      * <p>
      * The Request parameter passed in comes from
-     * Subscription.createSubscribeMessage(). The subscription duration is reset
-     * to the passed in Request's expiry value. If it is 0, this is an
+     * PresenceSubscriber.createSubscribeMessage(). The subscription duration is
+     * reset to the passed in Request's expiry value. If it is 0, this is an
      * unsubscribe. Note, the buddy stays in the buddy list even though the
      * subscription won't be active. The event "id" in the given request will be
      * used subsequently (for error checking SUBSCRIBE responses and NOTIFYs
@@ -2061,22 +2072,23 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         refresh operation is successful so far, null otherwise. Null just
-     *         means this SUBSCRIBE sequence failed, the buddy's Subscription
-     *         object still exists as before (you can get it by calling
-     *         SipPhone.getBuddyInfo() if you need it). If this method returns
-     *         null, call this SipPhone's getReturnCode(), getErrorMessage()
-     *         and/or getException() methods to see why the operation failed.
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the refresh operation is successful so far, null otherwise. Null
+     *         just means this SUBSCRIBE sequence failed, the buddy's
+     *         PresenceSubscriber object still exists as before (you can get it
+     *         by calling SipPhone.getBuddyInfo() if you need it). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
+     *         getErrorMessage() and/or getException() methods to see why the
+     *         operation failed.
      */
-    public Subscription refreshBuddy(String uri, Request req, long timeout)
+    public PresenceSubscriber refreshBuddy(String uri, Request req, long timeout)
     {
         initErrorInfo();
 
-        Subscription sub = (Subscription) buddyList.get(uri);
+        PresenceSubscriber sub = buddyList.get(uri);
         if (sub != null)
         {
-            if (sub.refresh(req, timeout, false) == true)
+            if (sub.refreshSubscription(req, timeout, false) == true)
             {
                 return sub;
             }
@@ -2101,15 +2113,15 @@ public class SipPhone extends SipSession implements SipActionObject,
      * SUBSCRIBE/NOTIFY sequence to terminate the subscription unless the
      * subscription is already terminated. Regardless, the buddy is taken out of
      * the active buddy list and put into the retired buddy list (which is a
-     * list of Subscription objects of buddies that have been removed from the
-     * buddy list and Subscription objects for individual fetch operations that
-     * have been done). A retired buddy's Subscription object continues to be
-     * accessible (via SipPhone.getBuddyInfo()).
+     * list of PresenceSubscriber objects of buddies that have been removed from
+     * the buddy list and PresenceSubscriber objects for individual fetch
+     * operations that have been done). A retired buddy's PresenceSubscriber
+     * object continues to be accessible (via SipPhone.getBuddyInfo()).
      * <p>
      * If the subscription is active, this operation is virtually the same as
      * addBuddy(uri, duration, eventId, timeout) except that it is an
-     * 'unsubscribe' and also the existing Subscription object for this buddy
-     * continues to be used (no new one is created). For a test program,
+     * 'unsubscribe' and also the existing PresenceSubscriber object for this
+     * buddy continues to be used (no new one is created). For a test program,
      * stepping through and processing the SUBSCRIBE/NOTIFY sequence for a
      * "remove" is the same as it is for the addBuddy() case. Please read the
      * addBuddy(uri, duration, eventId, timeout) javadoc.
@@ -2119,9 +2131,9 @@ public class SipPhone extends SipSession implements SipActionObject,
      * <p>
      * In order for you to determine whether or not to proceed forward with the
      * SUBSCRIBE/NOTIFY sequence processing when this method returns non-null,
-     * call the returned Subscription's isRemovalComplete() method. It will tell
-     * you if an unsubscribe sequence was initiated, by returning false, or not
-     * initiated, by returning true.
+     * call the returned PresenceSubscriber's isRemovalComplete() method. It
+     * will tell you if an unsubscribe sequence was initiated, by returning
+     * false, or not initiated, by returning true.
      * 
      * @param uri
      *            the URI (ie, sip:bob@nist.gov) of the buddy to be removed
@@ -2133,20 +2145,21 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         unsubscribe operation is successful so far or wasn't needed, null
-     *         otherwise. In either case, the buddy is removed from the buddy
-     *         list. Null just means this unSUBSCRIBE sequence failed, the
-     *         buddy's Subscription object still exists as before (you can get
-     *         it anytime by calling SipPhone.getBuddyInfo()). If this method
-     *         returns null, call this SipPhone's getReturnCode(),
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the unsubscribe operation is successful so far or wasn't needed,
+     *         null otherwise. In either case, the buddy is removed from the
+     *         buddy list. Null just means this unSUBSCRIBE sequence failed, the
+     *         buddy's PresenceSubscriber object still exists as before (you can
+     *         get it anytime by calling SipPhone.getBuddyInfo()). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
      *         getErrorMessage() and/or getException() methods to see why the
      *         operation failed. If the buddy wasn't in the list, null is
      *         returned immediately.
      */
-    public Subscription removeBuddy(String uri, String eventId, long timeout)
+    public PresenceSubscriber removeBuddy(String uri, String eventId,
+            long timeout)
     {
-        Subscription sub = (Subscription) buddyList.get(uri);
+        PresenceSubscriber sub = buddyList.get(uri);
         if (sub != null)
         {
             Request req = sub.createSubscribeMessage(0, eventId);
@@ -2181,18 +2194,18 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         unsubscribe operation is successful so far or wasn't needed, null
-     *         otherwise. In either case, the buddy is removed from the buddy
-     *         list. Null just means this unSUBSCRIBE sequence failed, the
-     *         buddy's Subscription object still exists as before (you can get
-     *         it anytime by calling SipPhone.getBuddyInfo()). If this method
-     *         returns null, call this SipPhone's getReturnCode(),
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the unsubscribe operation is successful so far or wasn't needed,
+     *         null otherwise. In either case, the buddy is removed from the
+     *         buddy list. Null just means this unSUBSCRIBE sequence failed, the
+     *         buddy's PresenceSubscriber object still exists as before (you can
+     *         get it anytime by calling SipPhone.getBuddyInfo()). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
      *         getErrorMessage() and/or getException() methods to see why the
      *         operation failed. If the buddy wasn't in the list, null is
      *         returned immediately.
      */
-    public Subscription removeBuddy(String uri, long timeout)
+    public PresenceSubscriber removeBuddy(String uri, long timeout)
     {
         return removeBuddy(uri, (String) null, timeout);
     }
@@ -2203,8 +2216,8 @@ public class SipPhone extends SipSession implements SipActionObject,
      * provided request parameter is used for sending out the SUBSCRIBE message
      * if the subscription is active.
      * <p>
-     * The Request parameter passed in comes from
-     * Subscription.createSubscribeMessage(). The event "id" in the given
+     * The Request message parameter passed in comes from
+     * PresenceSubscriber.createSubscribeMessage(). The event "id" in the given
      * request will be used subsequently for error checking the SUBSCRIBE
      * response and NOTIFY request from the server.
      * 
@@ -2215,26 +2228,26 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a SUBSCRIBE response,
      *            in milliseconds. Use a value of 0 to wait indefinitely.
-     * @return The existing Subscription object representing the buddy if the
-     *         unsubscribe operation is successful so far or wasn't needed, null
-     *         otherwise. In either case, the buddy is removed from the buddy
-     *         list. Null just means this unSUBSCRIBE sequence failed, the
-     *         buddy's Subscription object still exists as before (you can get
-     *         it anytime by calling SipPhone.getBuddyInfo()). If this method
-     *         returns null, call this SipPhone's getReturnCode(),
+     * @return The existing PresenceSubscriber object representing the buddy if
+     *         the unsubscribe operation is successful so far or wasn't needed,
+     *         null otherwise. In either case, the buddy is removed from the
+     *         buddy list. Null just means this unSUBSCRIBE sequence failed, the
+     *         buddy's PresenceSubscriber object still exists as before (you can
+     *         get it anytime by calling SipPhone.getBuddyInfo()). If this
+     *         method returns null, call this SipPhone's getReturnCode(),
      *         getErrorMessage() and/or getException() methods to see why the
      *         operation failed. If the buddy wasn't in the list, null is
      *         returned immediately.
      */
-    public Subscription removeBuddy(String uri, Request req, long timeout)
+    public PresenceSubscriber removeBuddy(String uri, Request req, long timeout)
     {
         initErrorInfo();
 
-        Subscription sub;
+        PresenceSubscriber sub;
 
         synchronized (buddyList)
         {
-            sub = (Subscription) buddyList.remove(uri);
+            sub = buddyList.remove(uri);
         }
 
         if (sub != null)
@@ -2244,7 +2257,8 @@ public class SipPhone extends SipSession implements SipActionObject,
                 buddyTerminatedList.put(uri, sub);
             }
 
-            if (sub.endSubscription(req, timeout, proxyHost != null) == true)
+            if (sub.endSubscription(req, timeout, proxyHost != null,
+                    "Buddy removed from contact list") == true)
             {
                 return sub;
             }
@@ -2276,11 +2290,11 @@ public class SipPhone extends SipSession implements SipActionObject,
      * See related methods getBuddyInfo(), getRetiredBuddies().
      * 
      * @return a Hashtable of zero or more entries, where the key = URI of the
-     *         buddy, value = Subscription object.
+     *         buddy, value = PresenceSubscriber object.
      */
-    public Hashtable<String, Subscription> getBuddyList()
+    public Hashtable<String, PresenceSubscriber> getBuddyList()
     {
-        return new Hashtable<String, Subscription>(buddyList);
+        return new Hashtable<String, PresenceSubscriber>(buddyList);
     }
 
     /**
@@ -2294,11 +2308,11 @@ public class SipPhone extends SipSession implements SipActionObject,
      * See related methods getBuddyInfo(), getBuddyList().
      * 
      * @return a Hashtable of zero or more entries, where the key = URI of the
-     *         user, value = Subscription object.
+     *         user, value = PresenceSubscriber object.
      */
-    public Hashtable<String, Subscription> getRetiredBuddies()
+    public Hashtable<String, PresenceSubscriber> getRetiredBuddies()
     {
-        return new Hashtable<String, Subscription>(buddyTerminatedList);
+        return new Hashtable<String, PresenceSubscriber>(buddyTerminatedList);
     }
 
     protected String getProxyHost()

@@ -21,10 +21,9 @@ package org.cafesip.sipunit;
 import java.util.ArrayList;
 
 /**
- * MessageListener represents certain SipUnit objects (such as SipCall and
- * Subscription) that perform SIP messaging on behalf of a user program. This
- * interface provides a uniform way of retrieving messages received by such
- * SipUnit objects.
+ * MessageListener represents certain SipUnit objects (such as SipCall) that
+ * perform SIP messaging on behalf of a user program. This interface provides a
+ * uniform way of retrieving messages received by such SipUnit objects.
  * 
  * Internally, this interface is used for asynchronous reception of SIP
  * requests, responses, and response timeouts.
