@@ -331,11 +331,11 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
     /**
      * This method creates and returns to the caller the next SUBSCRIBE message
      * that would be sent out for this subscription, so that the user can modify
-     * it before it gets sent (ie, to introduce errors - insert incorrect
-     * content, remove content, etc.). The idea is to call this method which
-     * will create the SUBSCRIBE request correctly, then modify the returned
-     * request yourself, then call one of the subscription-related methods (for
-     * example: SipPhone methods refreshBuddy(), removeBuddy()) that take
+     * it before it gets sent (to introduce errors - insert incorrect content,
+     * remove content, etc.). The idea is to call this method which will create
+     * the SUBSCRIBE request correctly, then modify the returned request
+     * yourself, then call one of the subscription-related methods (for example:
+     * PresenceSubscriber methods refreshBuddy(), removeBuddy()) that take
      * Request as a parameter, which will result in the request being sent out.
      * <p>
      * If you don't need to modify the next SUBSCRIBE request to introduce
@@ -363,13 +363,13 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
      *            subsequently (for error checking SUBSCRIBE responses and
      *            NOTIFYs from the server as well as for sending subsequent
      *            SUBSCRIBEs) unless changed by the caller later on another
-     *            SipPhone buddy method call (refreshBuddy(), removeBuddy(),
-     *            fetch, etc.).
+     *            subscription-related method call.
      * @param eventType
      *            the eventType value (for example: "presence") to use in the
      *            EventHeader and AllowEventsHeader
      * @return a SUBSCRIBE Request object if creation is successful, null
-     *         otherwise.
+     *         otherwise. If null, call getReturnCode(), getErrorMessage()
+     *         and/or getException() for failure info.
      */
     public Request createSubscribeMessage(int duration, String eventId,
             String eventType)
@@ -683,31 +683,33 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
     }
 
     /**
-     * This method processes the initial SUBSCRIBE response received after
-     * sending a SUBSCRIBE request and takes the SUBSCRIBE transaction to its
-     * completion by collecting any remaining responses from the far end for
-     * this transaction, handling authentication challenge if needed, and
-     * updating the Subscription object with the results of the SUBSCRIBE
-     * sequence.
+     * This method processes the initial response received after sending a
+     * subscription request and takes the transaction to its completion by
+     * collecting any remaining responses from the far end for this transaction,
+     * handling authentication challenges if needed, and updating this object
+     * with the results of the subscription sequence.
      * <p>
-     * Call this method after calling any of the SipPhone buddy/fetch methods
-     * that initiate a SUBSCRIBE sequence (addBuddy(), refreshBuddy(),
-     * fetchPresenceInfo(), etc.) and getting back a positive indication.
+     * Call this method after calling any of the subscription operation methods
+     * that send a SUBSCRIBE or REFER request like SipPhone.addBuddy(),
+     * PresenceSubscriber.refreshBuddy(), SipPhone.refer(), etc. and getting
+     * back a positive indication.
      * <p>
-     * If a success indication is returned by this method, you may call other
-     * methods on this object to find out the result of the SUBSCRIBE sequence:
+     * If a success indication is returned by this method, you can call other
+     * methods to find out the result of the messaging sequence:
      * isSubscriptionActive/Pending/Terminated() for subscription state
-     * information, getTimeLeft() which is set based on the received response.
+     * information, getTimeLeft() which is set based on the response
+     * information.
      * <p>
      * The next step is to call waitNotify() to retrieve/wait for the NOTIFY
      * request from the server.
      * 
      * @param timeout
-     *            The maximum amount of time to wait for the SUBSCRIBE
+     *            The maximum amount of time to wait for the subscription
      *            transaction to complete, in milliseconds. Use a value of 0 to
      *            wait indefinitely.
      * @return true if the response(s) received were valid and no errors were
-     *         encountered, false otherwise.
+     *         encountered, false otherwise (call getReturnCode(),
+     *         getErrorMessage()).
      */
     public boolean processResponse(long timeout)
     {
@@ -938,9 +940,9 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
      * NOTIFY, call the appropriate Subscription subclass methods.
      * <p>
      * The next step after this is to invoke replyToNotify() to send the
-     * response to the network. You may modify (corrupt) the response returned
-     * by this method (using the JAIN-SIP API) before passing it to
-     * replyToNotify() or pass your own Response to replyToNotify().
+     * response to the network. You may modify/corrupt the response returned by
+     * this method (using the JAIN-SIP API) before passing it to
+     * replyToNotify().
      * <p>
      * Validation performed by this method includes: event header existence,
      * correct event type (done by the event-specific subclass), NOTIFY event ID
@@ -1473,7 +1475,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
         return errorMessage;
     }
 
-    private void setErrorMessage(String errorMessage)
+    protected void setErrorMessage(String errorMessage)
     {
         this.errorMessage = errorMessage;
     }
@@ -1486,7 +1488,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
         return exception;
     }
 
-    private void setException(Throwable exception)
+    protected void setException(Throwable exception)
     {
         this.exception = exception;
     }
@@ -1499,7 +1501,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
         return returnCode;
     }
 
-    private void setReturnCode(int returnCode)
+    protected void setReturnCode(int returnCode)
     {
         this.returnCode = returnCode;
     }
@@ -1849,7 +1851,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
      * sequence.
      * 
      * @return true if unsubscribe was not necessary (because the subscription
-     *         was already terminated) and false if a SUBSCRIBE/NOTIFY sequence
+     *         was already terminated) or false if a SUBSCRIBE/NOTIFY sequence
      *         was initiated due to the subscription-ending operation.
      */
     public boolean isRemovalComplete()

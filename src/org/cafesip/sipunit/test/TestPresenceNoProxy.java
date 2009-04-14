@@ -373,8 +373,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertNoPresenceErrors(s);
 
             // refresh buddy status - sends SUBSCRIBE, gets response
-            s = ua.refreshBuddy(buddy, 3600, 1000);
-            assertNotNull(ua.format(), s);
+            assertTrue(s.refreshBuddy(3600, 1000));
 
             // check the return info
             assertEquals(1, ua.getBuddyList().size());
@@ -580,8 +579,7 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
 
             // remove buddy from contacts, do the SUBSCRIBE sequence
-            s = ua.removeBuddy(buddy, 300);
-            assertNotNull(ua.format(), s);
+            assertTrue(s.removeBuddy(300));
             assertFalse(s.isRemovalComplete());
 
             // check immediate impacts - buddy lists, subscription state
@@ -1042,20 +1040,19 @@ public class TestPresenceNoProxy extends SipTestCase
 
     public void testErrors()
     {
-        PresenceSubscriber s = ua.refreshBuddy("sip:ddd@aaa.bbb", 100);
-        assertNull(s);
-        assertEquals(SipSession.INVALID_ARGUMENT, ua.getReturnCode());
-
-        s = ua.removeBuddy("sip:ddd@aaa.bbb", 100);
-        assertNull(s);
-        assertEquals(SipSession.INVALID_ARGUMENT, ua.getReturnCode());
-
-        // test wrong event ID -- TODO add more correct event ID tests
-
-        String buddy = "sip:becky@cafesip.org"; // I am amit
-
         try
         {
+            PresenceSubscriber s = new PresenceSubscriber("sip:ddd@aaa.bbb", ua);
+            assertFalse(s.refreshBuddy(100));
+            assertEquals(SipSession.INVALID_ARGUMENT, s.getReturnCode());
+
+            assertFalse(s.removeBuddy(100));
+            assertEquals(SipSession.INVALID_ARGUMENT, s.getReturnCode());
+
+            // test wrong event ID -- TODO add more correct event ID tests
+
+            String buddy = "sip:becky@cafesip.org"; // I am amit
+
             // create far end (presence server simulator, fictitious buddy)
             PresenceNotifySender ub = new PresenceNotifySender(sipStack
                     .createSipPhone(host, testProtocol, myPort, buddy));
@@ -1712,8 +1709,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             assertTrue(buddy2.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
             Thread.sleep(500);
-            s2 = ua.refreshBuddy(buddytwo, 2000);
-            assertNotNull(ua.format(), s2);
+            assertTrue(s2.refreshBuddy(2000));
             assertEquals(3, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
             assertEquals(SipResponse.OK, s2.getReturnCode());
@@ -1782,7 +1778,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             assertTrue(buddy1.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
             Thread.sleep(500);
-            assertNotNull(ua.removeBuddy(buddyone, 2000)); // send unSUBSCRIBE,
+            assertTrue(s1.removeBuddy(2000)); // send unSUBSCRIBE,
             // get response
             assertEquals(2, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
@@ -1889,10 +1885,10 @@ public class TestPresenceNoProxy extends SipTestCase
             Thread.sleep(500);
             assertTrue(buddy3.processSubscribe(25000, SipResponse.OK, "OK")); // prepare
             Thread.sleep(500);
-            assertNotNull(ua.removeBuddy(buddytwo, 22000));
+            assertTrue(s2.removeBuddy(22000));
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(2, ua.getRetiredBuddies().size());
-            assertNotNull(ua.removeBuddy(buddythree, 2000));
+            assertTrue(s3.removeBuddy(2000));
             assertEquals(SipResponse.OK, s2.getReturnCode());
             assertEquals(SipResponse.OK, s3.getReturnCode());
             assertEquals(0, ua.getBuddyList().size());

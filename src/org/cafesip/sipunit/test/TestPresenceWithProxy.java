@@ -401,8 +401,9 @@ public class TestPresenceWithProxy extends SipTestCase
             assertNoPresenceErrors(s);
 
             // refresh buddy status - sends SUBSCRIBE, gets response
-            s = ua.refreshBuddy(buddy, 1790, 2000);
-            assertNotNull(ua.format(), s);
+
+            s = ua.getBuddyInfo(buddy);
+            assertTrue(s.refreshBuddy(1790, 2000));
 
             // check the return info
             assertEquals(1, ua.getBuddyList().size());
@@ -588,8 +589,8 @@ public class TestPresenceWithProxy extends SipTestCase
                     "OK Ended"));
 
             // remove buddy from contacts list, terminating SUBSCRIBE sequence
-            s = ua.removeBuddy(buddy, 2000);
-            assertNotNull(ua.format(), s);
+            s = ua.getBuddyInfo(buddy);
+            assertTrue(s.removeBuddy(2000));
 
             // check immediate impacts - buddy lists, subscription state
             assertEquals(0, ua.getBuddyList().size());

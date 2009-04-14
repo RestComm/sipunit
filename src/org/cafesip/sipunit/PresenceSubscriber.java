@@ -298,4 +298,277 @@ public class PresenceSubscriber extends SubscriptionSubscriber
     {
         return new ArrayList<Object>(presenceExtensions);
     }
+
+    /**
+     * This method initiates a SUBSCRIBE/NOTIFY sequence for the purpose of
+     * updating the presence information for this buddy. This method creates a
+     * SUBSCRIBE request message based on the parameters passed in, sends out
+     * the request, and waits for a response to be received. It saves the
+     * received response and checks for a "proceedable" (positive) status code
+     * value. Positive response status codes include any of the following:
+     * provisional (status / 100 == 1), UNAUTHORIZED,
+     * PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED. Any other status code, or
+     * a response timeout or any other error, is considered fatal to this
+     * refresh operation.
+     * <p>
+     * This method blocks until one of the above outcomes is reached.
+     * <p>
+     * If this method returns true, it means a positive response was received.
+     * You can find out about the response by calling this object's
+     * getReturnCode() and/or getCurrentResponse() or getLastReceivedResponse()
+     * methods. Your next step will be to call the processResponse() method to
+     * proceed with the refresh sequence. See the processResponse() javadoc for
+     * more details.
+     * <p>
+     * If this method returns false, it means this refresh operation has failed.
+     * Call the usual SipUnit failed-operation methods to find out what happened
+     * (ie, getErrorMessage(), getReturnCode(), and/or getException() methods).
+     * The getReturnCode() method will tell you the response status code that
+     * was received from the network (unless it is an internal SipUnit error
+     * code, see the SipSession javadoc for more on that).
+     * 
+     * @param duration
+     *            the duration in seconds to put in the SUBSCRIBE message and
+     *            reset the subscription time left to. If it is 0, this is an
+     *            unsubscribe (note, the buddy stays in the SipPhone's buddy
+     *            list even though the subscription won't be active).
+     * @param eventId
+     *            the event "id" to use in the SUBSCRIBE message, or null for no
+     *            event "id" parameter. Whatever is indicated here will be used
+     *            subsequently (for error checking SUBSCRIBE responses and
+     *            NOTIFYs from the server as well as for sending subsequent
+     *            SUBSCRIBEs) unless changed by the caller later on another
+     *            buddy method call.
+     * @param timeout
+     *            The maximum amount of time to wait for a SUBSCRIBE response,
+     *            in milliseconds. Use a value of 0 to wait indefinitely.
+     * @return true if the refresh operation is successful so far, false
+     *         otherwise. False just means this SUBSCRIBE sequence failed - this
+     *         buddy remains in the SipPhone's buddy list. See more details
+     *         above.
+     */
+    public boolean refreshBuddy(int duration, String eventId, long timeout)
+    {
+        if (parent.getBuddyList().get(targetUri) == null)
+        {
+            setReturnCode(SipSession.INVALID_ARGUMENT);
+            setErrorMessage("Buddy refresh for URI "
+                    + targetUri
+                    + " failed, URI was not found in the active buddy list. Use SipPhone.fetchPresenceInfo() for users not in the buddy list");
+
+            return false;
+        }
+
+        Request req = createSubscribeMessage(duration, eventId);
+
+        if (req == null)
+        {
+            return false;
+        }
+
+        return refreshBuddy(req, timeout);
+
+    }
+
+    /**
+     * This method is the same as refreshBuddy(duration, eventId, timeout)
+     * except that the SUBSCRIBE duration sent will be however much time is left
+     * on the current subscription. If time left on the subscription <= 0,
+     * unsubscribe occurs (note, the buddy stays in the list).
+     */
+    public boolean refreshBuddy(String eventId, long timeout)
+    {
+        if (parent.getBuddyList().get(targetUri) == null)
+        {
+            setReturnCode(SipSession.INVALID_ARGUMENT);
+            setErrorMessage("Buddy refresh for URI " + targetUri
+                    + " failed, not found in buddy list.");
+            return false;
+        }
+
+        return refreshBuddy(getTimeLeft(), eventId, timeout);
+    }
+
+    /**
+     * This method is the same as refreshBuddy(duration, eventId, timeout)
+     * except that the eventId remains unchanged from whatever it already was.
+     */
+    public boolean refreshBuddy(int duration, long timeout)
+    {
+        if (parent.getBuddyList().get(targetUri) == null)
+        {
+            setReturnCode(SipSession.INVALID_ARGUMENT);
+            setErrorMessage("Buddy refresh for URI " + targetUri
+                    + " failed, not found in buddy list.");
+            return false;
+        }
+
+        return refreshBuddy(duration, getEventId(), timeout);
+    }
+
+    /**
+     * This method is the same as refreshBuddy(duration, eventId, timeout)
+     * except that the eventId remains unchanged from whatever it already was
+     * and the SUBSCRIBE duration sent will be however much time is left on the
+     * current subscription. If time left on the subscription <= 0, unsubscribe
+     * occurs (note, the buddy stays in the list).
+     */
+    public boolean refreshBuddy(long timeout)
+    {
+        if (parent.getBuddyList().get(targetUri) == null)
+        {
+            setReturnCode(SipSession.INVALID_ARGUMENT);
+            setErrorMessage("Buddy refresh for URI " + targetUri
+                    + " failed, not found in buddy list.");
+            return false;
+        }
+
+        return refreshBuddy(getTimeLeft(), getEventId(), timeout);
+    }
+
+    /**
+     * This method is the same as refreshBuddy(duration, eventId, timeout)
+     * except that instead of creating the SUBSCRIBE request from parameters
+     * passed in, the given request message parameter is used for sending out
+     * the SUBSCRIBE message.
+     * <p>
+     * The Request parameter passed into this method should come from calling
+     * createSubscribeMessage() - see that javadoc. The subscription duration is
+     * reset to the passed in Request's expiry value. If it is 0, this is an
+     * unsubscribe. Note, the buddy stays in the buddy list even though the
+     * subscription won't be active. The event "id" in the given request will be
+     * used subsequently (for error checking SUBSCRIBE responses and NOTIFYs
+     * from the server as well as for sending subsequent SUBSCRIBEs).
+     */
+    public boolean refreshBuddy(Request req, long timeout)
+    {
+        if (parent.getBuddyList().get(targetUri) == null)
+        {
+            setReturnCode(SipSession.INVALID_ARGUMENT);
+            setErrorMessage("Buddy refresh for URI "
+                    + targetUri
+                    + " failed, uri was not found in the buddy list. Use fetchPresenceInfo() for users not in the buddy list");
+
+            return false;
+        }
+
+        return refreshSubscription(req, timeout, false);
+    }
+
+    /**
+     * This method removes this buddy from the SipPhone buddy list and initiates
+     * a SUBSCRIBE/NOTIFY sequence to terminate the subscription unless the
+     * subscription is already terminated. Regardless, this buddy is taken out
+     * of the active buddy list and put into the retired buddy list (which is a
+     * list of PresenceSubscriber objects of buddies that have been removed from
+     * the buddy list and PresenceSubscriber objects for individual fetch
+     * operations that have been done). A retired buddy's PresenceSubscriber
+     * object continues to be valid and accessible via SipPhone.getBuddyInfo().
+     * <p>
+     * If the subscription is active when this method is called, this method
+     * creates a SUBSCRIBE request message based on the parameters passed in,
+     * sends out the request, and waits for a response to be received. It saves
+     * the received response and checks for a "proceedable" (positive) status
+     * code value. Positive response status codes include any of the following:
+     * provisional (status / 100 == 1), UNAUTHORIZED,
+     * PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED. Any other status code, or
+     * a response timeout or any other error, is considered fatal to the
+     * unsubscribe operation.
+     * <p>
+     * This method blocks until one of the above outcomes is reached.
+     * <p>
+     * If this method returns true, it means a positive response was received or
+     * the unsubscribe sequence was not required. In order for you to know which
+     * is the case (and whether or not to proceed forward with the
+     * SUBSCRIBE/NOTIFY sequence processing), call isRemovalComplete(). It will
+     * tell you if an unsubscribe sequence was initiated or not. If not, you are
+     * done. Otherwise you can find out about the positive response by calling
+     * this object's getReturnCode() and/or getCurrentResponse() or
+     * getLastReceivedResponse() methods. Your next step will be to call the
+     * processResponse() method to proceed with the unsubscribe sequence. See
+     * the processResponse() javadoc for more details.
+     * <p>
+     * If this method returns false, it means the unsubscribe operation was
+     * required and it failed. Call the usual SipUnit failed-operation methods
+     * to find out what happened (ie, getErrorMessage(), getReturnCode(), and/or
+     * getException() methods). The getReturnCode() method will tell you the
+     * response status code that was received from the network (unless it is an
+     * internal SipUnit error code, see the SipSession javadoc for more on
+     * that).
+     * 
+     * @param eventId
+     *            the event "id" to use in the SUBSCRIBE message, or null for no
+     *            event "id" parameter. Whatever is indicated here will be used
+     *            subsequently, for error checking the unSUBSCRIBE response and
+     *            NOTIFY from the server.
+     * @param timeout
+     *            The maximum amount of time to wait for a SUBSCRIBE response,
+     *            in milliseconds. Use a value of 0 to wait indefinitely.
+     * @return true if the unsubscribe operation is successful so far or wasn't
+     *         needed, false otherwise. See more details above. In either case,
+     *         the buddy is removed from the buddy list.
+     */
+    public boolean removeBuddy(String eventId, long timeout)
+    {
+        if (parent.getBuddyList().get(targetUri) == null)
+        {
+            setReturnCode(SipSession.INVALID_ARGUMENT);
+            setErrorMessage("Buddy removal for URI " + targetUri
+                    + " failed, not found in buddy list.");
+            return false;
+        }
+
+        Request req = createSubscribeMessage(0, eventId);
+
+        if (req == null)
+        {
+            return false;
+        }
+
+        return removeBuddy(req, timeout);
+    }
+
+    /**
+     * This method is the same as removeBuddy(eventId, timeout) except that no
+     * event "id" parameter will be included in the unSUBSCRIBE message. When
+     * error checking the SUBSCRIBE response and NOTIFY from the server, no
+     * event "id" parameter will be expected.
+     */
+    public boolean removeBuddy(long timeout)
+    {
+        return removeBuddy((String) null, timeout);
+    }
+
+    /**
+     * This method is the same as removeBuddy(eventId, timeout) except that
+     * instead of creating the SUBSCRIBE request from parameters passed in, the
+     * given request message parameter is used for sending out the SUBSCRIBE
+     * message if the subscription is active.
+     * <p>
+     * The Request parameter passed into this method should come from calling
+     * createSubscribeMessage() - see that javadoc. The event "id" in the given
+     * request will be used subsequently for error checking the SUBSCRIBE
+     * response and NOTIFY request from the server.
+     */
+    public boolean removeBuddy(Request req, long timeout)
+    {
+        initErrorInfo();
+
+        if (parent.retireBuddy(targetUri) == null)
+        {
+            setReturnCode(SipSession.INVALID_ARGUMENT);
+            setErrorMessage("Buddy removal for URI " + targetUri
+                    + " failed, not found in buddy list.");
+            return false;
+        }
+
+        if (endSubscription(req, timeout, parent.getProxyHost() != null,
+                "Buddy removed from contact list") == true)
+        {
+            return true;
+        }
+
+        // unsubscribe failed
+        return false;
+    }
 }
