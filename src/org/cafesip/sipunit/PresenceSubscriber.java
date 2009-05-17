@@ -123,7 +123,7 @@ public class PresenceSubscriber extends SubscriptionSubscriber
         if (event.equals("presence") == false)
         {
             throw new SubscriptionError(SipResponse.BAD_EVENT,
-                    "received an event header containing unknown event = "
+                    "received a presence event header containing unknown event = "
                             + event);
         }
     }

@@ -2453,6 +2453,25 @@ public class SipCall implements SipActionObject, MessageListener
     }
 
     /**
+     * @return Returns the dialog.
+     */
+    protected Dialog getDialog()
+    {
+        return dialog;
+    }
+
+    /**
+     * This method returns the dialog ID associated with this call leg, or an
+     * empty string if the dialog isn't created yet.
+     * 
+     * @return String which is the dialog ID associated with this call leg
+     */
+    public String getDialogId()
+    {
+        return dialog == null ? "" : dialog.getDialogId();
+    }
+
+    /**
      * This method returns the AddressFactory associated with this object. It
      * may be needed by the caller if providing additional or replacement JAIN
      * SIP headers for outbound messages.
