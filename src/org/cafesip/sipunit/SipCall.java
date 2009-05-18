@@ -2453,9 +2453,11 @@ public class SipCall implements SipActionObject, MessageListener
     }
 
     /**
-     * @return Returns the dialog.
+     * This method returns the dialog associated with this call leg.
+     * 
+     * @return The JAIN-SIP Dialog object.
      */
-    protected Dialog getDialog()
+    public Dialog getDialog()
     {
         return dialog;
     }

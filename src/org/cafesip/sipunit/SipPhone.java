@@ -22,12 +22,15 @@ package org.cafesip.sipunit;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.EventObject;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 
+import javax.sip.Dialog;
 import javax.sip.InvalidArgumentException;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
@@ -1939,14 +1942,14 @@ public class SipPhone extends SipSession implements SipActionObject,
      * REFER subscription(s) associated with the referToUri.
      * 
      * @param referToUri
-     *            the referToUri (ie, sip:bob@nist.gov) that was previously
-     *            passed in to SipPhone.refer().
+     *            the referToUri that was previously passed in to
+     *            SipPhone.refer(). See javadoc there.
      * @return ReferSubscriber object(s) associated with the referToUri, or an
      *         empty list if there was never a call to SipPhone.refer() with
      *         that referToUri.
      * 
      */
-    public List<ReferSubscriber> getRefererInfo(String referToUri)
+    public List<ReferSubscriber> getRefererInfo(SipURI referToUri)
     {
         List<ReferSubscriber> list = new ArrayList<ReferSubscriber>();
 
@@ -2000,8 +2003,8 @@ public class SipPhone extends SipSession implements SipActionObject,
      * REFER requests from this SipPhone. These are the subscriptions resulting
      * from calling SipPhone.refer() during the lifetime of this SipPhone
      * object. A given subscription in the list may be active or not -
-     * subscription termination does not remove a subscription from this list
-     * (ReferSubscriber.dispose() does that).
+     * subscription termination does not automatically remove a subscription
+     * from this list (calling ReferSubscriber.dispose() does that).
      * <p>
      * See related method getRefererInfo().
      * 
@@ -2011,6 +2014,107 @@ public class SipPhone extends SipSession implements SipActionObject,
     public List<ReferSubscriber> getRefererList()
     {
         return new ArrayList<ReferSubscriber>(refererList);
+    }
+
+    /**
+     * Creates an URI object useful for passing into methods such as
+     * SipPhone.refer().
+     * 
+     * @param scheme
+     *            "sip:" or "sips:" or null if the scheme is already included in
+     *            the userHostPortTransport parameter.
+     * @param userHostPortTransport
+     *            Addressing information in the form of:
+     *            user@host:port/transport. Not all 4 components are required,
+     *            and the scheme may optionally be included here. Examples:
+     *            sipmaster@192.168.1.11:5060/UDP and alice@atlanta.sip.com.
+     * @param methodUriParameter
+     *            Specifies which SIP method to use in requests directed at this
+     *            URI (ie, INVITE), or null if not applicable.
+     * @param otherUriParameters
+     *            Remaining URI parameters affecting a request constructed from
+     *            this URI (Lr, MAddr, TTL, etc), or null if not applicable. URI
+     *            parameters are key-value pairs. Any given parameter name (key)
+     *            MUST NOT appear more than once.
+     * @param joinUriHeader
+     *            This value is the dialog ID for a Join header to be included
+     *            in a request constructed from this URI, or null if not
+     *            applicable.
+     * @param replacesUriHeader
+     *            This value is the dialog ID for a Replaces header to be
+     *            included in a request constructed from this URI, or null if
+     *            not applicable.
+     * @param bodyUriHeader
+     *            This value is the message body of a SIP request constructed
+     *            from this URI, or null if not applicable.
+     * @param otherUriHeaders
+     *            Remaining header fields to be included in a request
+     *            constructed from this URI, or null if not applicable. Header
+     *            fields are key-value pairs.
+     * @return A SipURI for passing into methods such as SipPhone.refer().
+     * @throws ParseException
+     *             On parse error due to invalid scheme or userHostPortTransport
+     *             parameters.
+     */
+    public SipURI getUri(String scheme, String userHostPortTransport,
+            String methodUriParameter, Map<String, String> otherUriParameters,
+            String joinUriHeader, String replacesUriHeader,
+            String bodyUriHeader, Map<String, String> otherUriHeaders)
+            throws ParseException
+    {
+        StringBuffer buf = new StringBuffer();
+        if (scheme != null)
+        {
+            buf.append(scheme);
+        }
+        buf.append(userHostPortTransport);
+
+        Address addr = getAddressFactory().createAddress(buf.toString());
+        URI addrUri = addr.getURI();
+        if (!addrUri.isSipURI())
+        {
+            throw new ParseException("Non-SIP URI not supported: "
+                    + buf.toString(), 0);
+        }
+        SipURI uri = (SipURI) addrUri;
+
+        // handle URI parameters
+        if (otherUriParameters == null)
+        {
+            otherUriParameters = new HashMap<String, String>();
+        }
+        if (methodUriParameter != null)
+        {
+            otherUriParameters.put("method", methodUriParameter);
+        }
+        for (Map.Entry<String, String> entry : otherUriParameters.entrySet())
+        {
+            uri.setParameter(entry.getKey(), entry.getValue());
+        }
+
+        // handle URI headers
+        if (otherUriHeaders == null)
+        {
+            otherUriHeaders = new HashMap<String, String>();
+        }
+        if (joinUriHeader != null)
+        {
+            otherUriHeaders.put("Join", joinUriHeader);
+        }
+        if (replacesUriHeader != null)
+        {
+            otherUriHeaders.put("Replaces", replacesUriHeader);
+        }
+        if (bodyUriHeader != null)
+        {
+            otherUriHeaders.put("body", bodyUriHeader);
+        }
+        for (Map.Entry<String, String> entry : otherUriHeaders.entrySet())
+        {
+            uri.setHeader(entry.getKey(), entry.getValue());
+        }
+
+        return uri;
     }
 
     /**
@@ -2030,10 +2134,10 @@ public class SipPhone extends SipSession implements SipActionObject,
      * save the returned object yourself or retrieve it anytime later by calling
      * one of this SipPhone's getReferrerInfo() methods or getRefererList(). Use
      * the returned subscription object to proceed through the remainder of this
-     * REFER-NOTIFY sequence as well as for future SUBSCRIBE-NOTIFY sequences
-     * and to find out details at any given time such as the subscription state,
-     * amount of time left on the subscription, termination reason, details of
-     * received responses and requests, etc.
+     * REFER-NOTIFY sequence as well as for future SUBSCRIBE-NOTIFY sequences on
+     * this subscription and also to find out details at any given time such as
+     * the subscription state, amount of time left on the subscription,
+     * termination reason, details of received responses and requests, etc.
      * <p>
      * In the case of a positive response status code (a non-null object is
      * returned), you may find out more about the response that was just
@@ -2051,12 +2155,14 @@ public class SipPhone extends SipSession implements SipActionObject,
      * see the SipSession javadoc for more on that).
      * 
      * @param refereeUri
-     *            the URI (ie, sip:bob@nist.gov) of the far end of the
+     *            The URI (ie, sip:bob@nist.gov) of the far end of the
      *            subscription. This is the party the REFER request is sent to.
      * @param referToUri
-     *            the URI of the party that the refereeUri is to refer to.
+     *            The URI that the refereeUri is to refer to. You can use
+     *            SipPhone.getUri() to create this object for you to pass in, or
+     *            you can create your own using the JAIN SIP API.
      * @param eventId
-     *            the event "id" to use in the REFER message, or null for no
+     *            The event "id" to use in the REFER message, or null for no
      *            event "id" parameter. If an eventId is specified here, it will
      *            be used subsequently for error checking the REFER responses
      *            and the NOTIFYs from the far end as well as for sending
@@ -2069,25 +2175,176 @@ public class SipPhone extends SipSession implements SipActionObject,
      *            Affects the routing of the REFER message. By default, the
      *            message is routed to the Proxy that was specified when this
      *            SipPhone object was created (SipStack.createSipPhone()) or if
-     *            no proxy was specified, it is looped back to this local sip
-     *            stack. If the viaNonProxyRoute parameter is not null, it
-     *            overrides the default behavior and causes the message to be
-     *            routed differently, to the viaNonProxyRoute node which is
-     *            specified as "hostaddress:port/transport" i.e.
-     *            129.1.22.333:5060/UDP.
+     *            no proxy was specified then, the REFER is looped back to this
+     *            local sip stack. If the viaNonProxyRoute parameter is not
+     *            null, it overrides the default behavior and causes the message
+     *            to be routed differently, to the viaNonProxyRoute node which
+     *            is specified as "hostaddress:port/transport" i.e.
+     *            129.1.22.333:5060/UDP. A route header will be added to the
+     *            REFER for this, before the request is sent.
      * 
      * @return ReferSubscriber object representing the implicit subscription if
      *         the operation is successful so far, null otherwise.
      */
-    // public ReferSubscriber refer(String refereeUri, String referToUri,
-    // String eventId, long timeout, String viaNonProxyRoute)
-    // {
-    // return refer(refereeUri, referToUri, eventId, timeout, viaNonProxyRoute,
-    //                
-    // }
+    public ReferSubscriber refer(String refereeUri, SipURI referToUri,
+            String eventId, long timeout, String viaNonProxyRoute)
+    {
+        return refer(refereeUri, referToUri, eventId, timeout,
+                viaNonProxyRoute, null, null, null);
+    }
+
     /**
-     * This method is like the basic out-of-dialog refer() method except that it
-     * allows the caller to specify a message body and/or additional JAIN-SIP
+     * This method is the same as the basic out-of-dialog refer() method except
+     * that it allows the caller to specify a message body and/or additional
+     * JAIN-SIP API message headers to add to or replace in the outbound
+     * message. Use of this method requires knowledge of the JAIN-SIP API.
+     * 
+     * The extra parameters supported by this method are:
+     * 
+     * @param additionalHeaders
+     *            ArrayList of javax.sip.header.Header, each element a SIP
+     *            header to add to the outbound message. These headers are added
+     *            to the message after a correct message has been constructed.
+     *            Note that if you try to add a header that there is only
+     *            supposed to be one of in a message, and it's already there and
+     *            only one single value is allowed for that header, then this
+     *            header addition attempt will be ignored. Use the
+     *            'replaceHeaders' parameter instead if you want to replace the
+     *            existing header with your own. Use null for no additional
+     *            message headers.
+     * @param replaceHeaders
+     *            ArrayList of javax.sip.header.Header, each element a SIP
+     *            header to add to the outbound message, replacing existing
+     *            header(s) of that type if present in the message. These
+     *            headers are applied to the message after a correct message has
+     *            been constructed. Use null for no replacement of message
+     *            headers.
+     * @param body
+     *            A String to be used as the body of the message. The
+     *            additionalHeaders parameter must contain a ContentTypeHeader
+     *            for this body to be included in the message. Use null for no
+     *            body bytes.
+     */
+    public ReferSubscriber refer(String refereeUri, SipURI referToUri,
+            String eventId, long timeout, String viaNonProxyRoute,
+            ArrayList<Header> additionalHeaders,
+            ArrayList<Header> replaceHeaders, String body)
+    {
+        initErrorInfo();
+
+        if (referToUri == null)
+        {
+            setReturnCode(INVALID_ARGUMENT);
+            setErrorMessage("Null referToUri");
+            return null;
+        }
+
+        try
+        {
+            ReferSubscriber sub = new ReferSubscriber(refereeUri, referToUri,
+                    this);
+            Request req = sub.createReferMessage(referToUri, eventId,
+                    viaNonProxyRoute);
+
+            if (req != null)
+            {
+                boolean viaProxy = (proxyHost != null)
+                        && (viaNonProxyRoute == null);
+
+                if (sub.startSubscription(req, timeout, viaProxy,
+                        additionalHeaders, replaceHeaders, body) == true)
+                {
+                    synchronized (refererList)
+                    {
+                        refererList.add(sub);
+                    }
+                    return sub;
+                }
+            }
+
+            setReturnCode(sub.getReturnCode());
+            setErrorMessage(sub.getErrorMessage());
+            setException(sub.getException());
+        }
+        catch (Exception e)
+        {
+            setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+            setException(e);
+            setErrorMessage("Exception: " + e.getClass().getName() + ": "
+                    + e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * This basic refer method creates an in-dialog REFER request message, sends
+     * it out, and waits for a first response to be received. It saves the
+     * received response and checks for a "proceedable" (positive) status code
+     * value. Positive response status codes include any of the following:
+     * provisional (status / 100 == 1), UNAUTHORIZED,
+     * PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED. Any other status code, or
+     * a response timeout or any other error, is considered fatal to the
+     * subscription.
+     * <p>
+     * This method blocks until one of the above outcomes is reached.
+     * <p>
+     * In the case of a positive response status code, this method returns a
+     * ReferSubscriber object that represents the implicit subscription. You can
+     * save the returned object yourself or retrieve it anytime later by calling
+     * one of this SipPhone's getReferrerInfo() methods or getRefererList(). Use
+     * the returned subscription object to proceed through the remainder of this
+     * REFER-NOTIFY sequence as well as for future SUBSCRIBE-NOTIFY sequences on
+     * this subscription and also to find out details at any given time such as
+     * the subscription state, amount of time left on the subscription,
+     * termination reason, details of received responses and requests, etc.
+     * <p>
+     * In the case of a positive response status code (a non-null object is
+     * returned), you may find out more about the response that was just
+     * received by calling the ReferSubscriber methods getReturnCode() and
+     * getCurrentResponse(). Your next step will then be to call the
+     * ReferSubscriber's processResponse() method to proceed with the REFER
+     * processing.
+     * <p>
+     * In the case of a fatal outcome, no subscription object is created and
+     * null is returned. In this case, call the usual SipUnit failed-operation
+     * methods to find out what happened (ie, call this SipPhone's
+     * getErrorMessage(), getReturnCode(), and/or getException() methods). The
+     * getReturnCode() method will tell you the response status code that was
+     * received from the network (unless it is an internal SipUnit error code,
+     * see the SipSession javadoc for more on that).
+     * 
+     * @param dialog
+     *            The existing dialog that this REFER should be associated with.
+     *            You can get it from SipCall.getDialog() or
+     *            ReferSubscriber.getDialog().
+     * @param referToUri
+     *            The URI that the far end of the dialog is to refer to. You can
+     *            use SipPhone.getUri() to create this object for you to pass
+     *            in, or you can create your own using the JAIN SIP API.
+     * @param eventId
+     *            The event "id" to use in the REFER message, or null for no
+     *            event "id" parameter. If an eventId is specified here, it will
+     *            be used subsequently for error checking the REFER responses
+     *            and the NOTIFYs from the far end as well as for sending
+     *            subsequent SUBSCRIBEs unless changed by the caller later when
+     *            invoking ReferSubscriber methods refresh() or unsubscribe().
+     * @param timeout
+     *            The maximum amount of time to wait for a response, in
+     *            milliseconds. Use a value of 0 to wait indefinitely.
+     * 
+     * @return ReferSubscriber object representing the implicit subscription if
+     *         the operation is successful so far, null otherwise.
+     */
+    public ReferSubscriber refer(Dialog dialog, SipURI referToUri,
+            String eventId, long timeout)
+    {
+        return refer(dialog, referToUri, eventId, timeout, null, null, null);
+    }
+
+    /**
+     * This method is the same as the basic in-dialog refer() method except that
+     * it allows the caller to specify a message body and/or additional JAIN-SIP
      * API message headers to add to or replace in the outbound message. Use of
      * this method requires knowledge of the JAIN-SIP API.
      * 
@@ -2117,28 +2374,28 @@ public class SipPhone extends SipSession implements SipActionObject,
      *            for this body to be included in the message. Use null for no
      *            body bytes.
      */
-    public ReferSubscriber refer(String refereeUri, String referToUri,
-            String paramXforReferToHeader, String eventId, long timeout,
-            String viaNonProxyRoute, ArrayList<Header> additionalHeaders,
+    public ReferSubscriber refer(Dialog dialog, SipURI referToUri,
+            String eventId, long timeout, ArrayList<Header> additionalHeaders,
             ArrayList<Header> replaceHeaders, String body)
     {
-        // TODO referToHeader params (optional) - paramXforReferToHeader
-
         initErrorInfo();
+
+        if ((referToUri == null) || (dialog == null))
+        {
+            setReturnCode(INVALID_ARGUMENT);
+            setErrorMessage("Null referToUri or dialog");
+            return null;
+        }
 
         try
         {
-            ReferSubscriber sub = new ReferSubscriber(refereeUri, referToUri,
-                    this);
-            Request req = sub.createReferMessage(referToUri, eventId,
-                    viaNonProxyRoute);
+            ReferSubscriber sub = new ReferSubscriber(dialog.getRemoteParty()
+                    .getURI().toString(), referToUri, this, dialog);
+            Request req = sub.createReferMessage(referToUri, eventId, null);
 
             if (req != null)
             {
-                boolean viaProxy = (proxyHost != null)
-                        && (viaNonProxyRoute == null);
-
-                if (sub.startSubscription(req, timeout, viaProxy,
+                if (sub.startSubscription(req, timeout, false,
                         additionalHeaders, replaceHeaders, body) == true)
                 {
                     synchronized (refererList)

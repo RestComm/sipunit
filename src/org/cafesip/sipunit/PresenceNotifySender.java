@@ -18,6 +18,7 @@
  */
 package org.cafesip.sipunit;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.EventObject;
@@ -64,19 +65,19 @@ import javax.sip.message.Response;
  */
 public class PresenceNotifySender implements MessageListener
 {
-    private SipPhone ub;
+    protected SipPhone ub;
 
-    private Dialog dialog;
+    protected Dialog dialog;
 
-    private EventHeader eventHeader;
+    protected EventHeader eventHeader;
 
-    private Object dialogLock = new Object();
+    protected Object dialogLock = new Object();
 
-    private String toTag;
+    protected String toTag;
 
-    private Request lastSentNotify;
+    protected Request lastSentNotify;
 
-    private String errorMessage = "";
+    protected String errorMessage = "";
 
     /**
      * A constructor for this class. This object immediately starts listening
@@ -122,12 +123,12 @@ public class PresenceNotifySender implements MessageListener
      * an incoming SUBSCRIBE. This method adds 500ms to the given timeout to
      * account for this delay.
      * 
-     * @param timeout -
-     *            number of milliseconds to wait for the SUBSCRIBE
-     * @param statusCode -
-     *            use in the response to the SUBSCRIBE
-     * @param reasonPhrase -
-     *            if not null, use in the SUBSCRIBE response
+     * @param timeout
+     *            - number of milliseconds to wait for the SUBSCRIBE
+     * @param statusCode
+     *            - use in the response to the SUBSCRIBE
+     * @param reasonPhrase
+     *            - if not null, use in the SUBSCRIBE response
      * @return true if SUBSCRIBE received and response sending was successful,
      *         false otherwise (call getErrorMessage() for details).
      */
@@ -258,16 +259,20 @@ public class PresenceNotifySender implements MessageListener
         }
     }
 
-    private Dialog sendResponse(ServerTransaction transaction, int statusCode,
-            String reasonPhrase, String toTag, Request request, int duration)
+    protected Dialog sendResponse(ServerTransaction transaction,
+            int statusCode, String reasonPhrase, String toTag, Request request,
+            int duration)
     {
         try
         {
             Response response = ub.getParent().getMessageFactory()
                     .createResponse(statusCode, request);
 
-            response.setHeader(ub.getParent().getHeaderFactory()
-                    .createExpiresHeader(duration));
+            if (duration != -1)
+            {
+                response.setHeader(ub.getParent().getHeaderFactory()
+                        .createExpiresHeader(duration));
+            }
 
             if (reasonPhrase != null)
             {
@@ -287,17 +292,17 @@ public class PresenceNotifySender implements MessageListener
 
             if (statusCode / 100 == 2) // 2xx
             {
-                AcceptHeader accept = ub.getParent().getHeaderFactory()
-                        .createAcceptHeader("application", "pidf+xml");
-                response.setHeader(accept);
+                AcceptHeader accept = getAcceptHeaderForResponse();
+                if (accept != null)
+                    response.setHeader(accept);
 
-                SupportedHeader shdr = ub.getParent().getHeaderFactory()
-                        .createSupportedHeader("presence");
-                response.setHeader(shdr);
+                SupportedHeader shdr = getSupportedHeaderForResponse();
+                if (shdr != null)
+                    response.setHeader(shdr);
 
-                AllowEventsHeader ahdr = ub.getParent().getHeaderFactory()
-                        .createAllowEventsHeader("presence");
-                response.setHeader(ahdr);
+                AllowEventsHeader ahdr = getAllowEventsHeaderForResponse();
+                if (ahdr != null)
+                    response.setHeader(ahdr);
             }
 
             transaction.sendResponse(response);
@@ -306,7 +311,7 @@ public class PresenceNotifySender implements MessageListener
         }
         catch (Exception e)
         {
-            setErrorMessage("Error responding to SUBSCRIBE from "
+            setErrorMessage("Error responding to request from "
                     + ((FromHeader) request.getHeader(FromHeader.NAME))
                             .getName() + ": " + e.getClass().getName() + ": "
                     + e.getMessage());
@@ -317,21 +322,56 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
+     * @return
+     * @throws ParseException
+     */
+    protected AllowEventsHeader getAllowEventsHeaderForResponse()
+            throws ParseException
+    {
+        AllowEventsHeader ahdr = ub.getParent().getHeaderFactory()
+                .createAllowEventsHeader("presence");
+        return ahdr;
+    }
+
+    /**
+     * @return
+     * @throws ParseException
+     */
+    protected SupportedHeader getSupportedHeaderForResponse()
+            throws ParseException
+    {
+        SupportedHeader shdr = ub.getParent().getHeaderFactory()
+                .createSupportedHeader("presence");
+        return shdr;
+    }
+
+    /**
+     * @return
+     * @throws ParseException
+     */
+    protected AcceptHeader getAcceptHeaderForResponse() throws ParseException
+    {
+        AcceptHeader accept = ub.getParent().getHeaderFactory()
+                .createAcceptHeader("application", "pidf+xml");
+        return accept;
+    }
+
+    /**
      * This method creates a NOTIFY message using the given parameters and sends
      * it to the subscriber. The request will be resent if challenged. Use this
      * method only if you have previously called processSubscribe(). Use this
      * method if you don't care about checking the response to the sent NOTIFY,
      * otherwise use sendStatefulNotify().
      * 
-     * @param subscriptionState -
-     *            String to use as the subscription state.
-     * @param termReason -
-     *            used only when subscriptionState = TERMINATED.
-     * @param body -
-     *            NOTIFY body to put in the message
-     * @param timeLeft -
-     *            expiry in seconds to put in the NOTIFY message (used only when
-     *            subscriptionState = ACTIVE or PENDING).
+     * @param subscriptionState
+     *            - String to use as the subscription state.
+     * @param termReason
+     *            - used only when subscriptionState = TERMINATED.
+     * @param body
+     *            - NOTIFY body to put in the message
+     * @param timeLeft
+     *            - expiry in seconds to put in the NOTIFY message (used only
+     *            when subscriptionState = ACTIVE or PENDING).
      * @param viaProxy
      *            If true, send the message to the proxy. In this case a Route
      *            header will be added. Else send the message as is.
@@ -353,27 +393,32 @@ public class PresenceNotifySender implements MessageListener
      * about checking the response to the sent NOTIFY, otherwise use
      * sendStatefulNotify().
      * 
-     * @param subscriptionState -
-     *            String to use as the subscription state. Overridden by sshdr.
-     * @param termReason -
-     *            used only when subscriptionState = TERMINATED. Overridden by
+     * @param subscriptionState
+     *            - String to use as the subscription state. Overridden by
      *            sshdr.
-     * @param body -
-     *            NOTIFY body to put in the message
-     * @param timeLeft -
-     *            expiry in seconds to put in the NOTIFY message (used only when
-     *            subscriptionState = ACTIVE or PENDING). Overridden by sshdr.
-     * @param eventHdr -
-     *            if not null, use this event header in the NOTIFY message
-     * @param ssHdr -
-     *            if not null, use this subscription state header in the NOTIFY
-     *            message instead of building one from other parameters given.
-     * @param accHdr -
-     *            if not null, use this accept header. Otherwise build the
+     * @param termReason
+     *            - used only when subscriptionState = TERMINATED. Overridden by
+     *            sshdr.
+     * @param body
+     *            - NOTIFY body to put in the message
+     * @param timeLeft
+     *            - expiry in seconds to put in the NOTIFY subscription state
+     *            header (only when subscriptionState = ACTIVE or PENDING),
+     *            unless the timeLeft value is -1 in which case don't include
+     *            expires information in the subscription state header.
+     *            Overridden by sshdr.
+     * @param eventHdr
+     *            - if not null, use this event header in the NOTIFY message
+     * @param ssHdr
+     *            - if not null, use this subscription state header in the
+     *            NOTIFY message instead of building one from other parameters
+     *            given.
+     * @param accHdr
+     *            - if not null, use this accept header. Otherwise build the
      *            default package one (pidf+xml).
-     * @param ctHdr -
-     *            if not null, use this content type header. Otherwise build the
-     *            default package one (pidf+xml).
+     * @param ctHdr
+     *            - if not null, use this content type header. Otherwise build
+     *            the default package one (pidf+xml).
      * @param viaProxy
      *            If true, send the message to the proxy. In this case a Route
      *            header will be added. Else send the message as is.
@@ -392,7 +437,7 @@ public class PresenceNotifySender implements MessageListener
         {
             if (dialog == null)
             {
-                setErrorMessage("Can't send notify, haven't received a subscribe");
+                setErrorMessage("Can't send notify, haven't received a request");
                 return false;
             }
 
@@ -415,7 +460,7 @@ public class PresenceNotifySender implements MessageListener
                     else
                     {
                         ehdr = ub.getParent().getHeaderFactory()
-                                .createEventHeader("presence");
+                                .createEventHeader(getEventType());
                     }
                 }
                 req.setHeader(ehdr);
@@ -442,7 +487,8 @@ public class PresenceNotifySender implements MessageListener
                 if (accept == null)
                 {
                     accept = ub.getParent().getHeaderFactory()
-                            .createAcceptHeader("application", "pidf+xml");
+                            .createAcceptHeader(getPackageContentType(),
+                                    getPackageContentSubType());
                 }
                 req.setHeader(accept);
 
@@ -451,7 +497,8 @@ public class PresenceNotifySender implements MessageListener
                 if (ct_hdr == null)
                 {
                     ct_hdr = ub.getParent().getHeaderFactory()
-                            .createContentTypeHeader("application", "pidf+xml");
+                            .createContentTypeHeader(getPackageContentType(),
+                                    getPackageContentSubType());
                 }
 
                 req.setContent(body, ct_hdr);
@@ -472,10 +519,34 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
+     * @return
+     */
+    protected String getPackageContentSubType()
+    {
+        return "pidf+xml";
+    }
+
+    /**
+     * @return
+     */
+    protected String getPackageContentType()
+    {
+        return "application";
+    }
+
+    /**
+     * @return
+     */
+    protected String getEventType()
+    {
+        return "presence";
+    }
+
+    /**
      * This method adds each of the given parameters, if not null, to the given
      * NOTIFY Request parameter which just contains the request line (created
      * from a string). It is for the purpose of building a NOTIFY message to
-     * send out. If a dialog is associated with this object (ie, a SUBSCRIBE has
+     * send out. If a dialog is associated with this object (ie, a request has
      * been previously received), this method takes the information from there
      * to create headers for the null parameters passed in, else this method
      * makes up the header content.
@@ -520,7 +591,7 @@ public class PresenceNotifySender implements MessageListener
                 else
                 {
                     ehdr = ub.getParent().getHeaderFactory().createEventHeader(
-                            "presence");
+                            getEventType());
                 }
                 req.setHeader(ehdr);
 
@@ -538,13 +609,13 @@ public class PresenceNotifySender implements MessageListener
                 }
                 req.setHeader(hdr);
 
-                AcceptHeader accept = ub.getParent().getHeaderFactory()
-                        .createAcceptHeader("application", "pidf+xml");
+                AcceptHeader accept = getAcceptHeaderForResponse();
                 req.setHeader(accept);
 
                 // now for the body
                 ContentTypeHeader ct_hdr = ub.getParent().getHeaderFactory()
-                        .createContentTypeHeader("application", "pidf+xml");
+                        .createContentTypeHeader(getPackageContentType(),
+                                getPackageContentSubType());
                 req.setContent(body, ct_hdr);
                 req.setContentLength(ub.getParent().getHeaderFactory()
                         .createContentLengthHeader(body.length()));
@@ -626,7 +697,7 @@ public class PresenceNotifySender implements MessageListener
         {
             if (dialog == null)
             {
-                setErrorMessage("Can't send notify, haven't received a subscribe");
+                setErrorMessage("Can't send notify, haven't received a request");
                 return false;
             }
 
@@ -669,7 +740,7 @@ public class PresenceNotifySender implements MessageListener
      * have to check for and handle it (TODO, provide a method that does like
      * processRespons() for the caller to use). Knowledge of JAIN-SIP API
      * headers is required to use this method. You may call this method whether
-     * or not this object has received a SUBSCRIBE (ie, whether or not you have
+     * or not this object has received a request (ie, whether or not you have
      * previously called processSubscribe() on this object.) You may
      * subsequently call waitResponse() to check the response returned by the
      * far end.
@@ -774,7 +845,7 @@ public class PresenceNotifySender implements MessageListener
         return errorMessage;
     }
 
-    private void setErrorMessage(String errorMessage)
+    protected void setErrorMessage(String errorMessage)
     {
         if (errorMessage.length() > 0)
         {
@@ -794,7 +865,7 @@ public class PresenceNotifySender implements MessageListener
         return lastSentNotify;
     }
 
-    private void setLastSentNotify(Request lastSentNotify)
+    protected void setLastSentNotify(Request lastSentNotify)
     {
         this.lastSentNotify = (Request) lastSentNotify.clone();
     }
@@ -832,7 +903,8 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /*
-     * @see org.cafesip.sipunit.RequestListener#processEvent(java.util.EventObject)
+     * @see
+     * org.cafesip.sipunit.RequestListener#processEvent(java.util.EventObject)
      */
     public void processEvent(EventObject event)
     {

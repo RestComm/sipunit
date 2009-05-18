@@ -82,7 +82,9 @@ public class PresenceSubscriber extends SubscriptionSubscriber
     private ArrayList<Object> presenceExtensions = new ArrayList<Object>();
 
     /**
-     * A constructor for this class.
+     * A constructor for this class. Used internally by SipUnit. Test programs
+     * should call the SipPhone.addBuddy() or fetchPresenceInfo() method to
+     * create a subscription.
      * 
      * @param uri
      * @param parent

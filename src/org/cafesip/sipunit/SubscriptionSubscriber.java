@@ -537,7 +537,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
      * @return
      * @throws ParseException
      */
-    protected Request createReferMessage(String referToUri, String eventId,
+    protected Request createReferMessage(SipURI referToUri, String eventId,
             String viaNonProxyRoute) throws ParseException
     {
         String nextHop = parent.getProxyHost();
@@ -1785,9 +1785,11 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
     }
 
     /**
-     * @return Returns the dialog.
+     * This method returns the dialog associated with this subscription.
+     * 
+     * @return The JAIN-SIP Dialog object.
      */
-    protected Dialog getDialog()
+    public Dialog getDialog()
     {
         return dialog;
     }

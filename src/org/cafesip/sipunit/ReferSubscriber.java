@@ -21,6 +21,7 @@ package org.cafesip.sipunit;
 import java.text.ParseException;
 
 import javax.sip.Dialog;
+import javax.sip.address.SipURI;
 import javax.sip.header.AcceptHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
@@ -54,15 +55,25 @@ import javax.sip.message.Request;
  */
 public class ReferSubscriber extends SubscriptionSubscriber
 {
-    private String referToUri = "";
+    private SipURI referToUri;
 
-    public ReferSubscriber(String refereeUri, String referToUri, SipPhone parent)
+    /**
+     * A constructor for this class. Used internally by SipUnit. Test programs
+     * should call one of the SipPhone.refer() methods to create a refer
+     * subscription.
+     */
+    public ReferSubscriber(String refereeUri, SipURI referToUri, SipPhone parent)
             throws ParseException
     {
         this(refereeUri, referToUri, parent, null);
     }
 
-    public ReferSubscriber(String refereeUri, String referToUri,
+    /**
+     * A constructor for this class. Used internally by SipUnit. Test programs
+     * should call one of the SipPhone.refer() methods to create a refer
+     * subscription.
+     */
+    public ReferSubscriber(String refereeUri, SipURI referToUri,
             SipPhone parent, Dialog dialog) throws ParseException
     {
         super(refereeUri, parent, dialog);
@@ -377,7 +388,7 @@ public class ReferSubscriber extends SubscriptionSubscriber
     /**
      * @return Returns the referToUri.
      */
-    public String getReferToUri()
+    public SipURI getReferToUri()
     {
         return referToUri;
     }
