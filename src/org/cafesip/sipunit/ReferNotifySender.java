@@ -99,8 +99,7 @@ public class ReferNotifySender extends PresenceNotifySender
      *            - use in the response to the request
      * @param reasonPhrase
      *            - if not null, use in the response
-     * @return true if REFER was received and response sending was successful,
-     *         false otherwise (call getErrorMessage() for details).
+     * @return true if the thread got started OK.
      */
     public boolean processRefer(long timeout, int statusCode,
             String reasonPhrase)
@@ -148,6 +147,7 @@ public class ReferNotifySender extends PresenceNotifySender
                 RequestEvent inc_req = ub.waitRequest(timeout);
                 while (inc_req != null)
                 {
+                    receivedRequests.add(new SipRequest(inc_req));
                     Request req = inc_req.getRequest();
                     if (req.getMethod().equals(Request.REFER) == false)
                     {

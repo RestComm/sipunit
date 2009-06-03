@@ -78,7 +78,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
 
     protected Address targetAddress;
 
-    private String subscriptionState = SubscriptionStateHeader.PENDING;
+    protected String subscriptionState = SubscriptionStateHeader.PENDING;
 
     private String terminationReason;
 
@@ -111,12 +111,12 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
     /*
      * list of SipResponse
      */
-    private LinkedList<SipResponse> receivedResponses = new LinkedList<SipResponse>();
+    protected LinkedList<SipResponse> receivedResponses = new LinkedList<SipResponse>();
 
     /*
      * list of SipRequest
      */
-    private LinkedList<SipRequest> receivedRequests = new LinkedList<SipRequest>();
+    protected LinkedList<SipRequest> receivedRequests = new LinkedList<SipRequest>();
 
     /*
      * for wait operations
@@ -125,13 +125,13 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
 
     private BlockObject responseBlock = new BlockObject();
 
-    private ResponseEvent currentResponse;
-
     /*
      * misc
      */
 
-    private Request lastSentRequest;
+    protected ResponseEvent currentResponse;
+
+    protected Request lastSentRequest;
 
     private Object lastSentRequestLock = new Object(); // lock object for
 
@@ -142,7 +142,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
 
     private boolean removalComplete = false;
 
-    private LinkedList<String> eventErrors = new LinkedList<String>();
+    protected LinkedList<String> eventErrors = new LinkedList<String>();
 
     protected SubscriptionSubscriber(String uri, SipPhone parent)
             throws ParseException
@@ -808,10 +808,10 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
      * back a positive indication.
      * <p>
      * If a success indication is returned by this method, you can call other
-     * methods to find out the result of the messaging sequence:
+     * methods on this object to find out the result of the messaging sequence:
      * isSubscriptionActive/Pending/Terminated() for subscription state
-     * information, getTimeLeft() which is set based on the response information
-     * if applicable.
+     * information, getTimeLeft() if subscription expiry information has been
+     * received.
      * <p>
      * The next step after this is to call waitNotify() to retrieve/wait for the
      * NOTIFY request from the server.
@@ -920,22 +920,26 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
                 return true;
             }
 
-            // the subscription is alive - check expires header
+            // the subscription is alive - check expires header if applicable
 
-            if (response.getExpires() == null)
+            if (expiresResponseHeaderRequired())
             {
-                throw new SubscriptionError(SipSession.FAR_END_ERROR,
-                        "no expires header received");
+                if (response.getExpires() == null)
+                {
+                    throw new SubscriptionError(SipSession.FAR_END_ERROR,
+                            "no expires header received");
+                }
+
+                int expires = response.getExpires().getExpires();
+                validateExpires(expires, false);
+
+                // use the received expiry time as the subscription duration
+                SipStack.trace(targetUri + ": received expiry = " + expires
+                        + ", updating current expiry which was "
+                        + getTimeLeft());
+
+                setTimeLeft(expires);
             }
-
-            int expires = response.getExpires().getExpires();
-            validateExpires(expires, false);
-
-            // use the received expiry time as the subscription duration
-            SipStack.trace(targetUri + ": received expiry = " + expires
-                    + ", updating current expiry which was " + getTimeLeft());
-
-            setTimeLeft(expires);
 
             // set subscription state
             if (status == SipResponse.OK)
@@ -1063,9 +1067,9 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
      * correct event type (done by the event-specific subclass), NOTIFY event ID
      * matches that in the sent request (SUBSCRIBE, REFER), subscription state
      * header existence, received expiry not greater than that sent in the
-     * request (SUBSCRIBE, REFER), catch illegal reception of NOTIFY request
-     * without having sent a request, supported content type/subtype in NOTIFY
-     * (done by the event-specific subclass), and other event-specific
+     * request if it was included there, catch illegal reception of NOTIFY
+     * request without having sent a request, supported content type/subtype in
+     * NOTIFY (done by the event-specific subclass), and other event-specific
      * validation (such as, for presence: matching (correct) presentity in
      * NOTIFY body, correctly formed xml body document, valid document content).
      * 
@@ -1151,7 +1155,10 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
             int expires = subsHdr.getExpires();
             // SIP list TODO - it's optional - how to know if didn't get it?
 
-            validateExpires(expires, true);
+            if (getLastSentRequest().getExpires() != null)
+            {
+                validateExpires(expires, true);
+            }
 
             SipStack.trace(targetUri + ": received expiry = " + expires
                     + ", updating current expiry which was " + getTimeLeft());
@@ -1246,7 +1253,6 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
 
     protected boolean messageForMe(javax.sip.message.Message msg)
     {
-        // TODO check this for refer
         /*
          * NOTIFY requests are matched to SUBSCRIBE/REFER requests if they
          * contain the same "Call-ID", a "To" header "tag" parameter which
@@ -1389,19 +1395,15 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
     {
         // expiry may be shorter, can't be longer than what we sent
 
-        if (getLastSentRequest().getExpires() != null)
+        int sentExpires = getLastSentRequest().getExpires().getExpires();
+
+        if (expires > sentExpires)
         {
-            int sentExpires = getLastSentRequest().getExpires().getExpires();
-
-            if (expires > sentExpires)
-            {
-                throw new SubscriptionError(
-                        (isNotify == true ? SipResponse.BAD_REQUEST
-                                : SipSession.FAR_END_ERROR),
-                        "received expiry > expiry in sent SUBSCRIBE ("
-                                + expires + " > " + sentExpires + ')');
-            }
-
+            throw new SubscriptionError(
+                    (isNotify == true ? SipResponse.BAD_REQUEST
+                            : SipSession.FAR_END_ERROR),
+                    "received expiry > expiry in sent SUBSCRIBE (" + expires
+                            + " > " + sentExpires + ')');
         }
     }
 
@@ -2045,6 +2047,12 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
     {
         // TODO subclass override
         return null;
+    }
+
+    protected boolean expiresResponseHeaderRequired()
+    {
+        // TODO subclass override
+        return true;
     }
 
 }

@@ -110,6 +110,16 @@ public class ReferSubscriber extends SubscriptionSubscriber
         return super.createSubscribeMessage(duration, eventId, "refer");
     }
 
+    protected boolean expiresResponseHeaderRequired()
+    {
+        if (receivedRequests.size() == 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     protected void checkEventType(EventHeader receivedHdr)
             throws SubscriptionError
     {

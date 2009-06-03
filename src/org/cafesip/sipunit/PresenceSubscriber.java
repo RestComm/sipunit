@@ -118,6 +118,11 @@ public class PresenceSubscriber extends SubscriptionSubscriber
         return super.createSubscribeMessage(duration, eventId, "presence");
     }
 
+    protected boolean expiresResponseHeaderRequired()
+    {
+        return true;
+    }
+
     protected void checkEventType(EventHeader receivedHdr)
             throws SubscriptionError
     {

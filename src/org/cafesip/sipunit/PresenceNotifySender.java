@@ -21,8 +21,10 @@ package org.cafesip.sipunit;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.EventObject;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.sip.Dialog;
 import javax.sip.RequestEvent;
@@ -79,6 +81,8 @@ public class PresenceNotifySender implements MessageListener
 
     protected String errorMessage = "";
 
+    protected List<SipRequest> receivedRequests;
+
     /**
      * A constructor for this class. This object immediately starts listening
      * for a SUBSCRIBE request.
@@ -92,6 +96,8 @@ public class PresenceNotifySender implements MessageListener
     {
         ub = userb;
         ub.listenRequestMessage();
+        receivedRequests = Collections
+                .synchronizedList(new ArrayList<SipRequest>());
     }
 
     /**
@@ -129,8 +135,7 @@ public class PresenceNotifySender implements MessageListener
      *            - use in the response to the SUBSCRIBE
      * @param reasonPhrase
      *            - if not null, use in the SUBSCRIBE response
-     * @return true if SUBSCRIBE received and response sending was successful,
-     *         false otherwise (call getErrorMessage() for details).
+     * @return true if the thread got started OK.
      */
     public boolean processSubscribe(long timeout, int statusCode,
             String reasonPhrase)
@@ -178,6 +183,7 @@ public class PresenceNotifySender implements MessageListener
                 RequestEvent inc_req = ub.waitRequest(timeout);
                 while (inc_req != null)
                 {
+                    receivedRequests.add(new SipRequest(inc_req));
                     Request req = inc_req.getRequest();
                     if (req.getMethod().equals(Request.SUBSCRIBE) == false)
                     {
@@ -849,7 +855,7 @@ public class PresenceNotifySender implements MessageListener
     {
         if (errorMessage.length() > 0)
         {
-            SipStack.trace("PresenceNotifySender error : " + errorMessage);
+            SipStack.trace("Notify sender error : " + errorMessage);
         }
         this.errorMessage = errorMessage;
     }
@@ -883,15 +889,21 @@ public class PresenceNotifySender implements MessageListener
      */
     public ArrayList<SipRequest> getAllReceivedRequests()
     {
-        return new ArrayList<SipRequest>();
+        return new ArrayList<SipRequest>(receivedRequests);
     }
 
-    /*
-     * Not implemented for this class. Returns null.
-     */
     public SipRequest getLastReceivedRequest()
     {
-        return null;
+        synchronized (receivedRequests)
+        {
+            if (receivedRequests.isEmpty())
+            {
+                return null;
+            }
+
+            return (SipRequest) receivedRequests
+                    .get(receivedRequests.size() - 1);
+        }
     }
 
     /*
@@ -1021,6 +1033,28 @@ public class PresenceNotifySender implements MessageListener
         }
 
         return null;
+    }
+
+    /**
+     * @return Returns the dialog.
+     */
+    public Dialog getDialog()
+    {
+        return dialog;
+    }
+
+    /**
+     * @param dialog
+     *            The dialog to set.
+     */
+    public void setDialog(Dialog dialog)
+    {
+        this.dialog = dialog;
+
+        if (dialog != null)
+        {
+            toTag = dialog.getLocalTag();
+        }
     }
 
 }

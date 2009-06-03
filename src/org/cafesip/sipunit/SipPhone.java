@@ -43,6 +43,7 @@ import javax.sip.header.AuthorizationHeader;
 import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
+import javax.sip.header.EventHeader;
 import javax.sip.header.ExpiresHeader;
 import javax.sip.header.FromHeader;
 import javax.sip.header.Header;
@@ -1456,16 +1457,61 @@ public class SipPhone extends SipSession implements SipActionObject,
 
         FromHeader from = (FromHeader) request.getHeader(FromHeader.NAME);
 
-        // TODO check EventHeader event type to see what kind of subscription
-        PresenceSubscriber subs = getBuddyInfo(from.getAddress().getURI()
-                .toString());
-        if (subs != null)
+        EventHeader event = (EventHeader) request.getHeader(EventHeader.NAME);
+        if (event == null)
         {
-            if (subs.messageForMe(request) == true)
+            SubscriptionSubscriber.sendResponse(this, requestEvent,
+                    SipResponse.BAD_REQUEST,
+                    "Received a NOTIFY request with no event header");
+
+            String err = "*** NOTIFY REQUEST ERROR ***  (SipPhone "
+                    + me
+                    + ") - SipPhone.processRequestEvent() - Received a NOTIFY request with no event header : \n"
+                    + request;
+            distributeEventError(err);
+            SipStack.trace(err);
+            return;
+        }
+
+        if (event.getEventType().equals("presence"))
+        {
+            PresenceSubscriber subs = getBuddyInfo(from.getAddress().getURI()
+                    .toString());
+            if (subs != null)
             {
-                subs.processEvent(requestEvent);
-                return;
+                if (subs.messageForMe(request) == true)
+                {
+                    subs.processEvent(requestEvent);
+                    return;
+                }
             }
+        }
+        else if (event.getEventType().equals("refer"))
+        {
+            List<ReferSubscriber> refers = getRefererInfoByDialog(requestEvent
+                    .getDialog().getDialogId());
+            for (ReferSubscriber s : refers)
+            {
+                if (s.messageForMe(request) == true)
+                {
+                    s.processEvent(requestEvent);
+                    return;
+                }
+            }
+        }
+        else
+        {
+            String error = "Received a NOTIFY request with unrecognized event header : "
+                    + event.getEventType();
+            SubscriptionSubscriber.sendResponse(this, requestEvent,
+                    SipResponse.BAD_EVENT, error);
+
+            String err = "*** NOTIFY REQUEST ERROR ***  (SipPhone " + me
+                    + ") - SipPhone.processRequestEvent() - " + error + " : \n"
+                    + request;
+            distributeEventError(err);
+            SipStack.trace(err);
+            return;
         }
 
         // no Subscription match for this NOTIFY - 481 status
@@ -2022,12 +2068,15 @@ public class SipPhone extends SipSession implements SipActionObject,
      * 
      * @param scheme
      *            "sip:" or "sips:" or null if the scheme is already included in
-     *            the userHostPortTransport parameter.
-     * @param userHostPortTransport
-     *            Addressing information in the form of:
-     *            user@host:port/transport. Not all 4 components are required,
-     *            and the scheme may optionally be included here. Examples:
-     *            sipmaster@192.168.1.11:5060/UDP and alice@atlanta.sip.com.
+     *            the userHostPort parameter.
+     * @param userHostPort
+     *            Addressing information in the form of: user@host:port. Port is
+     *            not required, and the scheme may optionally be included here
+     *            instead of in the "scheme" parameter. Examples:
+     *            sipmaster@192.168.1.11:5060 and sip:alice@atlanta.sip.com.
+     * @param transportUriParameter
+     *            Specifies which transport protocol to use for sending requests
+     *            and responses to this URI, or null if not needed.
      * @param methodUriParameter
      *            Specifies which SIP method to use in requests directed at this
      *            URI (ie, INVITE), or null if not applicable.
@@ -2053,21 +2102,21 @@ public class SipPhone extends SipSession implements SipActionObject,
      *            fields are key-value pairs.
      * @return A SipURI for passing into methods such as SipPhone.refer().
      * @throws ParseException
-     *             On parse error due to invalid scheme or userHostPortTransport
+     *             On parse error due to invalid scheme or userHostPort
      *             parameters.
      */
-    public SipURI getUri(String scheme, String userHostPortTransport,
-            String methodUriParameter, Map<String, String> otherUriParameters,
-            String joinUriHeader, String replacesUriHeader,
-            String bodyUriHeader, Map<String, String> otherUriHeaders)
-            throws ParseException
+    public SipURI getUri(String scheme, String userHostPort,
+            String transportUriParameter, String methodUriParameter,
+            Map<String, String> otherUriParameters, String joinUriHeader,
+            String replacesUriHeader, String bodyUriHeader,
+            Map<String, String> otherUriHeaders) throws ParseException
     {
         StringBuffer buf = new StringBuffer();
         if (scheme != null)
         {
             buf.append(scheme);
         }
-        buf.append(userHostPortTransport);
+        buf.append(userHostPort);
 
         Address addr = getAddressFactory().createAddress(buf.toString());
         URI addrUri = addr.getURI();
@@ -2082,6 +2131,10 @@ public class SipPhone extends SipSession implements SipActionObject,
         if (otherUriParameters == null)
         {
             otherUriParameters = new HashMap<String, String>();
+        }
+        if (transportUriParameter != null)
+        {
+            otherUriParameters.put("transport", transportUriParameter);
         }
         if (methodUriParameter != null)
         {
