@@ -19,6 +19,7 @@
 package org.cafesip.sipunit;
 
 import java.text.ParseException;
+import java.util.StringTokenizer;
 
 import javax.sip.Dialog;
 import javax.sip.address.SipURI;
@@ -127,7 +128,7 @@ public class ReferSubscriber extends SubscriptionSubscriber
         if (event.equals("refer") == false)
         {
             throw new SubscriptionError(SipResponse.BAD_EVENT,
-                    "received a refer event header containing unknown event = "
+                    "received a refer NOTIFY event header containing unknown event = "
                             + event);
         }
     }
@@ -150,45 +151,77 @@ public class ReferSubscriber extends SubscriptionSubscriber
         // REFER a UA receives in a given dialog. A SUBSCRIBE sent to refresh
         // or terminate this subscription MUST contain this id parameter.
 
-        // TODO uncomment
-        // byte[] bodyBytes = request.getRawContent();
-        // if (bodyBytes == null) - is this legal?
-        // {
-        // return;
-        // }
+        byte[] bodyBytes = request.getRawContent();
+        if (bodyBytes == null)
+        {
+            throw new SubscriptionError(SipResponse.BAD_REQUEST,
+                    "Refer NOTIFY has no body");
+        }
 
-        // check for supported content type
+        // Each NOTIFY MUST contain a body of type "message/sipfrag"
         ContentTypeHeader ct = (ContentTypeHeader) request
                 .getHeader(ContentTypeHeader.NAME);
-
         if (ct == null)
         {
             throw new SubscriptionError(SipResponse.BAD_REQUEST,
-                    "NOTIFY body has bytes but no content type header was received");
+                    "Refer NOTIFY body has bytes but no content type header was received");
         }
 
         if (ct.getContentType().equals("message") == false)
         {
             throw new SubscriptionError(SipResponse.UNSUPPORTED_MEDIA_TYPE,
-                    "received NOTIFY body with unsupported content type = "
+                    "received Refer NOTIFY body with unsupported content type = "
                             + ct.getContentType());
         }
         else if (ct.getContentSubType().equals("sipfrag") == false)
         {
             throw new SubscriptionError(SipResponse.UNSUPPORTED_MEDIA_TYPE,
-                    "received NOTIFY body with unsupported content subtype = "
+                    "received Refer NOTIFY body with unsupported content subtype = "
                             + ct.getContentSubType());
+        }
+
+        // The body of a NOTIFY MUST begin with a SIP Response Status-Line
+        // IE: Status-Line = SIP-Version SP Status-Code SP Reason-Phrase
+        // The Status-Code is a 3-digit integer result code, 1xx - 6xx
+        // IE: SIP/2.0 200 OK
+
+        StringTokenizer tok = new StringTokenizer(new String(bodyBytes));
+        if (tok.countTokens() < 3)
+        {
+            throw new SubscriptionError(
+                    SipResponse.BAD_REQUEST,
+                    "received Refer NOTIFY body with less than the number of words in a SIP Response Status-Line, received body: "
+                            + new String(bodyBytes));
+        }
+
+        String sipVersion = tok.nextToken();
+        String statusCode = tok.nextToken();
+
+        if (sipVersion.startsWith("SIP/") == false)
+        {
+            throw new SubscriptionError(
+                    SipResponse.BAD_REQUEST,
+                    "received Refer NOTIFY body Status-Line SIP-Version is invalid, received body: "
+                            + new String(bodyBytes));
         }
 
         try
         {
-            // any checking to do on the xml body ?
-            // TODO - check per RFC 3515 Section 2.4.5.
+            int status = Integer.valueOf(statusCode);
+            if (status < 100 || status > 699)
+            {
+                throw new SubscriptionError(
+                        SipResponse.BAD_REQUEST,
+                        "received Refer NOTIFY body Status-Line Status-Code is out of range, received body: "
+                                + new String(bodyBytes));
+            }
         }
-        catch (Exception e)
+        catch (NumberFormatException e)
         {
-            throw new SubscriptionError(SipResponse.BAD_REQUEST,
-                    "NOTIFY body parsing error : " + e.getMessage());
+            throw new SubscriptionError(
+                    SipResponse.BAD_REQUEST,
+                    "received Refer NOTIFY body Status-Line Status-Code is non-numeric, received body: "
+                            + new String(bodyBytes));
         }
 
         return;

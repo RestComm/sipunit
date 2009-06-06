@@ -619,12 +619,16 @@ public class PresenceNotifySender implements MessageListener
                 req.setHeader(accept);
 
                 // now for the body
-                ContentTypeHeader ct_hdr = ub.getParent().getHeaderFactory()
-                        .createContentTypeHeader(getPackageContentType(),
-                                getPackageContentSubType());
-                req.setContent(body, ct_hdr);
-                req.setContentLength(ub.getParent().getHeaderFactory()
-                        .createContentLengthHeader(body.length()));
+                if (body != null)
+                {
+                    ContentTypeHeader ct_hdr = ub.getParent()
+                            .getHeaderFactory().createContentTypeHeader(
+                                    getPackageContentType(),
+                                    getPackageContentSubType());
+                    req.setContent(body, ct_hdr);
+                    req.setContentLength(ub.getParent().getHeaderFactory()
+                            .createContentLengthHeader(body.length()));
+                }
 
                 if (dialog == null)
                 {
@@ -675,9 +679,10 @@ public class PresenceNotifySender implements MessageListener
         catch (Exception e)
         {
             setErrorMessage(e.getClass().getName() + ": " + e.getMessage());
+            return null;
         }
 
-        return null;
+        return req;
     }
 
     /**

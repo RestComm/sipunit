@@ -38,6 +38,7 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.EventHeader;
+import javax.sip.header.ExpiresHeader;
 import javax.sip.header.FromHeader;
 import javax.sip.header.Header;
 import javax.sip.header.HeaderFactory;
@@ -493,6 +494,8 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
             // dialog is established enough to use
             {
                 req = dialog.createRequest(method);
+                req.setHeader((ContactHeader) parent.getContactInfo()
+                        .getContactHeader().clone());
                 SipStack.trace("Dialog has created this established dialog "
                         + method + ": " + req);
             }
@@ -510,6 +513,10 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
             if (duration != -1)
             {
                 req.setExpires(hdrFactory.createExpiresHeader(duration));
+            }
+            else
+            {
+                req.removeHeader(ExpiresHeader.NAME);
             }
 
             parent.addAuthorizations(callId.getCallId(), req);
