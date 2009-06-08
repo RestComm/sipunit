@@ -26,7 +26,9 @@ import javax.sip.address.SipURI;
 import javax.sip.header.AcceptHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
+import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 /**
  * The ReferSubscriber class represents the implicit subscription created by
@@ -111,9 +113,9 @@ public class ReferSubscriber extends SubscriptionSubscriber
         return super.createSubscribeMessage(duration, eventId, "refer");
     }
 
-    protected boolean expiresResponseHeaderRequired()
+    protected boolean expiresResponseHeaderApplicable()
     {
-        if (receivedRequests.size() == 0)
+        if (lastSentRequest.getMethod().equals(SipRequest.REFER))
         {
             return false;
         }
@@ -434,6 +436,33 @@ public class ReferSubscriber extends SubscriptionSubscriber
     public SipURI getReferToUri()
     {
         return referToUri;
+    }
+
+    protected void validateOkAcceptedResponse(Response response)
+            throws SubscriptionError
+    {
+        if (!expiresResponseHeaderApplicable())
+        {
+            if (response.getExpires() != null)
+            {
+                throw new SubscriptionError(SipSession.FAR_END_ERROR,
+                        "expires header was received in the REFER response");
+            }
+        }
+    }
+
+    protected void validateSubscriptionStateHeader(
+            SubscriptionStateHeader subsHdr) throws SubscriptionError
+    {
+        if (!subsHdr.getState().equals(SubscriptionStateHeader.TERMINATED))
+        {
+            if (subsHdr.getExpires() <= 0)
+            {
+                throw new SubscriptionError(SipResponse.BAD_REQUEST,
+                        "invalid expires value in NOTIFY SubscriptionStateHeader: "
+                                + subsHdr.getExpires());
+            }
+        }
     }
 
 }

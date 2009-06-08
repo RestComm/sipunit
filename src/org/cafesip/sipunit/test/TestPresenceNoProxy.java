@@ -230,7 +230,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             RequestEvent reqevent = s.waitNotify(500);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // examine the request object
             Request request = reqevent.getRequest();
@@ -300,7 +300,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // examine the request object
             request = reqevent.getRequest();
@@ -370,7 +370,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // refresh buddy status - sends SUBSCRIBE, gets response
             assertTrue(s.refreshBuddy(3600, 1000));
@@ -378,7 +378,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // check the return info
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
             assertNotNull(ua.getBuddyInfo(buddy));
             assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
                     .getTargetUri());
@@ -410,7 +410,7 @@ public class TestPresenceNoProxy extends SipTestCase
                     + timeleft, timeleft <= 3600 && timeleft >= 3595);
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // tell far end to send a NOTIFY
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"> <tuple id=\"3\"> <status> <basic>closed</basic> </status> </tuple> </presence>";
@@ -420,14 +420,14 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
             assertNotNull(response);
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // check the processing results
             assertTrue(s.isSubscriptionActive());
@@ -470,14 +470,14 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
             assertNotNull(response);
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // check the processing results
             assertFalse(s.isSubscriptionActive());
@@ -549,7 +549,7 @@ public class TestPresenceNoProxy extends SipTestCase
                     notify_body, 2400, false));
             RequestEvent reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
             Response response = s.processNotify(reqevent);
             assertNotNull(response);
             assertTrue(s.isSubscriptionActive());
@@ -570,7 +570,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // check buddy lists
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // Now, end the subscription from our side
 
@@ -585,7 +585,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // check immediate impacts - buddy lists, subscription state
             assertEquals(0, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
             assertNotNull(ua.getBuddyInfo(buddy)); // can still be found
             assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
                     .getTargetUri());
@@ -620,7 +620,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(0, s.getTimeLeft());
             assertEquals(0, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // tell far end to send a NOTIFY
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"> <tuple id=\"3\"> <status> <basic>open</basic> </status> </tuple> </presence>";
@@ -630,14 +630,14 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
             assertNotNull(response);
             assertEquals(0, ua.getBuddyList().size());
             assertEquals(1, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // check the processing results
             assertTrue(s.isSubscriptionTerminated());
@@ -754,7 +754,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             RequestEvent reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
             HashMap<String, PresenceDeviceInfo> devices = s
                     .getPresenceDevices();
             assertTrue(devices.isEmpty());
@@ -857,7 +857,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
@@ -1078,7 +1078,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             RequestEvent reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
             Response response = s.processNotify(reqevent);
             assertNotNull(response);
             assertTrue(s.isSubscriptionActive());
@@ -1100,7 +1100,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // check buddy lists
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // do the NOTIFY sequence, send the wrong event ID
             EventHeader eventHdr = sipStack.getHeaderFactory()
@@ -1130,7 +1130,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertEquals(1, ua.getBuddyList().size());
             assertEquals(0, ua.getRetiredBuddies().size());
             s.clearEventErrors();
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
         }
         catch (Exception e)
         {
@@ -1214,7 +1214,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             RequestEvent reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // process the NOTIFY
             Response response = s.processNotify(reqevent);
@@ -1312,7 +1312,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
@@ -1340,7 +1340,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             // (3) send badly formed data
 
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
             notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n "
                     + " <presence entity=\"sip:becky@cafesip.org\""
                     + " xmlns=\"urn:ietf:params:xml:ns:pidf\"> "
@@ -1354,7 +1354,7 @@ public class TestPresenceNoProxy extends SipTestCase
             // get the NOTIFY
             reqevent = s.waitNotify(1000);
             assertNotNull(reqevent);
-            assertNoPresenceErrors(s);
+            assertNoSubscriptionErrors(s);
 
             // process the NOTIFY
             response = s.processNotify(reqevent);
@@ -1610,7 +1610,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertNotNull(reqevent);
             Response response = s1.processNotify(reqevent); // process it
             assertNotNull(response);
-            assertNoPresenceErrors(s1);
+            assertNoSubscriptionErrors(s1);
             assertTrue(s1.isSubscriptionActive());
             assertTrue(s1.getTimeLeft() <= 2400);
             assertEquals(SipResponse.OK, s1.getReturnCode());
@@ -1663,7 +1663,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             response = s2.processNotify(reqevent2); // process notify on 2
             assertNotNull(response);
-            assertNoPresenceErrors(s2);
+            assertNoSubscriptionErrors(s2);
             assertEquals(SipResponse.OK, response.getStatusCode());
             assertTrue(s2.isSubscriptionPending());
             assertTrue(s2.getTimeLeft() <= 2400);
@@ -1673,7 +1673,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             response = s3.processNotify(reqevent3); // process notify on 3
             assertNotNull(response);
-            assertNoPresenceErrors(s3);
+            assertNoSubscriptionErrors(s3);
             assertEquals(SipResponse.OK, response.getStatusCode());
             assertTrue(s3.isSubscriptionActive());
             assertTrue(s3.getTimeLeft() <= 3700);
@@ -1732,7 +1732,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             response = s2.processNotify(reqevent2); // process notify on 2
             assertNotNull(response);
-            assertNoPresenceErrors(s2);
+            assertNoSubscriptionErrors(s2);
             assertEquals(SipResponse.OK, response.getStatusCode());
             assertTrue(s2.isSubscriptionActive());
             assertTrue(s2.getTimeLeft() <= 2000);
@@ -1742,7 +1742,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             response = s3.processNotify(reqevent3); // process notify on 3
             assertNotNull(response);
-            assertNoPresenceErrors(s3);
+            assertNoSubscriptionErrors(s3);
             assertEquals(SipResponse.OK, response.getStatusCode());
             assertTrue(s3.isSubscriptionActive());
             assertTrue(s3.getTimeLeft() <= 3000);
@@ -1799,7 +1799,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertNotNull(reqevent);
             response = s1.processNotify(reqevent); // process it
             assertNotNull(response);
-            assertNoPresenceErrors(s1);
+            assertNoSubscriptionErrors(s1);
             assertTrue(s1.isSubscriptionTerminated());
             assertEquals(SipResponse.OK, s1.getReturnCode());
             assertTrue(s1.replyToNotify(reqevent, response)); // send reply
@@ -1854,7 +1854,7 @@ public class TestPresenceNoProxy extends SipTestCase
             assertNotNull(reqevent);
             response = s1.processNotify(reqevent); // process it
             assertNotNull(response);
-            assertNoPresenceErrors(s1);
+            assertNoSubscriptionErrors(s1);
             assertTrue(s1.isSubscriptionTerminated());
             assertEquals(SipResponse.OK, s1.getReturnCode());
             assertTrue(s1.replyToNotify(reqevent, response)); // send reply
@@ -1917,7 +1917,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             response = s2.processNotify(reqevent2); // process notify on 2
             assertNotNull(response);
-            assertNoPresenceErrors(s2);
+            assertNoSubscriptionErrors(s2);
             assertEquals(SipResponse.OK, response.getStatusCode());
             assertTrue(s2.isSubscriptionTerminated());
             assertEquals("done", s2.getTerminationReason());
@@ -1927,7 +1927,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
             response = s3.processNotify(reqevent3); // process notify on 3
             assertNotNull(response);
-            assertNoPresenceErrors(s3);
+            assertNoSubscriptionErrors(s3);
             assertEquals(SipResponse.OK, response.getStatusCode());
             assertTrue(s3.isSubscriptionTerminated());
             assertEquals("all-done", s3.getTerminationReason());
@@ -2008,8 +2008,8 @@ public class TestPresenceNoProxy extends SipTestCase
             response = s2.processNotify(reqevent2); // process notify on 2
             assertTrue(s2.replyToNotify(reqevent2, response)); // send reply
 
-            assertNoPresenceErrors(s1);
-            assertNoPresenceErrors(s2);
+            assertNoSubscriptionErrors(s1);
+            assertNoSubscriptionErrors(s2);
         }
         catch (Exception e)
         {

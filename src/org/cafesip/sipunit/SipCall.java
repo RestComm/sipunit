@@ -166,6 +166,21 @@ public class SipCall implements SipActionObject, MessageListener
     }
 
     /**
+     * This method is the same as dispose() except no BYE is sent before idling
+     * the dialog.
+     */
+    public void disposeNoBye()
+    {
+        if (dialog != null)
+        {
+            dialog.delete();
+            dialog = null;
+        }
+
+        dispose();
+    }
+
+    /**
      * Start listening for an ACK request. This is a non-blocking call. Starting
      * from the time this method is called, any received request(s) for this UA
      * are collected. After calling this method, you can call waitForAck() to

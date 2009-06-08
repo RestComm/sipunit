@@ -1063,21 +1063,21 @@ public class SipTestCase extends TestCase
 
     /**
      * Asserts that the given Subscription has not encountered any errors while
-     * processing received SUBSCRIBE responses and received NOTIFY requests. If
-     * the assertion fails, the encountered error(s) are included in the failure
-     * output.
+     * processing received subscription responses and received NOTIFY requests.
+     * If the assertion fails, the encountered error(s) are included in the
+     * failure output.
      * 
      * @param subscription
      *            the Subscription in question.
      */
-    public void assertNoPresenceErrors(SubscriptionSubscriber subscription)
+    public void assertNoSubscriptionErrors(SubscriptionSubscriber subscription)
     {
-        assertNoPresenceErrors(null, subscription);
+        assertNoSubscriptionErrors(null, subscription);
     }
 
     /**
      * Asserts that the given Subscription has not encountered any errors while
-     * processing received SUBSCRIBE responses and received NOTIFY requests.
+     * processing received subscription responses and received NOTIFY requests.
      * Assertion failure output includes the given message text along with the
      * encountered error(s).
      * 
@@ -1086,12 +1086,13 @@ public class SipTestCase extends TestCase
      * @param subscription
      *            the Subscription in question.
      */
-    public void assertNoPresenceErrors(String msg, SubscriptionSubscriber subscription)
+    public void assertNoSubscriptionErrors(String msg,
+            SubscriptionSubscriber subscription)
     {
         assertNotNull("Null assert object passed in", subscription);
 
-        StringBuffer buf = new StringBuffer(msg == null ? "Presence error(s)"
-                : msg);
+        StringBuffer buf = new StringBuffer(
+                msg == null ? "Subscription error(s)" : msg);
         Iterator<String> i = subscription.getEventErrors().iterator();
         while (i.hasNext())
         {
@@ -1111,23 +1112,23 @@ public class SipTestCase extends TestCase
      * 
      * catch (AssertionFailedError e) // adjust stack trace { ArrayList stack =
      * new ArrayList(); StackTraceElement[] t = e.getStackTrace(); String
-     * thisclass = this.getClass().getName(); for (int i = 0; i < t.length; i++) {
-     * StackTraceElement ele = t[i]; System.out.println("Element = " +
-     * ele.toString()); if (thisclass.equals(ele.getClass().getName()) == true) {
-     * continue; } stack.add(t[i]); }
+     * thisclass = this.getClass().getName(); for (int i = 0; i < t.length; i++)
+     * { StackTraceElement ele = t[i]; System.out.println("Element = " +
+     * ele.toString()); if (thisclass.equals(ele.getClass().getName()) == true)
+     * { continue; } stack.add(t[i]); }
      * 
      * StackTraceElement[] new_stack = new StackTraceElement[stack.size()];
-     * e.setStackTrace((StackTraceElement[]) stack.toArray(new_stack)); throw e; }
+     * e.setStackTrace((StackTraceElement[]) stack.toArray(new_stack)); throw e;
+     * }
      */
 
     /*
-     * public class Arguments { public static void notNull(Object arg) { if(arg ==
-     * null) { IllegalArgumentException t = new IllegalArgumentException();
+     * public class Arguments { public static void notNull(Object arg) { if(arg
+     * == null) { IllegalArgumentException t = new IllegalArgumentException();
      * reorient(t); throw t; } } private static void reorient(Throwable t) {
      * StackTraceElement[] elems = t.getStackTrace(); StackTraceElement[]
      * subElems = new StackTraceElement[elems.length-1]; System.arrayCopy(elems,
      * 1, subElems, 0, elems.length-1); t.setStackTrace(t); } }
-     * 
      */
 
 }

@@ -1531,30 +1531,17 @@ public class SipPhone extends SipSession implements SipActionObject,
     }
 
     private void distributeEventError(String err)
-    // to all the appropriate Subscriptions - test program will need to see the
-    // error
+    // to all the Subscriptions - test program will need to see the error
     {
-        ArrayList<SubscriptionSubscriber> subscriptions = new ArrayList<SubscriptionSubscriber>();
+        ArrayList<SubscriptionSubscriber> subscriptions = new ArrayList<SubscriptionSubscriber>(
+                getBuddyList().values());
+        subscriptions.addAll(new ArrayList<SubscriptionSubscriber>(
+                getRetiredBuddies().values()));
+        subscriptions.addAll(getRefererList());
 
-        // TODO, pass in EventHeader and use event type to get the approriate
-        // subscriptions
-        synchronized (buddyList)
+        for (SubscriptionSubscriber s : subscriptions)
         {
-            if (!buddyList.isEmpty())
-            {
-                subscriptions.addAll(buddyList.values());
-            }
-
-            if (!buddyTerminatedList.isEmpty())
-            {
-                subscriptions.addAll(buddyTerminatedList.values());
-            }
-        }
-
-        Iterator<SubscriptionSubscriber> i = subscriptions.iterator();
-        while (i.hasNext())
-        {
-            i.next().addEventError(err);
+            s.addEventError(err);
         }
     }
 
@@ -2292,25 +2279,26 @@ public class SipPhone extends SipSession implements SipActionObject,
             return null;
         }
 
+        ReferSubscriber sub = null;
         try
         {
-            ReferSubscriber sub = new ReferSubscriber(refereeUri, referToUri,
-                    this);
+            sub = new ReferSubscriber(refereeUri, referToUri, this);
             Request req = sub.createReferMessage(referToUri, eventId,
                     viaNonProxyRoute);
 
             if (req != null)
             {
+                synchronized (refererList)
+                {
+                    refererList.add(sub);
+                }
+
                 boolean viaProxy = (proxyHost != null)
                         && (viaNonProxyRoute == null);
 
                 if (sub.startSubscription(req, timeout, viaProxy,
                         additionalHeaders, replaceHeaders, body) == true)
                 {
-                    synchronized (refererList)
-                    {
-                        refererList.add(sub);
-                    }
                     return sub;
                 }
             }
@@ -2327,7 +2315,85 @@ public class SipPhone extends SipSession implements SipActionObject,
                     + e.getMessage());
         }
 
+        if (sub != null)
+        {
+            synchronized (refererList)
+            {
+                refererList.remove(sub);
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * This method is the same as the basic out-of-dialog refer() method except
+     * that it allows the caller to specify a message body and/or additional
+     * message headers to add to or replace in the outbound message without
+     * requiring knowledge of the JAIN-SIP API.
+     * 
+     * The extra parameters supported by this method are:
+     * 
+     * @param body
+     *            A String to be used as the body of the message. Parameters
+     *            contentType, contentSubType must both be non-null to get the
+     *            body included in the message. Use null for no body bytes.
+     * @param contentType
+     *            The body content type (ie, 'message' part of
+     *            'message/sipfrag'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param contentSubType
+     *            The body content sub-type (ie, 'sipfrag' part of
+     *            'message/sipfrag'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param additionalHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message. Examples: "Priority:
+     *            Urgent", "Max-Forwards: 10". These headers are added to the
+     *            message after a correct message has been constructed. Note
+     *            that if you try to add a header that there is only supposed to
+     *            be one of in a message, and it's already there and only one
+     *            single value is allowed for that header, then this header
+     *            addition attempt will be ignored. Use the 'replaceHeaders'
+     *            parameter instead if you want to replace the existing header
+     *            with your own. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no additional message headers.
+     * @param replaceHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message, replacing existing
+     *            header(s) of that type if present in the message. Examples:
+     *            "Priority: Urgent", "Max-Forwards: 10". These headers are
+     *            applied to the message after a correct message has been
+     *            constructed. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no replacement of message headers.
+     * 
+     */
+    public ReferSubscriber refer(String refereeUri, SipURI referToUri,
+            String eventId, long timeout, String viaNonProxyRoute, String body,
+            String contentType, String contentSubType,
+            ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
+    {
+        try
+        {
+            return refer(refereeUri, referToUri, eventId, timeout,
+                    viaNonProxyRoute, toHeader(additionalHeaders, contentType,
+                            contentSubType), toHeader(replaceHeaders), body);
+        }
+        catch (Exception ex)
+        {
+            setException(ex);
+            setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                    + ex.getMessage());
+            setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+            return null;
+        }
     }
 
     /**
@@ -2440,21 +2506,23 @@ public class SipPhone extends SipSession implements SipActionObject,
             return null;
         }
 
+        ReferSubscriber sub = null;
         try
         {
-            ReferSubscriber sub = new ReferSubscriber(dialog.getRemoteParty()
-                    .getURI().toString(), referToUri, this, dialog);
+            sub = new ReferSubscriber(dialog.getRemoteParty().getURI()
+                    .toString(), referToUri, this, dialog);
             Request req = sub.createReferMessage(referToUri, eventId, null);
 
             if (req != null)
             {
+                synchronized (refererList)
+                {
+                    refererList.add(sub);
+                }
+
                 if (sub.startSubscription(req, timeout, false,
                         additionalHeaders, replaceHeaders, body) == true)
                 {
-                    synchronized (refererList)
-                    {
-                        refererList.add(sub);
-                    }
                     return sub;
                 }
             }
@@ -2471,7 +2539,84 @@ public class SipPhone extends SipSession implements SipActionObject,
                     + e.getMessage());
         }
 
+        if (sub != null)
+        {
+            synchronized (refererList)
+            {
+                refererList.remove(sub);
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * This method is the same as the basic in-dialog refer() method except that
+     * it allows the caller to specify a message body and/or additional message
+     * headers to add to or replace in the outbound message without requiring
+     * knowledge of the JAIN-SIP API.
+     * 
+     * The extra parameters supported by this method are:
+     * 
+     * @param body
+     *            A String to be used as the body of the message. Parameters
+     *            contentType, contentSubType must both be non-null to get the
+     *            body included in the message. Use null for no body bytes.
+     * @param contentType
+     *            The body content type (ie, 'message' part of
+     *            'message/sipfrag'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param contentSubType
+     *            The body content sub-type (ie, 'sipfrag' part of
+     *            'message/sipfrag'), required if there is to be any content
+     *            (even if body bytes length 0). Use null for no message
+     *            content.
+     * @param additionalHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message. Examples: "Priority:
+     *            Urgent", "Max-Forwards: 10". These headers are added to the
+     *            message after a correct message has been constructed. Note
+     *            that if you try to add a header that there is only supposed to
+     *            be one of in a message, and it's already there and only one
+     *            single value is allowed for that header, then this header
+     *            addition attempt will be ignored. Use the 'replaceHeaders'
+     *            parameter instead if you want to replace the existing header
+     *            with your own. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no additional message headers.
+     * @param replaceHeaders
+     *            ArrayList of String, each element representing a SIP message
+     *            header to add to the outbound message, replacing existing
+     *            header(s) of that type if present in the message. Examples:
+     *            "Priority: Urgent", "Max-Forwards: 10". These headers are
+     *            applied to the message after a correct message has been
+     *            constructed. Unpredictable results may occur if your headers
+     *            are not syntactically correct or contain nonsensical values
+     *            (the message may not pass through the local SIP stack). Use
+     *            null for no replacement of message headers.
+     * 
+     */
+    public ReferSubscriber refer(Dialog dialog, SipURI referToUri,
+            String eventId, long timeout, String body, String contentType,
+            String contentSubType, ArrayList<String> additionalHeaders,
+            ArrayList<String> replaceHeaders)
+    {
+        try
+        {
+            return refer(dialog, referToUri, eventId, timeout, toHeader(
+                    additionalHeaders, contentType, contentSubType),
+                    toHeader(replaceHeaders), body);
+        }
+        catch (Exception ex)
+        {
+            setException(ex);
+            setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                    + ex.getMessage());
+            setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
+            return null;
+        }
     }
 
     protected String getProxyHost()

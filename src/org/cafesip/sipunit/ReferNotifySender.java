@@ -28,6 +28,7 @@ import javax.sip.header.AllowEventsHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
+import javax.sip.header.Header;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.header.SupportedHeader;
 import javax.sip.message.Request;
@@ -62,15 +63,6 @@ public class ReferNotifySender extends PresenceNotifySender
     public ReferNotifySender(SipPhone userb)
     {
         super(userb);
-    }
-
-    /**
-     * Dispose of this object (but not the stack given to it).
-     * 
-     */
-    public void dispose()
-    {
-        ub.dispose();
     }
 
     /**
@@ -181,6 +173,182 @@ public class ReferNotifySender extends PresenceNotifySender
                             eventHeader = (EventHeader) req.getHeader(
                                     EventHeader.NAME).clone();
 
+                            dialog = sendResponse(trans, statusCode,
+                                    reasonPhrase, toTag, req, -1);
+
+                            if (dialog == null)
+                            {
+                                ub.clearAuthorizations(((CallIdHeader) req
+                                        .getHeader(CallIdHeader.NAME))
+                                        .getCallId());
+                                return;
+                            }
+                        }
+
+                        SipStack.trace("Sent response to REFER");
+                        return;
+                    }
+                    catch (Throwable e)
+                    {
+                        setErrorMessage("Throwable: " + e.getClass().getName()
+                                + ": " + e.getMessage());
+                        return;
+                    }
+                }
+
+                setErrorMessage(ub.getErrorMessage());
+                return;
+            }
+            catch (Exception e)
+            {
+                setErrorMessage("Exception: " + e.getClass().getName() + ": "
+                        + e.getMessage());
+            }
+            catch (Throwable t)
+            {
+                setErrorMessage("Throwable: " + t.getClass().getName() + ": "
+                        + t.getMessage());
+                return;
+            }
+        }
+    }
+
+    /**
+     * This method starts a thread that waits for up to 'timeout' milliseconds
+     * to receive a REFER and if received, it sends NOTIFY with the given notify
+     * parms and 500ms later, it sends a response with 'statusCode' and
+     * 'reasonPhrase' (if not null). This method waits 500 ms before returning
+     * to allow the thread to get started and begin waiting for an incoming
+     * REFER. This method adds 1000ms to the given timeout to account for these
+     * delays.
+     * 
+     * @param timeout
+     *            - number of milliseconds to wait for the request
+     * @param statusCode
+     *            - use in the response to the request
+     * @param reasonPhrase
+     *            - if not null, use in the response
+     * @param notifySubscriptionState
+     * @param notifyTermReason
+     * @param notifyBody
+     * @param notifyTimeLeft
+     * @return true if the thread got started OK.
+     */
+    public boolean processReferSendNotifyBeforeResponse(long timeout,
+            int statusCode, String reasonPhrase,
+            String notifySubscriptionState, String notifyTermReason,
+            String notifyBody, int notifyTimeLeft)
+    {
+        setErrorMessage("");
+
+        PhoneB2 b = new PhoneB2(timeout + 1000, statusCode, reasonPhrase,
+                notifySubscriptionState, notifyTermReason, notifyBody,
+                notifyTimeLeft);
+        b.start();
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    class PhoneB2 extends Thread
+    {
+        long timeout;
+
+        int statusCode;
+
+        String reasonPhrase;
+
+        String notifySubscriptionState;
+
+        String notifyTermReason;
+
+        String notifyBody;
+
+        int notifyTimeLeft;
+
+        public PhoneB2(long timeout, int statusCode, String reasonPhrase,
+                String notifySubscriptionState, String notifyTermReason,
+                String notifyBody, int notifyTimeLeft)
+        {
+            this.timeout = timeout;
+            this.statusCode = statusCode;
+            this.reasonPhrase = reasonPhrase;
+            this.notifySubscriptionState = notifySubscriptionState;
+            this.notifyTermReason = notifyTermReason;
+            this.notifyBody = notifyBody;
+            this.notifyTimeLeft = notifyTimeLeft;
+        }
+
+        public void run()
+        {
+            try
+            {
+                ub.unlistenRequestMessage(); // clear out request queue
+                ub.listenRequestMessage();
+
+                RequestEvent inc_req = ub.waitRequest(timeout);
+                while (inc_req != null)
+                {
+                    receivedRequests.add(new SipRequest(inc_req));
+                    Request req = inc_req.getRequest();
+                    if (req.getMethod().equals(Request.REFER) == false)
+                    {
+                        inc_req = ub.waitRequest(timeout);
+                        continue;
+                    }
+
+                    try
+                    {
+                        synchronized (dialogLock)
+                        {
+                            ServerTransaction trans = inc_req
+                                    .getServerTransaction();
+                            if (trans == null)
+                            {
+                                trans = ub.getParent().getSipProvider()
+                                        .getNewServerTransaction(req);
+                            }
+
+                            if (toTag == null)
+                            {
+                                toTag = new Long(Calendar.getInstance()
+                                        .getTimeInMillis()).toString();
+                            }
+
+                            // enable auth challenge handling
+                            ub.enableAuthorization(((CallIdHeader) req
+                                    .getHeader(CallIdHeader.NAME)).getCallId());
+
+                            // save original event header
+                            eventHeader = (EventHeader) req.getHeader(
+                                    EventHeader.NAME).clone();
+
+                            // send the NOTIFY before sending the REFER response
+                            Thread.sleep(50);
+                            Request notifyRequest = inc_req.getDialog()
+                                    .createRequest(SipRequest.NOTIFY);
+                            notifyRequest = addNotifyHeaders(notifyRequest,
+                                    null, null, notifySubscriptionState,
+                                    notifyTermReason, notifyBody,
+                                    notifyTimeLeft);
+                            notifyRequest.addHeader((Header) eventHeader
+                                    .clone());
+                            if (sendNotify(notifyRequest, false) == false)
+                            {
+                                return;
+                            }
+                            Thread.sleep(500);
+
+                            // now send the REFER response
                             dialog = sendResponse(trans, statusCode,
                                     reasonPhrase, toTag, req, -1);
 

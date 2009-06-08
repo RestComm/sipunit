@@ -118,7 +118,7 @@ public class PresenceSubscriber extends SubscriptionSubscriber
         return super.createSubscribeMessage(duration, eventId, "presence");
     }
 
-    protected boolean expiresResponseHeaderRequired()
+    protected boolean expiresResponseHeaderApplicable()
     {
         return true;
     }

@@ -30,6 +30,7 @@ import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.address.SipURI;
 import javax.sip.header.CSeqHeader;
+import javax.sip.header.EventHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -266,10 +267,12 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(uri.toString().indexOf("body=This is my body") > 0);
     }
 
-    public void testOutboundOutdialogBasic() throws Exception // TODO
-    // unsubscribe
-    // part
+    public void testOutboundOutdialogBasicWithUnsubscribe() throws Exception
     {
+        // A sends out-of-dialog REFER to B, gets OK response
+        // B sends active-state NOTIFY to A, gets OK response
+        // A unsubscribes, gets OK response
+        // B sends terminated NOTIFY, gets OK response
         SipURI referTo = ua
                 .getUri(
                         "sip:",
@@ -289,7 +292,7 @@ public class TestReferNoProxy extends SipTestCase
 
         assertEquals(0, ua.getRefererList().size());
 
-        // send REFER
+        // A: send REFER
         ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
                 referTo, null, 5000, null);
         assertNotNull(subscription);
@@ -315,6 +318,7 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals(subscription, ua.getRefererInfoByDialog(
                 subscription.getDialogId()).get(0));
         assertEquals(subscription, ua.getRefererList().get(0));
+        assertNoSubscriptionErrors(subscription);
 
         // process the received response
         assertTrue(subscription.processResponse(1000));
@@ -325,15 +329,18 @@ public class TestReferNoProxy extends SipTestCase
         assertFalse(subscription.isSubscriptionTerminated());
         assertNull(subscription.getTerminationReason());
         assertEquals(0, subscription.getTimeLeft());
+        assertNoSubscriptionErrors(subscription);
 
-        // tell far end to send a NOTIFY
+        // B sends active-state NOTIFY to A, gets OK response
+        // **********************************************************
+        // B: send NOTIFY
         Thread.sleep(500);
         String notifyBody = "SIP/2.0 200 OK";
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
                 notifyBody, 2400, false));
         Thread.sleep(10);
 
-        // get the NOTIFY
+        // A: get the NOTIFY
         RequestEvent reqevent = subscription.waitNotify(500);
         assertNotNull(reqevent);
 
@@ -353,6 +360,7 @@ public class TestReferNoProxy extends SipTestCase
                 .toString(), request.toString());
         assertEquals(received_requests.get(0).toString(), req.toString());
         assertBodyContains(req, notifyBody);
+        assertNoSubscriptionErrors(subscription);
 
         // process the NOTIFY
         resp = subscription.processNotify(reqevent);
@@ -364,7 +372,102 @@ public class TestReferNoProxy extends SipTestCase
         assertFalse(subscription.isSubscriptionTerminated());
         assertNull(subscription.getTerminationReason());
         assertTrue(subscription.getTimeLeft() <= 2400);
+        assertTrue(subscription.getTimeLeft() > 1000);
         assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertNoSubscriptionErrors(subscription);
+
+        // check the response that was created
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+        assertTrue(resp.getReasonPhrase().equals("OK"));
+
+        // A: reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+
+        // terminate the subscription from the referrer side
+        // A unsubscribes, gets OK response
+        // **************************************************
+        // prepare the far end
+        assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Done"));
+        Thread.sleep(100);
+
+        // send the un-SUBSCRIBE
+        assertTrue(subscription.unsubscribe(100));
+        assertFalse(subscription.isRemovalComplete());
+
+        // check the results - subscription, response, SipPhone referer list
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertFalse(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionActive());
+        assertTrue(subscription.isSubscriptionTerminated());
+        resp = subscription.getCurrentResponse().getResponse();
+        assertEquals(SipRequest.SUBSCRIBE, ((CSeqHeader) resp
+                .getHeader(CSeqHeader.NAME)).getMethod());
+        assertEquals("OK Done", resp.getReasonPhrase());
+        assertEquals(0, resp.getExpires().getExpires());
+        assertEquals(resp.toString(), subscription.getLastReceivedResponse()
+                .getMessage().toString());
+        received_responses = subscription.getAllReceivedResponses();
+        assertEquals(2, received_responses.size());
+        assertEquals(resp.toString(), received_responses.get(1).toString());
+        assertEquals(1, ua.getRefererList().size());
+        assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
+        assertEquals(subscription, ua.getRefererInfoByDialog(
+                subscription.getDialogId()).get(0));
+        assertEquals(subscription, ua.getRefererList().get(0));
+        assertNoSubscriptionErrors(subscription);
+
+        // process the received response
+        assertTrue(subscription.processResponse(1000));
+
+        // check the response processing results
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionPending());
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertEquals("Unsubscribe", subscription.getTerminationReason());
+        assertEquals(0, subscription.getTimeLeft());
+        assertNoSubscriptionErrors(subscription);
+
+        // B sends terminated NOTIFY, gets OK response
+        // *********************************************************
+        // tell far end to send a NOTIFY
+        Thread.sleep(500);
+        notifyBody = "SIP/2.0 100 Trying";
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "Unsubscribed", notifyBody, 0, false));
+        Thread.sleep(10);
+
+        // A: get the NOTIFY
+        reqevent = subscription.waitNotify(500);
+        assertNotNull(reqevent);
+
+        // examine the NOTIFY request object, verify subscription getters
+        request = reqevent.getRequest();
+        assertEquals(Request.NOTIFY, request.getMethod());
+        assertEquals(-1, ((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+        received_requests = subscription.getAllReceivedRequests();
+        assertEquals(2, received_requests.size());
+        req = subscription.getLastReceivedRequest();
+        assertNotNull(req);
+        assertTrue(req.isNotify());
+        assertFalse(req.isSubscribe());
+        assertEquals(((SipRequest) received_requests.get(1)).getMessage()
+                .toString(), request.toString());
+        assertEquals(received_requests.get(1).toString(), req.toString());
+        assertBodyContains(req, notifyBody);
+        assertNoSubscriptionErrors(subscription);
+
+        // process the NOTIFY
+        resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+
+        // check the processing results
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionPending());
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertEquals("Unsubscribed", subscription.getTerminationReason());
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertNoSubscriptionErrors(subscription);
 
         // check the response that was created
         assertEquals(SipResponse.OK, resp.getStatusCode());
@@ -372,215 +475,620 @@ public class TestReferNoProxy extends SipTestCase
 
         // reply to the NOTIFY
         assertTrue(subscription.replyToNotify(reqevent, resp));
-
-        // terminate the subscription from the referrer side
-
-        // prepare the far end
-        assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
-        Thread.sleep(500);
-
-        // send the un-SUBSCRIBE
-        assertTrue(subscription.unsubscribe(100));
-        assertFalse(subscription.isRemovalComplete());
-
-        // check everything
-
-        // process the received response
-
-        // check the response processing results
-
-        // tell far end to send a NOTIFY
-
-        // receive the NOTIFY
-
-        // examine the request object
-
-        // process the NOTIFY
-        // resp = subscription.processNotify(reqevent);
-        // assertNotNull(resp);
-
-        // check the processing results
-
-        // check the response that was created
-
-        // reply to the NOTIFY
-
-        // Let B send BYE
-
+        subscription.dispose();
+        assertEquals(0, ua.getRefererList().size());
     }
 
     public void testOutboundIndialogBasic() throws Exception
     {
         // A calls B, call established
         // A sends in-dialog REFER to B, gets 202 Accepted
-        // B sends subscription-terminating NOTIFY to A, gets OK
-        // A sends BYE, gets OK
-        try
+        // B sends subscription-terminating NOTIFY to A, gets OK in response
+
+        // create and set up the far end
+        SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        SipCall b = ub.createSipCall();
+        assertTrue(b.listenForIncomingCall());
+
+        // make the call from A
+        SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(ua.format(), ua);
+
+        // B side answer the call
+        assertTrue(b.waitForIncomingCall(1000));
+        assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+        Thread.sleep(20);
+        assertTrue(b.sendIncomingCallResponse(Response.OK,
+                "Answer - Hello world", 0));
+        Thread.sleep(20);
+
+        // A side finish call establishment
+        assertAnswered("Outgoing call leg not answered", a);
+        a.sendInviteOkAck();
+        assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+        Thread.sleep(1000);
+
+        // B side - prepare to receive REFER
+        ReferNotifySender referHandler = new ReferNotifySender(ub);
+        referHandler.setDialog(b.getDialog());
+        assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED,
+                "Accepted"));
+
+        // A side - send a REFER message
+        SipURI referTo = ua
+                .getUri(
+                        "sip:",
+                        "dave@denver.example.org",
+                        "udp",
+                        null,
+                        null,
+                        null,
+                        "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994",
+                        null, null);
+
+        ReferSubscriber subscription = ua.refer(a.getDialog(), referTo, null,
+                4000);
+        if (subscription == null)
         {
-            // create and set up the far end
-            SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
-            SipCall b = ub.createSipCall();
-            assertTrue(b.listenForIncomingCall());
-
-            // make the call from A
-            SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
-                    .getProperty("javax.sip.IP_ADDRESS")
-                    + ':' + myPort + '/' + testProtocol);
-            assertLastOperationSuccess(ua.format(), ua);
-
-            // B side answer the call
-            assertTrue(b.waitForIncomingCall(1000));
-            assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing",
-                    0));
-            Thread.sleep(20);
-            assertTrue(b.sendIncomingCallResponse(Response.OK,
-                    "Answer - Hello world", 0));
-            Thread.sleep(20);
-
-            // A side finish call establishment
-            assertAnswered("Outgoing call leg not answered", a);
-            a.sendInviteOkAck();
-            assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
-            Thread.sleep(1000);
-
-            // B side - prepare to receive REFER
-            ReferNotifySender referHandler = new ReferNotifySender(ub);
-            referHandler.setDialog(b.getDialog());
-            assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED,
-                    "Accepted"));
-
-            // A side - send a REFER message
-            SipURI referTo = ua
-                    .getUri(
-                            "sip:",
-                            "dave@denver.example.org",
-                            "udp",
-                            null,
-                            null,
-                            null,
-                            "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994",
-                            null, null);
-
-            ReferSubscriber subscription = ua.refer(a.getDialog(), referTo,
-                    null, 4000);
-            if (subscription == null)
-            {
-                fail(ua.getReturnCode() + ':' + ua.getErrorMessage());
-            }
-
-            // B side - verify received REFER contents
-            RequestEvent requestEvent = referHandler.getLastReceivedRequest()
-                    .getRequestEvent();
-            assertNotNull(requestEvent);
-            Request req = requestEvent.getRequest();
-            assertEquals(SipRequest.REFER, req.getMethod());
-            assertEquals(b.getDialogId(), requestEvent.getDialog()
-                    .getDialogId());
-
-            // A side - check the initial results - subscription, response,
-            // SipPhone referer list
-            assertEquals(SipResponse.ACCEPTED, subscription.getReturnCode());
-            assertTrue(subscription.isSubscriptionPending());
-            assertFalse(subscription.isSubscriptionActive());
-            assertFalse(subscription.isSubscriptionTerminated());
-            Response resp = subscription.getCurrentResponse().getResponse();
-            assertEquals(SipRequest.REFER, ((CSeqHeader) resp
-                    .getHeader(CSeqHeader.NAME)).getMethod());
-            assertEquals("Accepted", resp.getReasonPhrase());
-            assertNull(resp.getExpires());
-            assertEquals(resp.toString(), subscription
-                    .getLastReceivedResponse().getMessage().toString());
-            ArrayList<SipResponse> received_responses = subscription
-                    .getAllReceivedResponses();
-            assertEquals(1, received_responses.size());
-            assertEquals(resp.toString(), received_responses.get(0).toString());
-            assertEquals(1, ua.getRefererList().size());
-            assertEquals(subscription, ua.getRefererList().get(0));
-            assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
-            assertEquals(subscription, ua.getRefererInfoByDialog(
-                    subscription.getDialogId()).get(0));
-            assertEquals(subscription, ua.getRefererInfoByDialog(
-                    a.getDialogId()).get(0));
-
-            // A side - process the received response
-            assertTrue(subscription.processResponse(1000));
-
-            // A side - check the response processing results
-            assertFalse(subscription.isSubscriptionActive());
-            assertTrue(subscription.isSubscriptionPending());
-            assertFalse(subscription.isSubscriptionTerminated());
-            assertNull(subscription.getTerminationReason());
-            assertEquals(0, subscription.getTimeLeft());
-
-            // B side - send a NOTIFY
-            Thread.sleep(20);
-            Request notifyRequest = b.getDialog().createRequest(
-                    SipRequest.NOTIFY);
-            notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
-                    null, SubscriptionStateHeader.TERMINATED, "noresource",
-                    "SIP/2.0 100 Trying", 0);
-            SipTransaction trans = referHandler.sendStatefulNotify(
-                    notifyRequest, false);
-            assertNotNull(trans);
-
-            // A side - wait for the NOTIFY
-            RequestEvent reqevent = subscription.waitNotify(1000);
-            assertNotNull(reqevent);
-
-            // A side - examine the NOTIFY request object, verify subscription
-            // message getters
-            Request request = reqevent.getRequest();
-            assertEquals(Request.NOTIFY, request.getMethod());
-            assertTrue(((SubscriptionStateHeader) request
-                    .getHeader(SubscriptionStateHeader.NAME)).getExpires() < 1);
-            ArrayList<SipRequest> received_requests = subscription
-                    .getAllReceivedRequests();
-            assertEquals(1, received_requests.size());
-            SipRequest sipreq = subscription.getLastReceivedRequest();
-            assertNotNull(sipreq);
-            assertTrue(sipreq.isNotify());
-            assertFalse(sipreq.isSubscribe());
-            assertEquals(received_requests.get(0).getMessage().toString(),
-                    request.toString());
-            assertEquals(received_requests.get(0).toString(), sipreq.toString());
-            assertBodyContains(sipreq, "SIP/2.0 100 Trying");
-
-            // A side - process the NOTIFY
-            resp = subscription.processNotify(reqevent);
-            assertNotNull(resp);
-
-            // A side - check the NOTIFY processing results on subscription
-            assertFalse(subscription.isSubscriptionActive());
-            assertFalse(subscription.isSubscriptionPending());
-            assertTrue(subscription.isSubscriptionTerminated());
-            assertEquals("noresource", subscription.getTerminationReason());
-            assertEquals(0, subscription.getTimeLeft());
-
-            // A side - check the NOTIFY response that was created
-            assertEquals(SipResponse.OK, resp.getStatusCode());
-            assertTrue(resp.getReasonPhrase().equals("noresource"));
-            assertEquals(SipResponse.OK, subscription.getReturnCode());
-
-            // A side - reply to the NOTIFY
-            assertTrue(subscription.replyToNotify(reqevent, resp));
-
-            // B side - verify the NOTIFY response got sent by A
-            Object obj = referHandler.waitResponse(trans, 10000);
-            assertNotNull(obj);
-            assertTrue(obj instanceof ResponseEvent);
-            assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse()
-                    .getStatusCode());
-
-            // end the SIP call
-            assertTrue(a.disconnect());
-            assertLastOperationSuccess("a disc - " + a.format(), a);
-            assertTrue(b.waitForDisconnect(500));
-            assertTrue(b.respondToDisconnect());
+            fail(ua.getReturnCode() + ':' + ua.getErrorMessage());
         }
-        catch (Exception e)
-        {
-            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-        }
+
+        // B side - verify received REFER contents
+        RequestEvent requestEvent = referHandler.getLastReceivedRequest()
+                .getRequestEvent();
+        assertNotNull(requestEvent);
+        Request req = requestEvent.getRequest();
+        assertEquals(SipRequest.REFER, req.getMethod());
+        assertEquals(b.getDialogId(), requestEvent.getDialog().getDialogId());
+
+        // A side - check the initial results - subscription, response,
+        // SipPhone referer list
+        assertEquals(SipResponse.ACCEPTED, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionTerminated());
+        Response resp = subscription.getCurrentResponse().getResponse();
+        assertEquals(SipRequest.REFER, ((CSeqHeader) resp
+                .getHeader(CSeqHeader.NAME)).getMethod());
+        assertEquals("Accepted", resp.getReasonPhrase());
+        assertNull(resp.getExpires());
+        assertEquals(resp.toString(), subscription.getLastReceivedResponse()
+                .getMessage().toString());
+        ArrayList<SipResponse> received_responses = subscription
+                .getAllReceivedResponses();
+        assertEquals(1, received_responses.size());
+        assertEquals(resp.toString(), received_responses.get(0).toString());
+        assertEquals(1, ua.getRefererList().size());
+        assertEquals(subscription, ua.getRefererList().get(0));
+        assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
+        assertEquals(subscription, ua.getRefererInfoByDialog(
+                subscription.getDialogId()).get(0));
+        assertEquals(subscription, ua.getRefererInfoByDialog(a.getDialogId())
+                .get(0));
+
+        // A side - process the received response
+        assertTrue(subscription.processResponse(1000));
+        assertNoSubscriptionErrors(subscription);
+
+        // A side - check the response processing results
+        assertFalse(subscription.isSubscriptionActive());
+        assertTrue(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionTerminated());
+        assertNull(subscription.getTerminationReason());
+        assertEquals(0, subscription.getTimeLeft());
+
+        // B side - send a NOTIFY
+        Thread.sleep(20);
+        Request notifyRequest = b.getDialog().createRequest(SipRequest.NOTIFY);
+        notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
+                null, SubscriptionStateHeader.TERMINATED, "noresource",
+                "SIP/2.0 100 Trying", 0);
+        SipTransaction trans = referHandler.sendStatefulNotify(notifyRequest,
+                false);
+        assertNotNull(trans);
+
+        // A side - wait for the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        assertNotNull(reqevent);
+
+        // A side - examine the NOTIFY request object, verify subscription
+        // message getters
+        Request request = reqevent.getRequest();
+        assertEquals(Request.NOTIFY, request.getMethod());
+        assertTrue(((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires() < 1);
+        ArrayList<SipRequest> received_requests = subscription
+                .getAllReceivedRequests();
+        assertEquals(1, received_requests.size());
+        SipRequest sipreq = subscription.getLastReceivedRequest();
+        assertNotNull(sipreq);
+        assertTrue(sipreq.isNotify());
+        assertFalse(sipreq.isSubscribe());
+        assertEquals(received_requests.get(0).getMessage().toString(), request
+                .toString());
+        assertEquals(received_requests.get(0).toString(), sipreq.toString());
+        assertBodyContains(sipreq, "SIP/2.0 100 Trying");
+
+        // A side - process the NOTIFY
+        resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+        assertNoSubscriptionErrors(subscription);
+
+        // A side - check the NOTIFY processing results on subscription
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionPending());
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertEquals("noresource", subscription.getTerminationReason());
+        assertEquals(0, subscription.getTimeLeft());
+
+        // A side - check the NOTIFY response that was created
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+        assertTrue(resp.getReasonPhrase().equals("OK"));
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+        // A side - reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+
+        // B side - verify the NOTIFY response got sent by A
+        Object obj = referHandler.waitResponse(trans, 10000);
+        assertNotNull(obj);
+        assertTrue(obj instanceof ResponseEvent);
+        assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse()
+                .getStatusCode());
+
+        // cleanup
+        a.disposeNoBye();
+        b.disposeNoBye();
     }
 
+    public void testOutboundIndialogBrefersAwithRefresh() throws Exception
+    {
+        // A calls B, call established
+        // B sends in-dialog REFER to A, gets 202 Accepted
+        // A sends state-active NOTIFY to B, gets OK in response
+        // A sends another NOTIFY to B, gets OK in response
+        // B refreshes the subscription
+        // A sends subscription-terminating NOTIFY to B, gets OK in response
+
+        // create and set up the far end
+        SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        SipCall b = ub.createSipCall();
+        assertTrue(b.listenForIncomingCall());
+
+        // make the call from A
+        SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(ua.format(), ua);
+
+        // B side answer the call
+        assertTrue(b.waitForIncomingCall(1000));
+        assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+        Thread.sleep(20);
+        assertTrue(b.sendIncomingCallResponse(Response.OK,
+                "Answer - Hello world", 0));
+        Thread.sleep(20);
+
+        // A side finish call establishment
+        assertAnswered("Outgoing call leg not answered", a);
+        a.sendInviteOkAck();
+        assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+        Thread.sleep(1000);
+
+        // B sends in-dialog REFER to A, gets 202 Accepted
+        // ****************************************************************
+        // A side - prepare to receive REFER
+        ReferNotifySender referHandler = new ReferNotifySender(ua);
+        referHandler.setDialog(a.getDialog());
+        assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED,
+                "Accepted"));
+
+        // B side - send a REFER message
+        SipURI referTo = ub.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+
+        ReferSubscriber subscription = ub.refer(b.getDialog(), referTo,
+                "myeventid", 4000);
+        if (subscription == null)
+        {
+            fail(ub.getReturnCode() + ':' + ub.getErrorMessage());
+        }
+
+        // A side - verify received REFER contents
+        RequestEvent requestEvent = referHandler.getLastReceivedRequest()
+                .getRequestEvent();
+        assertNotNull(requestEvent);
+        Request req = requestEvent.getRequest();
+        assertEquals(SipRequest.REFER, req.getMethod());
+        assertEquals(a.getDialogId(), requestEvent.getDialog().getDialogId());
+        assertEquals("myeventid", ((EventHeader) req
+                .getHeader(EventHeader.NAME)).getEventId());
+
+        // B side - check the initial results - subscription, response,
+        // SipPhone referer list
+        assertEquals(SipResponse.ACCEPTED, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionTerminated());
+        Response resp = subscription.getCurrentResponse().getResponse();
+        assertEquals(SipRequest.REFER, ((CSeqHeader) resp
+                .getHeader(CSeqHeader.NAME)).getMethod());
+        assertEquals("Accepted", resp.getReasonPhrase());
+        assertNull(resp.getExpires());
+        assertEquals(resp.toString(), subscription.getLastReceivedResponse()
+                .getMessage().toString());
+        ArrayList<SipResponse> received_responses = subscription
+                .getAllReceivedResponses();
+        assertEquals(1, received_responses.size());
+        assertEquals(resp.toString(), received_responses.get(0).toString());
+        assertEquals(1, ub.getRefererList().size());
+        assertEquals(subscription, ub.getRefererList().get(0));
+        assertEquals(subscription, ub.getRefererInfo(referTo).get(0));
+        assertEquals(subscription, ub.getRefererInfoByDialog(
+                subscription.getDialogId()).get(0));
+        assertEquals(subscription, ub.getRefererInfoByDialog(b.getDialogId())
+                .get(0));
+
+        // B side - process the received response
+        assertTrue(subscription.processResponse(1000));
+        assertNoSubscriptionErrors(subscription);
+
+        // B side - check the response processing results
+        assertFalse(subscription.isSubscriptionActive());
+        assertTrue(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionTerminated());
+        assertNull(subscription.getTerminationReason());
+        assertEquals(0, subscription.getTimeLeft());
+
+        // A sends state-active NOTIFY to B, gets OK in response
+        // **************************************************************
+        // A side - send a NOTIFY
+        Thread.sleep(20);
+        Request notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+        notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
+                null, SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 100 Trying", 60);
+        SipTransaction trans = referHandler.sendStatefulNotify(notifyRequest,
+                false);
+        assertNotNull(trans);
+
+        // B side - wait for the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        assertNotNull(reqevent);
+
+        // B side - examine the NOTIFY request object, verify subscription
+        // message getters
+        Request request = reqevent.getRequest();
+        assertEquals(Request.NOTIFY, request.getMethod());
+        assertEquals(60, ((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+        ArrayList<SipRequest> received_requests = subscription
+                .getAllReceivedRequests();
+        assertEquals(1, received_requests.size());
+        SipRequest sipreq = subscription.getLastReceivedRequest();
+        assertNotNull(sipreq);
+        assertTrue(sipreq.isNotify());
+        assertFalse(sipreq.isSubscribe());
+        assertEquals(received_requests.get(0).getMessage().toString(), request
+                .toString());
+        assertEquals(received_requests.get(0).toString(), sipreq.toString());
+        assertBodyContains(sipreq, "SIP/2.0 100 Trying");
+        assertHeaderContains(sipreq, EventHeader.NAME, "myeventid");
+
+        // B side - process the NOTIFY
+        resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+        assertNoSubscriptionErrors(subscription);
+
+        // B side - check the NOTIFY processing results on subscription
+        assertTrue(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionTerminated());
+        assertTrue(subscription.getTimeLeft() <= 60
+                && subscription.getTimeLeft() > 55);
+
+        // B side - check the NOTIFY response that was created
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+        // B side - reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+
+        // A side - verify the NOTIFY response got sent by B
+        Object obj = referHandler.waitResponse(trans, 10000);
+        assertNotNull(obj);
+        assertTrue(obj instanceof ResponseEvent);
+        assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse()
+                .getStatusCode());
+
+        // A sends another NOTIFY to B, gets OK in response
+        // **************************************************************
+        Thread.sleep(800);
+        notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+        notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
+                null, SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 180 Ringing", 20);
+        trans = referHandler.sendStatefulNotify(notifyRequest, false);
+        assertNotNull(trans);
+
+        // B side - wait for the NOTIFY
+        reqevent = subscription.waitNotify(1000);
+        assertNotNull(reqevent);
+
+        // B side - examine the NOTIFY request object
+        request = reqevent.getRequest();
+        assertEquals(20, ((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+        received_requests = subscription.getAllReceivedRequests();
+        assertEquals(2, received_requests.size());
+        sipreq = subscription.getLastReceivedRequest();
+        assertNotNull(sipreq);
+        assertEquals(received_requests.get(1).getMessage().toString(), request
+                .toString());
+        assertBodyContains(sipreq, "SIP/2.0 180 Ringing");
+
+        // B side - process the NOTIFY
+        resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+        assertNoSubscriptionErrors(subscription);
+
+        // B side - check the NOTIFY processing results on subscription
+        assertTrue(subscription.isSubscriptionActive());
+        assertTrue(subscription.getTimeLeft() <= 20
+                && subscription.getTimeLeft() > 15);
+
+        // B side - check the NOTIFY response that was created
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+
+        // B side - reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+
+        // A side - verify the NOTIFY response got sent by B
+        obj = referHandler.waitResponse(trans, 10000);
+        assertNotNull(obj);
+        assertTrue(obj instanceof ResponseEvent);
+        assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse()
+                .getStatusCode());
+
+        // B refreshes the subscription
+        // **************************************************************
+        // prepare A to receive SUBSCRIBE
+        assertTrue(referHandler.processSubscribe(2000, SipResponse.OK, "OK"));
+        // refresh
+        assertTrue(subscription.refresh(10, "eventid-x", 500));
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertEquals(subscription.getLastReceivedResponse().getResponseEvent(),
+                subscription.getCurrentResponse());
+        assertEquals("eventid-x", ((EventHeader) subscription
+                .getLastSentRequest().getHeader(EventHeader.NAME)).getEventId());
+        assertTrue(subscription.processResponse(200));
+        assertTrue(subscription.isSubscriptionActive());
+        assertTrue(subscription.getTimeLeft() <= 10
+                && subscription.getTimeLeft() > 5);
+
+        // A sends subscription-terminating NOTIFY to B, gets OK in response
+        // **************************************************************
+        // A side - send a NOTIFY
+        Thread.sleep(20);
+        notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+        notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
+                null, SubscriptionStateHeader.TERMINATED, "noresource",
+                "SIP/2.0 100 Trying", 0);
+        trans = referHandler.sendStatefulNotify(notifyRequest, false);
+        assertNotNull(trans);
+
+        // B side - wait for the NOTIFY
+        reqevent = subscription.waitNotify(1000);
+        assertNotNull(reqevent);
+
+        // B side - examine the NOTIFY request object, verify subscription
+        // message getters
+        request = reqevent.getRequest();
+        assertEquals(Request.NOTIFY, request.getMethod());
+        assertTrue(((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires() < 1);
+        received_requests = subscription.getAllReceivedRequests();
+        assertEquals(3, received_requests.size());
+        sipreq = subscription.getLastReceivedRequest();
+        assertNotNull(sipreq);
+        assertTrue(sipreq.isNotify());
+        assertFalse(sipreq.isSubscribe());
+        assertEquals(received_requests.get(2).getMessage().toString(), request
+                .toString());
+        assertEquals(received_requests.get(2).toString(), sipreq.toString());
+        assertBodyContains(sipreq, "SIP/2.0 100 Trying");
+
+        // B side - process the NOTIFY
+        resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+        assertNoSubscriptionErrors(subscription);
+
+        // B side - check the NOTIFY processing results on subscription
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionPending());
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertEquals("noresource", subscription.getTerminationReason());
+
+        // B side - check the NOTIFY response that was created
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+        assertTrue(resp.getReasonPhrase().equals("OK"));
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+        // B side - reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+
+        // A side - verify the NOTIFY response got sent by B
+        obj = referHandler.waitResponse(trans, 10000);
+        assertNotNull(obj);
+        assertTrue(obj instanceof ResponseEvent);
+        assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse()
+                .getStatusCode());
+
+        // cleanup
+        a.disposeNoBye();
+        b.disposeNoBye();
+    }
+
+    public void testOutboundIndialogNotifyBeforeReferResponse()
+            throws Exception
+    {
+        // A calls B, call established
+        // A sends in-dialog REFER to B, A gets subscription-terminating NOTIFY
+        // A gets 202 Accepted in response to the REFER A sent
+        // B receives OK from A in response to the NOTIFY B sent
+
+        // create and set up the far end
+        SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        SipCall b = ub.createSipCall();
+        assertTrue(b.listenForIncomingCall());
+
+        // make the call from A
+        SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(ua.format(), ua);
+
+        // B side answer the call
+        assertTrue(b.waitForIncomingCall(1000));
+        assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+        Thread.sleep(20);
+        assertTrue(b.sendIncomingCallResponse(Response.OK,
+                "Answer - Hello world", 0));
+        Thread.sleep(20);
+
+        // A side finish call establishment
+        assertAnswered("Outgoing call leg not answered", a);
+        a.sendInviteOkAck();
+        assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+        Thread.sleep(1000);
+
+        // B side - set up REFER handler
+        ReferNotifySender referHandler = new ReferNotifySender(ub);
+        referHandler.setDialog(b.getDialog());
+        assertTrue(referHandler.processReferSendNotifyBeforeResponse(2000,
+                SipResponse.ACCEPTED, "Accepted",
+                SubscriptionStateHeader.TERMINATED, "noresource",
+                "SIP/2.0 100 Trying", 0));
+
+        // A side - send a REFER message
+        SipURI referTo = ua
+                .getUri(
+                        "sip:",
+                        "dave@denver.example.org",
+                        "udp",
+                        null,
+                        null,
+                        null,
+                        "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994",
+                        null, null);
+
+        ReferSubscriber subscription = ua.refer(a.getDialog(), referTo,
+                "eventbackward", 1000);
+        if (subscription == null)
+        {
+            fail(ua.getReturnCode() + ':' + ua.getErrorMessage());
+        }
+
+        // B side - verify received REFER contents
+        RequestEvent requestEvent = referHandler.getLastReceivedRequest()
+                .getRequestEvent();
+        assertNotNull(requestEvent);
+        Request req = requestEvent.getRequest();
+        assertEquals(SipRequest.REFER, req.getMethod());
+        assertEquals(b.getDialogId(), requestEvent.getDialog().getDialogId());
+
+        // A side - check the initial results - subscription, response,
+        // SipPhone referer list
+        assertEquals(SipResponse.ACCEPTED, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionTerminated());
+        Response resp = subscription.getCurrentResponse().getResponse();
+        assertEquals(SipRequest.REFER, ((CSeqHeader) resp
+                .getHeader(CSeqHeader.NAME)).getMethod());
+        assertEquals("Accepted", resp.getReasonPhrase());
+        assertNull(resp.getExpires());
+        assertEquals(resp.toString(), subscription.getLastReceivedResponse()
+                .getMessage().toString());
+        ArrayList<SipResponse> received_responses = subscription
+                .getAllReceivedResponses();
+        assertEquals(1, received_responses.size());
+        assertEquals(resp.toString(), received_responses.get(0).toString());
+        assertEquals(1, ua.getRefererList().size());
+        assertEquals(subscription, ua.getRefererList().get(0));
+        assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
+        assertEquals(subscription, ua.getRefererInfoByDialog(
+                subscription.getDialogId()).get(0));
+        assertEquals(subscription, ua.getRefererInfoByDialog(a.getDialogId())
+                .get(0));
+
+        // A side - process the received response
+        assertTrue(subscription.processResponse(2000));
+        assertNoSubscriptionErrors(subscription);
+
+        // A side - check the response processing results
+        assertFalse(subscription.isSubscriptionActive());
+        assertTrue(subscription.isSubscriptionPending());
+        assertFalse(subscription.isSubscriptionTerminated());
+        assertNull(subscription.getTerminationReason());
+        assertEquals(0, subscription.getTimeLeft());
+
+        // A side - wait for the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        assertNotNull(reqevent);
+
+        // A side - examine the NOTIFY request object, verify subscription
+        // message getters
+        Request request = reqevent.getRequest();
+        assertEquals(Request.NOTIFY, request.getMethod());
+        assertTrue(((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires() < 1);
+        ArrayList<SipRequest> received_requests = subscription
+                .getAllReceivedRequests();
+        assertEquals(1, received_requests.size());
+        SipRequest sipreq = subscription.getLastReceivedRequest();
+        assertNotNull(sipreq);
+        assertTrue(sipreq.isNotify());
+        assertFalse(sipreq.isSubscribe());
+        assertEquals(received_requests.get(0).getMessage().toString(), request
+                .toString());
+        assertEquals(received_requests.get(0).toString(), sipreq.toString());
+        assertBodyContains(sipreq, "SIP/2.0 100 Trying");
+
+        // A side - process the NOTIFY
+        resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+        assertNoSubscriptionErrors(subscription);
+
+        // A side - check the NOTIFY processing results on subscription
+        assertFalse(subscription.isSubscriptionActive());
+        assertFalse(subscription.isSubscriptionPending());
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertEquals("noresource", subscription.getTerminationReason());
+        assertEquals(0, subscription.getTimeLeft());
+
+        // A side - check the NOTIFY response that was created
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+        assertTrue(resp.getReasonPhrase().equals("OK"));
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+        // A side - reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+
+        // B side - verify the NOTIFY response got sent by A
+        Thread.sleep(500);
+        SipResponse sipresp = referHandler.getLastReceivedResponse();
+        assertNotNull(sipresp);
+        CSeqHeader cseq = (CSeqHeader) sipresp.getMessage().getHeader(
+                CSeqHeader.NAME);
+        assertEquals(SipRequest.NOTIFY, cseq.getMethod());
+        assertEquals(SipResponse.OK, sipresp.getResponseEvent().getResponse()
+                .getStatusCode());
+
+        // cleanup
+        a.disposeNoBye();
+        b.disposeNoBye();
+    }
 }

@@ -83,6 +83,8 @@ public class PresenceNotifySender implements MessageListener
 
     protected List<SipRequest> receivedRequests;
 
+    protected List<SipResponse> receivedResponses;
+
     /**
      * A constructor for this class. This object immediately starts listening
      * for a SUBSCRIBE request.
@@ -98,6 +100,8 @@ public class PresenceNotifySender implements MessageListener
         ub.listenRequestMessage();
         receivedRequests = Collections
                 .synchronizedList(new ArrayList<SipRequest>());
+        receivedResponses = Collections
+                .synchronizedList(new ArrayList<SipResponse>());
     }
 
     /**
@@ -821,7 +825,14 @@ public class PresenceNotifySender implements MessageListener
      */
     public EventObject waitResponse(SipTransaction trans, long timeout)
     {
-        return ub.waitResponse(trans, timeout);
+        EventObject event = ub.waitResponse(trans, timeout);
+
+        if (event instanceof ResponseEvent)
+        {
+            receivedResponses.add(new SipResponse((ResponseEvent) event));
+        }
+
+        return event;
     }
 
     /**
@@ -881,17 +892,11 @@ public class PresenceNotifySender implements MessageListener
         this.lastSentNotify = (Request) lastSentNotify.clone();
     }
 
-    /*
-     * Not implemented for this class. Returns empty ArrayList.
-     */
     public ArrayList<SipResponse> getAllReceivedResponses()
     {
-        return new ArrayList<SipResponse>();
+        return new ArrayList<SipResponse>(receivedResponses);
     }
 
-    /*
-     * Not implemented for this class. Returns empty ArrayList.
-     */
     public ArrayList<SipRequest> getAllReceivedRequests()
     {
         return new ArrayList<SipRequest>(receivedRequests);
@@ -911,12 +916,18 @@ public class PresenceNotifySender implements MessageListener
         }
     }
 
-    /*
-     * Not implemented for this class. Returns null.)
-     */
     public SipResponse getLastReceivedResponse()
     {
-        return null;
+        synchronized (receivedResponses)
+        {
+            if (receivedResponses.isEmpty())
+            {
+                return null;
+            }
+
+            return (SipResponse) receivedResponses
+                    .get(receivedResponses.size() - 1);
+        }
     }
 
     /*
@@ -930,6 +941,7 @@ public class PresenceNotifySender implements MessageListener
 
         if (event instanceof ResponseEvent)
         {
+            receivedResponses.add(new SipResponse((ResponseEvent) event));
             resendWithAuthorization((ResponseEvent) event);
         }
     }
