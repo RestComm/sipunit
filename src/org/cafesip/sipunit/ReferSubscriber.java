@@ -431,6 +431,8 @@ public class ReferSubscriber extends SubscriptionSubscriber
     }
 
     /**
+     * Get the referTo URI for this subscription.
+     * 
      * @return Returns the referToUri.
      */
     public SipURI getReferToUri()
