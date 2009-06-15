@@ -41,6 +41,7 @@ import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
+import org.cafesip.sipunit.SipSession;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTestCase;
 import org.cafesip.sipunit.SipTransaction;
@@ -58,8 +59,6 @@ public class TestReferNoProxy extends SipTestCase
     private SipStack sipStack;
 
     private SipPhone ua;
-
-    private String host;
 
     private int myPort;
 
@@ -100,7 +99,6 @@ public class TestReferNoProxy extends SipTestCase
     public TestReferNoProxy(String arg0)
     {
         super(arg0);
-        host = properties.getProperty("javax.sip.IP_ADDRESS");
 
         properties.putAll(System.getProperties());
 
@@ -1090,5 +1088,154 @@ public class TestReferNoProxy extends SipTestCase
         // cleanup
         a.disposeNoBye();
         b.disposeNoBye();
+    }
+
+    public void testErrorNoResponse() throws Exception
+    {
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 1000, null);
+        assertNull(subscription);
+    }
+
+    public void testErrorResponseWithExpiry() throws Exception
+    {
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(5000, SipResponse.OK, "OK", 60));
+        Thread.sleep(50);
+
+        // User A: send REFER out-of-dialog
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+        // Process the response
+        assertFalse(subscription.processResponse(1000));
+        assertEquals(SipSession.FAR_END_ERROR, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf(
+                "expires header was received") != -1);
+    }
+
+    public void testExample() throws Exception
+    {
+        // create a refer-To URI
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+
+        // create & prepare the referee simulator (User B) to respond to REFER
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(5000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+
+        // User A: send REFER out-of-dialog
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription); // REFER sending successful, received a
+        // response
+        assertEquals(SipResponse.OK, subscription.getReturnCode()); // status
+        // code
+        assertTrue(subscription.isSubscriptionPending()); // response not
+        // processed yet
+        // optionally examine response in full detail using JAIN SIP:
+        // ResponseEvent responseEvent = subscription.getCurrentResponse(); Etc.
+
+        // process the received REFER response, check results
+        assertTrue(subscription.processResponse(1000));
+        assertTrue(subscription.isSubscriptionActive());
+        assertNoSubscriptionErrors(subscription);
+
+        // User B send active-state NOTIFY to A
+        Thread.sleep(50);
+        String notifyBody = "SIP/2.0 200 OK";
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                notifyBody, 2400, false));
+
+        // User A: get the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(500);
+        assertNotNull(reqevent);
+        // optionally examine NOTIFY in full detail using JAIN SIP:
+        Request request = reqevent.getRequest();
+        assertEquals(2400, ((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+        assertBodyContains(new SipRequest(reqevent), "200 OK");
+
+        // process the NOTIFY
+        Response resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+
+        // check the NOTIFY processing results
+        assertTrue(subscription.isSubscriptionActive());
+        assertTrue(subscription.getTimeLeft() <= 2400
+                && subscription.getTimeLeft() > 2300);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertNoSubscriptionErrors(subscription);
+
+        // optionally check or corrupt the response that was created by
+        // processNotify()
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+        assertTrue(resp.getReasonPhrase().equals("OK"));
+        // Etc. - modify the resp using JAIN SIP API
+
+        // User A: reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+
+        // terminate the subscription from the referrer side
+        // prepare the far end to respond to unSUBSCRIBE
+        assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Done"));
+        Thread.sleep(100);
+
+        // send the un-SUBSCRIBE
+        assertTrue(subscription.unsubscribe(100));
+        if (!subscription.isRemovalComplete())
+        {
+            assertEquals(SipResponse.OK, subscription.getReturnCode());
+            assertTrue(subscription.isSubscriptionTerminated());
+            assertNoSubscriptionErrors(subscription);
+            // optionally examine response in full detail using JAIN SIP:
+            resp = subscription.getCurrentResponse().getResponse();
+            assertEquals("OK Done", resp.getReasonPhrase()); // Etc.
+
+            // process the received SUBSCRIBE response, check results
+            assertTrue(subscription.processResponse(1000));
+            assertTrue(subscription.isSubscriptionTerminated());
+            assertEquals("Unsubscribe", subscription.getTerminationReason());
+            assertEquals(0, subscription.getTimeLeft());
+            assertNoSubscriptionErrors(subscription);
+
+            // User B: send terminated NOTIFY
+            Thread.sleep(500);
+            notifyBody = "SIP/2.0 100 Trying";
+            assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                    "Unsubscribed", notifyBody, 0, false));
+            Thread.sleep(10);
+
+            // User A: get the NOTIFY
+            reqevent = subscription.waitNotify(500);
+            assertNotNull(reqevent);
+            assertNoSubscriptionErrors(subscription);
+            // optionally examine NOTIFY in full detail using JAIN SIP:
+            request = reqevent.getRequest(); // Etc.
+
+            // process the NOTIFY
+            resp = subscription.processNotify(reqevent);
+            assertNotNull(resp);
+
+            // check the NOTIFY processing results
+            assertTrue(subscription.isSubscriptionTerminated());
+            assertEquals(SipResponse.OK, subscription.getReturnCode());
+            assertNoSubscriptionErrors(subscription);
+
+            // reply to the NOTIFY
+            assertTrue(subscription.replyToNotify(reqevent, resp));
+            subscription.dispose();
+        }
     }
 }

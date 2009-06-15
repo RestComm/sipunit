@@ -1438,7 +1438,7 @@ public class SipPhone extends SipSession implements SipActionObject,
 
         if (request.getMethod().equals(Request.NOTIFY) == false)
         {
-            SubscriptionSubscriber.sendResponse(this, requestEvent,
+            EventSubscriber.sendResponse(this, requestEvent,
                     SipResponse.SERVER_INTERNAL_ERROR,
                     "Expected to receive a NOTIFY request, but instead got: "
                             + request.getMethod());
@@ -1452,7 +1452,7 @@ public class SipPhone extends SipSession implements SipActionObject,
             return;
         }
 
-        // find the SubscriptionSubscriber that this message is for - get the
+        // find the EventSubscriber that this message is for - get the
         // subscription target uri from the message
 
         FromHeader from = (FromHeader) request.getHeader(FromHeader.NAME);
@@ -1460,7 +1460,7 @@ public class SipPhone extends SipSession implements SipActionObject,
         EventHeader event = (EventHeader) request.getHeader(EventHeader.NAME);
         if (event == null)
         {
-            SubscriptionSubscriber.sendResponse(this, requestEvent,
+            EventSubscriber.sendResponse(this, requestEvent,
                     SipResponse.BAD_REQUEST,
                     "Received a NOTIFY request with no event header");
 
@@ -1503,7 +1503,7 @@ public class SipPhone extends SipSession implements SipActionObject,
         {
             String error = "Received a NOTIFY request with unrecognized event header : "
                     + event.getEventType();
-            SubscriptionSubscriber.sendResponse(this, requestEvent,
+            EventSubscriber.sendResponse(this, requestEvent,
                     SipResponse.BAD_EVENT, error);
 
             String err = "*** NOTIFY REQUEST ERROR ***  (SipPhone " + me
@@ -1518,7 +1518,7 @@ public class SipPhone extends SipSession implements SipActionObject,
         String err = "Received orphan NOTIFY message (no matching subscription) from "
                 + from.getAddress().getURI().toString();
 
-        SubscriptionSubscriber.sendResponse(this, requestEvent,
+        EventSubscriber.sendResponse(this, requestEvent,
                 SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST, err);
 
         String error = "*** NOTIFY REQUEST ERROR ***  ("
@@ -1533,13 +1533,13 @@ public class SipPhone extends SipSession implements SipActionObject,
     private void distributeEventError(String err)
     // to all the Subscriptions - test program will need to see the error
     {
-        ArrayList<SubscriptionSubscriber> subscriptions = new ArrayList<SubscriptionSubscriber>(
+        ArrayList<EventSubscriber> subscriptions = new ArrayList<EventSubscriber>(
                 getBuddyList().values());
-        subscriptions.addAll(new ArrayList<SubscriptionSubscriber>(
-                getRetiredBuddies().values()));
+        subscriptions.addAll(new ArrayList<EventSubscriber>(getRetiredBuddies()
+                .values()));
         subscriptions.addAll(getRefererList());
 
-        for (SubscriptionSubscriber s : subscriptions)
+        for (EventSubscriber s : subscriptions)
         {
             s.addEventError(err);
         }

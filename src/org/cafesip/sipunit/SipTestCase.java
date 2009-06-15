@@ -1070,7 +1070,7 @@ public class SipTestCase extends TestCase
      * @param subscription
      *            the Subscription in question.
      */
-    public void assertNoSubscriptionErrors(SubscriptionSubscriber subscription)
+    public void assertNoSubscriptionErrors(EventSubscriber subscription)
     {
         assertNoSubscriptionErrors(null, subscription);
     }
@@ -1087,7 +1087,7 @@ public class SipTestCase extends TestCase
      *            the Subscription in question.
      */
     public void assertNoSubscriptionErrors(String msg,
-            SubscriptionSubscriber subscription)
+            EventSubscriber subscription)
     {
         assertNotNull("Null assert object passed in", subscription);
 

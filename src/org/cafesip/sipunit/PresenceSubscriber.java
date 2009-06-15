@@ -62,7 +62,7 @@ import org.cafesip.sipunit.presenceparser.pidf.Tuple;
  * @author Becky McElroy
  * 
  */
-public class PresenceSubscriber extends SubscriptionSubscriber
+public class PresenceSubscriber extends EventSubscriber
 {
     /*
      * List of zero or more PresenceDeviceInfo objects (active devices) for this
@@ -97,9 +97,8 @@ public class PresenceSubscriber extends SubscriptionSubscriber
     }
 
     /**
-     * This method is the same as
-     * SubscriptionSubscriber.createSubscribeMessage() except there's no need
-     * for the caller to supply the eventType parameter.
+     * This method is the same as EventSubscriber.createSubscribeMessage()
+     * except there's no need for the caller to supply the eventType parameter.
      * 
      * @param duration
      *            the duration in seconds to put in the SUBSCRIBE message.

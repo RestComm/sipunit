@@ -51,8 +51,8 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 /**
- * The SubscriptionSubscriber class represents a generic subscription conforming
- * to the event subscription and asynchronous notification framework defined by
+ * The EventSubscriber class represents a generic subscription conforming to the
+ * event subscription and asynchronous notification framework defined by
  * RFC-3265. This class is used for the Subscriber-side perspective as opposed
  * to the NOTIFY sending side.
  * <p>
@@ -71,7 +71,7 @@ import javax.sip.message.Response;
  * @author Becky McElroy
  * 
  */
-public class SubscriptionSubscriber implements MessageListener, SipActionObject
+public class EventSubscriber implements MessageListener, SipActionObject
 {
     protected String targetUri; // The subscription target (ie,
 
@@ -145,13 +145,13 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
 
     protected LinkedList<String> eventErrors = new LinkedList<String>();
 
-    protected SubscriptionSubscriber(String uri, SipPhone parent)
+    protected EventSubscriber(String uri, SipPhone parent)
             throws ParseException
     {
         this(uri, parent, null);
     }
 
-    protected SubscriptionSubscriber(String uri, SipPhone parent, Dialog dialog)
+    protected EventSubscriber(String uri, SipPhone parent, Dialog dialog)
             throws ParseException
     {
         this.targetUri = uri.trim();
@@ -713,7 +713,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
         CSeqHeader rcvSeqHdr = (CSeqHeader) request.getHeader(CSeqHeader.NAME);
         if (rcvSeqHdr == null)
         {
-            SubscriptionSubscriber.sendResponse(parent, requestEvent,
+            EventSubscriber.sendResponse(parent, requestEvent,
                     SipResponse.BAD_REQUEST, "no CSEQ header received");
 
             String err = "*** NOTIFY REQUEST ERROR ***  (" + targetUri
@@ -730,7 +730,7 @@ public class SubscriptionSubscriber implements MessageListener, SipActionObject
         {
             if (rcvSeqHdr.getSeqNumber() <= notifyCSeq.getSeqNumber())
             {
-                SubscriptionSubscriber.sendResponse(parent, requestEvent,
+                EventSubscriber.sendResponse(parent, requestEvent,
                         SipResponse.OK, "OK");
 
                 SipStack.trace("Received NOTIFY CSEQ "

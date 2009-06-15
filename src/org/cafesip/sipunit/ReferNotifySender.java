@@ -96,9 +96,19 @@ public class ReferNotifySender extends PresenceNotifySender
     public boolean processRefer(long timeout, int statusCode,
             String reasonPhrase)
     {
+        return processRefer(timeout, statusCode, reasonPhrase, -1);
+    }
+
+    /**
+     * Same as the other processRefer() except takes a duration for adding
+     * ExpiresHeader to the REFER response.
+     */
+    public boolean processRefer(long timeout, int statusCode,
+            String reasonPhrase, int duration)
+    {
         setErrorMessage("");
 
-        PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase);
+        PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase, duration);
         b.start();
         try
         {
@@ -122,11 +132,15 @@ public class ReferNotifySender extends PresenceNotifySender
 
         String reasonPhrase;
 
-        public PhoneB(long timeout, int statusCode, String reasonPhrase)
+        int duration;
+
+        public PhoneB(long timeout, int statusCode, String reasonPhrase,
+                int duration)
         {
             this.timeout = timeout;
             this.statusCode = statusCode;
             this.reasonPhrase = reasonPhrase;
+            this.duration = duration;
         }
 
         public void run()
@@ -174,7 +188,7 @@ public class ReferNotifySender extends PresenceNotifySender
                                     EventHeader.NAME).clone();
 
                             dialog = sendResponse(trans, statusCode,
-                                    reasonPhrase, toTag, req, -1);
+                                    reasonPhrase, toTag, req, duration);
 
                             if (dialog == null)
                             {

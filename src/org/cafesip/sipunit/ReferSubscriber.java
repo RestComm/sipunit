@@ -56,7 +56,7 @@ import javax.sip.message.Response;
  * @author Becky McElroy
  * 
  */
-public class ReferSubscriber extends SubscriptionSubscriber
+public class ReferSubscriber extends EventSubscriber
 {
     private SipURI referToUri;
 
@@ -93,9 +93,8 @@ public class ReferSubscriber extends SubscriptionSubscriber
     }
 
     /**
-     * This method is the same as
-     * SubscriptionSubscriber.createSubscribeMessage() except there's no need
-     * for the caller to supply the eventType parameter.
+     * This method is the same as EventSubscriber.createSubscribeMessage()
+     * except there's no need for the caller to supply the eventType parameter.
      * 
      * @param duration
      *            the duration in seconds to put in the SUBSCRIBE message.
