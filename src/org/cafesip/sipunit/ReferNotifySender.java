@@ -101,7 +101,9 @@ public class ReferNotifySender extends PresenceNotifySender
 
     /**
      * Same as the other processRefer() except takes a duration for adding
-     * ExpiresHeader to the REFER response.
+     * ExpiresHeader to the REFER response. This is for testing error handling
+     * by SipUnit on the outbound REFER side - the response shouldn't have an
+     * expires header.
      */
     public boolean processRefer(long timeout, int statusCode,
             String reasonPhrase, int duration)

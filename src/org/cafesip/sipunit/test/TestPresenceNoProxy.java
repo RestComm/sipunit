@@ -1012,8 +1012,8 @@ public class TestPresenceNoProxy extends SipTestCase
             Response response = s.processNotify(reqevent);
 
             // check the notify processing results
-            assertTrue(s.isSubscriptionPending());
-            assertFalse(s.isSubscriptionActive());
+            assertFalse(s.isSubscriptionPending());
+            assertTrue(s.isSubscriptionActive());
             assertFalse(s.isSubscriptionTerminated());
             assertNull(s.getTerminationReason());
             assertTrue(s.getTimeLeft() <= 3600); // expiry > what we sent

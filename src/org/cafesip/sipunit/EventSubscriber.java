@@ -1129,8 +1129,21 @@ public class EventSubscriber implements MessageListener, SipActionObject
             }
             validateSubscriptionStateHeader(subsHdr);
 
-            // update our subscription state information
+            int expires = subsHdr.getExpires();
+            if (!subsHdr.getState().equals(SubscriptionStateHeader.TERMINATED))
+            {
+                // SIP list TODO - it's optional for presence - how to know if
+                // didn't get it?
 
+                if (getLastSentRequest().getExpires() != null)
+                {
+                    validateExpiresDuration(expires, true);
+                }
+            }
+
+            updateEventInfo(request);
+
+            // all is well, update our subscription state information
             if (subscriptionState.equals(SubscriptionStateHeader.TERMINATED) == false)
             {
                 subscriptionState = subsHdr.getState();
@@ -1147,10 +1160,7 @@ public class EventSubscriber implements MessageListener, SipActionObject
                 // any more by clearing out lastSentRequest, if one is received
                 // after
                 // this, SipPhone will respond with 481
-
                 setLastSentRequest(null);
-
-                updateEventInfo(request);
 
                 Response response = createNotifyResponse(requestEvent,
                         SipResponse.OK, "OK");
@@ -1162,22 +1172,10 @@ public class EventSubscriber implements MessageListener, SipActionObject
                 return response;
             }
 
-            // active or pending state: check expiry & update time left
-
-            int expires = subsHdr.getExpires();
-            // SIP list TODO - it's optional for presence - how to know if
-            // didn't get it?
-
-            if (getLastSentRequest().getExpires() != null)
-            {
-                validateExpiresDuration(expires, true);
-            }
-
+            // subscription is active or pending - update time left
             SipStack.trace(targetUri + ": received expiry = " + expires
                     + ", updating current expiry which was " + getTimeLeft());
-
             setTimeLeft(expires);
-            updateEventInfo(request);
 
             Response response = createNotifyResponse(requestEvent,
                     SipResponse.OK, "OK");

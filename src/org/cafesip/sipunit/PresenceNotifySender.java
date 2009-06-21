@@ -144,9 +144,23 @@ public class PresenceNotifySender implements MessageListener
     public boolean processSubscribe(long timeout, int statusCode,
             String reasonPhrase)
     {
+        return processSubscribe(timeout, statusCode, reasonPhrase, -1);
+    }
+
+    /**
+     * Same as the other processSubscribe() except takes a duration for
+     * overriding what would normally/correctly be sent back in the response
+     * (which is the same as what was received in the SUBSCRIBE request or
+     * default 3600 if none was received). Observed if >= 0. This is for testing
+     * error handling by SipUnit on the outbound SUBSCRIBE side.
+     */
+    public boolean processSubscribe(long timeout, int statusCode,
+            String reasonPhrase, int overrideDuration)
+    {
         setErrorMessage("");
 
-        PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase);
+        PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase,
+                overrideDuration);
         b.start();
         try
         {
@@ -170,11 +184,15 @@ public class PresenceNotifySender implements MessageListener
 
         String reasonPhrase;
 
-        public PhoneB(long timeout, int statusCode, String reasonPhrase)
+        int overrideDuration;
+
+        public PhoneB(long timeout, int statusCode, String reasonPhrase,
+                int overrideDuration)
         {
             this.timeout = timeout;
             this.statusCode = statusCode;
             this.reasonPhrase = reasonPhrase;
+            this.overrideDuration = overrideDuration;
         }
 
         public void run()
@@ -219,6 +237,10 @@ public class PresenceNotifySender implements MessageListener
                             if (exp != null)
                             {
                                 duration = exp.getExpires();
+                            }
+                            if (overrideDuration > -1)
+                            {
+                                duration = overrideDuration;
                             }
 
                             // enable auth challenge handling

@@ -279,8 +279,9 @@ public class SipCall implements SipActionObject, MessageListener
      * false is returned in this case. 3) An error occurs. false is returned in
      * this case.
      * <p>
-     * Any non-BYE requests received for this user agent are discarded while
-     * waiting for a BYE message.
+     * Any non-BYE requests received for this user agent are collected while
+     * waiting for a BYE message and can be seen by calling
+     * getAllReceivedRequests() once this method returns.
      * <p>
      * Regardless of the outcome, incoming requests associated with this User
      * Agent will continue to be queued up until the stopListeningForRequests()
@@ -380,8 +381,9 @@ public class SipCall implements SipActionObject, MessageListener
      * expires. False is returned in this case. 3) An error occurs. False is
      * returned in this case.
      * <p>
-     * Any non-INVITE requests received for this user agent are discarded while
-     * waiting for an INVITE message.
+     * Any non-INVITE requests received for this user agent are collected while
+     * waiting for an INVITE message and can be seen by calling
+     * getAllReceivedRequests() once this method returns.
      * <p>
      * Regardless of the outcome, incoming requests associated with this User
      * Agent will continue to be queued up until the stopListeningForRequests()
@@ -494,8 +496,9 @@ public class SipCall implements SipActionObject, MessageListener
      * is returned in this case. 3) An error occurs. false is returned in this
      * case.
      * <p>
-     * Any non-ACK requests received for this user agent are discarded while
-     * waiting for an ACK message.
+     * Any non-ACK requests received for this user agent are collected while
+     * waiting for an ACK message and can be seen by calling
+     * getAllReceivedRequests() once this method returns.
      * <p>
      * Regardless of the outcome, incoming requests associated with this User
      * Agent will continue to be queued up until the stopListeningForRequests()
@@ -752,8 +755,9 @@ public class SipCall implements SipActionObject, MessageListener
      * parameter to this method expires. Null is returned in this case. 3) An
      * error occurs. Null is returned in this case.
      * <p>
-     * Any non-INVITE requests received for this user agent are discarded while
-     * waiting for the RE-INVITE message.
+     * Any non-INVITE requests received for this user agent are collected while
+     * waiting for the RE-INVITE message and can be seen by calling
+     * getAllReceivedRequests() once this method returns.
      * 
      * @param timeout
      *            The maximum amount of time to wait, in milliseconds. Use a
@@ -3295,7 +3299,8 @@ public class SipCall implements SipActionObject, MessageListener
      * this case. 3) An error occurs. Null is returned in this case.
      * <p>
      * Any non-CANCEL requests or unmatched CANCEL requests received for this
-     * user agent are discarded while waiting for the CANCEL message.
+     * user agent are collected while waiting for the CANCEL message and can be
+     * seen by calling getAllReceivedRequests().
      * 
      * @param timeout
      *            The maximum amount of time to wait, in milliseconds. Use a
