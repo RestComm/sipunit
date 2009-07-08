@@ -504,7 +504,7 @@ public class PresenceNotifySender implements MessageListener
                             .createSubscriptionStateHeader(subscriptionState);
 
                     if (subscriptionState
-                            .equals(SubscriptionStateHeader.TERMINATED))
+                            .equalsIgnoreCase(SubscriptionStateHeader.TERMINATED))
                     {
                         hdr.setReasonCode(termReason);
                     }
@@ -631,7 +631,7 @@ public class PresenceNotifySender implements MessageListener
                         .createSubscriptionStateHeader(subscriptionState);
 
                 if (subscriptionState
-                        .equals(SubscriptionStateHeader.TERMINATED))
+                        .equalsIgnoreCase(SubscriptionStateHeader.TERMINATED))
                 {
                     hdr.setReasonCode(termReason);
                 }

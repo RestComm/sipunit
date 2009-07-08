@@ -262,8 +262,9 @@ public class EventSubscriber implements MessageListener, SipActionObject
         initErrorInfo();
         setRemovalComplete(true);
 
-        if ((subscriptionState.equals(SubscriptionStateHeader.ACTIVE))
-                || (subscriptionState.equals(SubscriptionStateHeader.PENDING)))
+        if ((subscriptionState.equalsIgnoreCase(SubscriptionStateHeader.ACTIVE))
+                || (subscriptionState
+                        .equalsIgnoreCase(SubscriptionStateHeader.PENDING)))
         {
             SipStack.trace("Ending subscription for URI " + targetUri
                     + ", time left = " + getTimeLeft());
@@ -926,7 +927,8 @@ public class EventSubscriber implements MessageListener, SipActionObject
             // response status is OK or accepted
             validateOkAcceptedResponse(response);
 
-            if (subscriptionState == SubscriptionStateHeader.TERMINATED)
+            if (subscriptionState
+                    .equalsIgnoreCase(SubscriptionStateHeader.TERMINATED))
             {
                 return true;
             }
@@ -1130,7 +1132,8 @@ public class EventSubscriber implements MessageListener, SipActionObject
             validateSubscriptionStateHeader(subsHdr);
 
             int expires = subsHdr.getExpires();
-            if (!subsHdr.getState().equals(SubscriptionStateHeader.TERMINATED))
+            if (!subsHdr.getState().equalsIgnoreCase(
+                    SubscriptionStateHeader.TERMINATED))
             {
                 // SIP list TODO - it's optional for presence - how to know if
                 // didn't get it?
@@ -1144,12 +1147,14 @@ public class EventSubscriber implements MessageListener, SipActionObject
             updateEventInfo(request);
 
             // all is well, update our subscription state information
-            if (subscriptionState.equals(SubscriptionStateHeader.TERMINATED) == false)
+            if (subscriptionState
+                    .equalsIgnoreCase(SubscriptionStateHeader.TERMINATED) == false)
             {
                 subscriptionState = subsHdr.getState();
             }
 
-            if (subscriptionState.equals(SubscriptionStateHeader.TERMINATED))
+            if (subscriptionState
+                    .equalsIgnoreCase(SubscriptionStateHeader.TERMINATED))
             {
                 terminationReason = subsHdr.getReasonCode();
 
@@ -1562,7 +1567,8 @@ public class EventSubscriber implements MessageListener, SipActionObject
      */
     public boolean isSubscriptionTerminated()
     {
-        return (subscriptionState.equals(SubscriptionStateHeader.TERMINATED));
+        return (subscriptionState
+                .equalsIgnoreCase(SubscriptionStateHeader.TERMINATED));
     }
 
     /**
@@ -1572,7 +1578,8 @@ public class EventSubscriber implements MessageListener, SipActionObject
      */
     public boolean isSubscriptionActive()
     {
-        return (subscriptionState.equals(SubscriptionStateHeader.ACTIVE));
+        return (subscriptionState
+                .equalsIgnoreCase(SubscriptionStateHeader.ACTIVE));
     }
 
     /**
@@ -1582,7 +1589,8 @@ public class EventSubscriber implements MessageListener, SipActionObject
      */
     public boolean isSubscriptionPending()
     {
-        return (subscriptionState.equals(SubscriptionStateHeader.PENDING));
+        return (subscriptionState
+                .equalsIgnoreCase(SubscriptionStateHeader.PENDING));
     }
 
     /**

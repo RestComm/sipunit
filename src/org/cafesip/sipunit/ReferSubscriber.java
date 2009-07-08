@@ -455,7 +455,8 @@ public class ReferSubscriber extends EventSubscriber
     protected void validateSubscriptionStateHeader(
             SubscriptionStateHeader subsHdr) throws SubscriptionError
     {
-        if (!subsHdr.getState().equals(SubscriptionStateHeader.TERMINATED))
+        if (!subsHdr.getState().equalsIgnoreCase(
+                SubscriptionStateHeader.TERMINATED))
         {
             if (subsHdr.getExpires() <= 0)
             {
