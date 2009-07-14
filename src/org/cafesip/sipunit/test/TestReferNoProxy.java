@@ -335,7 +335,7 @@ public class TestReferNoProxy extends SipTestCase
         // **********************************************************
         // B: send NOTIFY
         Thread.sleep(500);
-        String notifyBody = "SIP/2.0 200 OK";
+        String notifyBody = "SIP/2.0 200 OK\n";
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
                 notifyBody, 2400, false));
         Thread.sleep(10);
@@ -431,7 +431,7 @@ public class TestReferNoProxy extends SipTestCase
         // *********************************************************
         // tell far end to send a NOTIFY
         Thread.sleep(500);
-        notifyBody = "SIP/2.0 100 Trying";
+        notifyBody = "SIP/2.0 100 Trying\n";
         assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
                 "Unsubscribed", notifyBody, 0, false));
         Thread.sleep(10);
@@ -502,7 +502,7 @@ public class TestReferNoProxy extends SipTestCase
         Thread.sleep(20);
         assertTrue(b.sendIncomingCallResponse(Response.OK,
                 "Answer - Hello world", 0));
-        Thread.sleep(20);
+        Thread.sleep(200);
 
         // A side finish call establishment
         assertAnswered("Outgoing call leg not answered", a);
@@ -584,7 +584,7 @@ public class TestReferNoProxy extends SipTestCase
         Request notifyRequest = b.getDialog().createRequest(SipRequest.NOTIFY);
         notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
                 null, SubscriptionStateHeader.TERMINATED, "noresource",
-                "SIP/2.0 100 Trying", 0);
+                "SIP/2.0 100 Trying\n", 0);
         SipTransaction trans = referHandler.sendStatefulNotify(notifyRequest,
                 false);
         assertNotNull(trans);
@@ -669,7 +669,7 @@ public class TestReferNoProxy extends SipTestCase
         Thread.sleep(20);
         assertTrue(b.sendIncomingCallResponse(Response.OK,
                 "Answer - Hello world", 0));
-        Thread.sleep(20);
+        Thread.sleep(200);
 
         // A side finish call establishment
         assertAnswered("Outgoing call leg not answered", a);
@@ -749,7 +749,7 @@ public class TestReferNoProxy extends SipTestCase
         Request notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
         notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
                 null, SubscriptionStateHeader.ACTIVE, null,
-                "SIP/2.0 100 Trying", 60);
+                "SIP/2.0 100 Trying\n", 60);
         SipTransaction trans = referHandler.sendStatefulNotify(notifyRequest,
                 false);
         assertNotNull(trans);
@@ -809,7 +809,7 @@ public class TestReferNoProxy extends SipTestCase
         notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
         notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
                 null, SubscriptionStateHeader.ACTIVE, null,
-                "SIP/2.0 180 Ringing", 20);
+                "SIP/2.0 180 Ringing\n", 20);
         trans = referHandler.sendStatefulNotify(notifyRequest, false);
         assertNotNull(trans);
 
@@ -875,7 +875,7 @@ public class TestReferNoProxy extends SipTestCase
         notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
         notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
                 null, SubscriptionStateHeader.TERMINATED, "noresource",
-                "SIP/2.0 100 Trying", 0);
+                "SIP/2.0 100 Trying\n", 0);
         trans = referHandler.sendStatefulNotify(notifyRequest, false);
         assertNotNull(trans);
 
@@ -956,7 +956,7 @@ public class TestReferNoProxy extends SipTestCase
         Thread.sleep(20);
         assertTrue(b.sendIncomingCallResponse(Response.OK,
                 "Answer - Hello world", 0));
-        Thread.sleep(20);
+        Thread.sleep(200);
 
         // A side finish call establishment
         assertAnswered("Outgoing call leg not answered", a);
@@ -970,7 +970,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(referHandler.processReferSendNotifyBeforeResponse(2000,
                 SipResponse.ACCEPTED, "Accepted",
                 SubscriptionStateHeader.TERMINATED, "noresource",
-                "SIP/2.0 100 Trying", 0));
+                "SIP/2.0 100 Trying\n", 0));
 
         // A side - send a REFER message
         SipURI referTo = ua
@@ -1261,7 +1261,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - wrong number of tokens
         assertTrue(ub.sendNotify(SubscriptionStateHeader.PENDING, null,
-                "SIP/2.0 200", 30, false));
+                "SIP/2.0 200\n", 30, false));
         // wait for & process the NOTIFY
         RequestEvent reqevent = subscription.waitNotify(1000);
         Response response = subscription.processNotify(reqevent);
@@ -1275,7 +1275,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - bad SIP version token
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 200 OK", 30, false));
+                "SIP2.0 200 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1289,7 +1289,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - non-numeric status code
         assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
-                "all done", "SIP2.0 200-OK OK", 30, false));
+                "all done", "SIP2.0 200-OK OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1304,7 +1304,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // upper
         assertTrue(ub.sendNotify(SubscriptionStateHeader.PENDING, null,
-                "SIP2.0 700 OK", 30, false));
+                "SIP2.0 700 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1319,7 +1319,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // lower
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 99 OK", 30, false));
+                "SIP2.0 99 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1350,7 +1350,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - wrong number of tokens
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP/2.0 200", 30, false));
+                "SIP/2.0 200\n", 30, false));
         // wait for & process the NOTIFY
         RequestEvent reqevent = subscription.waitNotify(1000);
         Response response = subscription.processNotify(reqevent);
@@ -1364,7 +1364,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - bad SIP version token
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 200 OK", 30, false));
+                "SIP2.0 200 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1378,7 +1378,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - non-numeric status code
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 200-OK OK", 30, false));
+                "SIP2.0 200-OK OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1393,7 +1393,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // upper
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 700 OK", 30, false));
+                "SIP2.0 700 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1408,7 +1408,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // lower
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 99 OK", 30, false));
+                "SIP2.0 99 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1440,7 +1440,7 @@ public class TestReferNoProxy extends SipTestCase
         ContentTypeHeader ct = ua.getParent().getHeaderFactory()
                 .createContentTypeHeader("bad-content-type", "sipfrag");
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP/2.0 200 OK", 30, null, null, null, ct, false));
+                "SIP/2.0 200 OK\n", 30, null, null, null, ct, false));
         // wait for & process the NOTIFY
         RequestEvent reqevent = subscription.waitNotify(1000);
         Response response = subscription.processNotify(reqevent);
@@ -1460,7 +1460,7 @@ public class TestReferNoProxy extends SipTestCase
         ct = ua.getParent().getHeaderFactory().createContentTypeHeader(
                 "message", "bad-content-subtype");
         assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED, "done",
-                "SIP/2.0 200 OK", 30, null, null, null, ct, false));
+                "SIP/2.0 200 OK\n", 30, null, null, null, ct, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1496,7 +1496,7 @@ public class TestReferNoProxy extends SipTestCase
         ContentTypeHeader ct = ua.getParent().getHeaderFactory()
                 .createContentTypeHeader("bad-content-type", "sipfrag");
         assertTrue(ub.sendNotify(SubscriptionStateHeader.PENDING, null,
-                "SIP/2.0 200 OK", 30, null, null, null, ct, false));
+                "SIP/2.0 200 OK\n", 30, null, null, null, ct, false));
         // wait for & process the NOTIFY
         RequestEvent reqevent = subscription.waitNotify(1000);
         Response response = subscription.processNotify(reqevent);
@@ -1516,7 +1516,7 @@ public class TestReferNoProxy extends SipTestCase
         ct = ua.getParent().getHeaderFactory().createContentTypeHeader(
                 "message", "bad-content-subtype");
         assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED, "done",
-                "SIP/2.0 200 OK", 30, null, null, null, ct, false));
+                "SIP/2.0 200 OK\n", 30, null, null, null, ct, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1564,7 +1564,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // User B send active-state NOTIFY to A
         Thread.sleep(50);
-        String notifyBody = "SIP/2.0 200 OK";
+        String notifyBody = "SIP/2.0 200 OK\n";
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
                 notifyBody, 2400, false));
 
@@ -1622,7 +1622,7 @@ public class TestReferNoProxy extends SipTestCase
 
             // User B: send terminated NOTIFY
             Thread.sleep(500);
-            notifyBody = "SIP/2.0 100 Trying";
+            notifyBody = "SIP/2.0 100 Trying\n";
             assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
                     "Unsubscribed", notifyBody, 0, false));
             Thread.sleep(10);
