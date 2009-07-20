@@ -1114,7 +1114,7 @@ public class TestPresenceNoProxy extends SipTestCase
             reqevent = s.waitNotify(1000);
             assertNull(reqevent); // event id used to find the Subscription, s
             // won't get it. should have sent 481
-            assertEquals(1, s.getEventErrors().size());
+            assertTrue(s.getEventErrors().size() > 0);
             assertTrue(((String) s.getEventErrors().get(0)).indexOf("orphan") != -1);
 
             // check PRESENCE info unchanged

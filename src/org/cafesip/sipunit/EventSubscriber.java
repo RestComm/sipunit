@@ -1361,7 +1361,7 @@ public class EventSubscriber implements MessageListener, SipActionObject
     {
         if (receivedHdr == null)
         {
-            throw new SubscriptionError(SipResponse.BAD_REQUEST,
+            throw new SubscriptionError(SipResponse.BAD_EVENT,
                     "no event header received");
         }
 
@@ -1886,8 +1886,17 @@ public class EventSubscriber implements MessageListener, SipActionObject
                     .trace("Subscription.waitNotify() - either we got the request, or timed out");
             if (reqEvents.size() == 0)
             {
+                String err = "*** NOTIFY REQUEST ERROR ***  ("
+                        + targetUri
+                        + ") - The maximum amount of time to wait for a NOTIFY message has elapsed.";
+                synchronized (eventErrors)
+                {
+                    eventErrors.addLast(err);
+                }
+                SipStack.trace(err);
+
                 setReturnCode(SipSession.TIMEOUT_OCCURRED);
-                setErrorMessage("The maximum amount of time to wait for a NOTIFY message has elapsed.");
+                setErrorMessage(err);
                 return null;
             }
 

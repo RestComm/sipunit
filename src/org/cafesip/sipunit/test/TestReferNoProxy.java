@@ -1289,7 +1289,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - non-numeric status code
         assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
-                "all done", "SIP2.0 200-OK OK\n", 30, false));
+                "all done", "SIP/2.0 200-OK OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1304,7 +1304,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // upper
         assertTrue(ub.sendNotify(SubscriptionStateHeader.PENDING, null,
-                "SIP2.0 700 OK\n", 30, false));
+                "SIP/2.0 700 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1319,7 +1319,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // lower
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 99 OK\n", 30, false));
+                "SIP/2.0 99 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1378,7 +1378,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // tell far end to send a bad NOTIFY body - non-numeric status code
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 200-OK OK\n", 30, false));
+                "SIP/2.0 200-OK OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1393,7 +1393,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // upper
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 700 OK\n", 30, false));
+                "SIP/2.0 700 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1408,7 +1408,7 @@ public class TestReferNoProxy extends SipTestCase
         // tell far end to send a bad NOTIFY body - status code out of range,
         // lower
         assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                "SIP2.0 99 OK\n", 30, false));
+                "SIP/2.0 99 OK\n", 30, false));
         // wait for & process the NOTIFY
         reqevent = subscription.waitNotify(1000);
         response = subscription.processNotify(reqevent);
@@ -1419,6 +1419,143 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
         assertFalse(response.getReasonPhrase().equals("OK"));
         assertTrue(subscription.replyToNotify(reqevent, response));
+    }
+
+    public void testErrorNotifyBadBodyTerminatedState() throws Exception
+    {
+        // prepare far end referee side
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+
+        // send REFER, get OK - minimal processing
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // tell far end to send a bad NOTIFY body - wrong number of tokens
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "no-resource", "SIP/2.0 200\n", 30, false));
+        // wait for & process the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        Response response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionActive());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getReasonPhrase().equals("OK"));
+        assertTrue(subscription.replyToNotify(reqevent, response));
+
+        // tell far end to send a bad NOTIFY body - bad SIP version token
+        // start a new subscription
+        ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+        referTo = ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE",
+                null, null, null, null, null);
+        subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000,
+                null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "no-resource", "SIP2.0 200 OK\n", 30, false));
+        // wait for & process the NOTIFY
+        reqevent = subscription.waitNotify(1000);
+        response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionActive());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getReasonPhrase().equals("OK"));
+        assertTrue(subscription.replyToNotify(reqevent, response));
+
+        // tell far end to send a bad NOTIFY body - non-numeric status code
+        // start a new subscription
+        ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+        referTo = ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE",
+                null, null, null, null, null);
+        subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000,
+                null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "all done", "SIP/2.0 200-OK OK\n", 30, false));
+        // wait for & process the NOTIFY
+        reqevent = subscription.waitNotify(1000);
+        response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionActive());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getReasonPhrase().equals("OK"));
+        assertTrue(subscription.replyToNotify(reqevent, response));
+
+        // tell far end to send a bad NOTIFY body - status code out of range,
+        // upper
+        // start a new subscription
+        ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+        referTo = ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE",
+                null, null, null, null, null);
+        subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000,
+                null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "no-resource", "SIP/2.0 700 OK\n", 30, false));
+        // wait for & process the NOTIFY
+        reqevent = subscription.waitNotify(1000);
+        response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionActive());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getReasonPhrase().equals("OK"));
+        assertTrue(subscription.replyToNotify(reqevent, response));
+
+        // tell far end to send a bad NOTIFY body - status code out of range,
+        // lower
+        // start a new subscription
+        ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+        referTo = ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE",
+                null, null, null, null, null);
+        subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000,
+                null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "no-resource", "SIP/2.0 99 OK\n", 30, false));
+        // wait for & process the NOTIFY
+        reqevent = subscription.waitNotify(1000);
+        response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionActive());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getReasonPhrase().equals("OK"));
+        assertTrue(subscription.replyToNotify(reqevent, response));
+
     }
 
     public void testErrorNotifyBadContentTypeSubtypePendingState()
@@ -1530,6 +1667,215 @@ public class TestReferNoProxy extends SipTestCase
         assertHeaderContains(new SipResponse(response), AcceptHeader.NAME,
                 "sipfrag");
         assertFalse(response.getReasonPhrase().equals("OK"));
+        assertTrue(subscription.replyToNotify(reqevent, response));
+    }
+
+    public void testErrorNotifyMissingBody() throws Exception
+    {
+        // establish the subscription
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted"));
+        Thread.sleep(50);
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // tell far end to send a bad NOTIFY - missing body
+        Request req = ub.getDialog().createRequest(Request.NOTIFY);
+        Request notifyMsg = ub.addNotifyHeaders(req, null, null,
+                SubscriptionStateHeader.ACTIVE, null, null, 30);
+        ContentTypeHeader ct = ua.getParent().getHeaderFactory()
+                .createContentTypeHeader("message", "sipfrag");
+        notifyMsg.setHeader(ct);
+        assertTrue(ub.sendNotify(notifyMsg, false));
+        // wait for & process the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        Response response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf("no body") != -1);
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionPending());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertTrue(subscription.replyToNotify(reqevent, response));
+    }
+
+    public void testErrorNotifyMissingCtHeader() throws Exception
+    {
+        // establish the subscription
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted"));
+        Thread.sleep(50);
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // tell far end to send a bad NOTIFY - missing CT Header
+        Request req = ub.getDialog().createRequest(Request.NOTIFY);
+        Request notifyMsg = ub.addNotifyHeaders(req, null, null,
+                SubscriptionStateHeader.ACTIVE, null, "SIP/2.0 200 OK\n", 30);
+        notifyMsg.removeHeader(ContentTypeHeader.NAME);
+        assertTrue(ub.sendNotify(notifyMsg, false));
+        // wait for & process the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        Response response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf(
+                "no content type header") != -1);
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionPending());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertTrue(subscription.replyToNotify(reqevent, response));
+    }
+
+    public void testNotifyTimeouts() throws Exception
+    {
+        // create a refer-To URI
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+
+        // create & prepare the referee simulator (User B) to respond to REFER
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(5000, SipResponse.ACCEPTED, "OK Accepted"));
+        Thread.sleep(50);
+
+        // User A: send REFER out-of-dialog
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertEquals(SipResponse.ACCEPTED, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionPending());
+        assertTrue(subscription.processResponse(1000));
+        assertTrue(subscription.isSubscriptionPending());
+        assertNoSubscriptionErrors(subscription);
+
+        // TEST NOTIFY TIMEOUT WHILE IN PENDING STATE
+        RequestEvent reqevent = subscription.waitNotify(200);
+        assertNull(reqevent);
+        assertEquals(SipSession.TIMEOUT_OCCURRED, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionPending());
+        assertTrue(subscription.getEventErrors().size() > 0);
+        subscription.clearEventErrors();
+        assertFalse(subscription.getEventErrors().size() > 0);
+
+        // TEST NOTIFY TIMEOUT WHILE IN ACTIVE STATE
+        // send a NOTFIY to get the subscription into ACTIVE state
+        Thread.sleep(50);
+        String notifyBody = "SIP/2.0 200 OK\n";
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                notifyBody, 2400, false));
+        reqevent = subscription.waitNotify(200);
+        assertNotNull(reqevent);
+        Response resp = subscription.processNotify(reqevent);
+        assertTrue(subscription.isSubscriptionActive());
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertTrue(subscription.replyToNotify(reqevent, resp));
+        // now test notify timeout
+        reqevent = subscription.waitNotify(200);
+        assertNull(reqevent);
+        assertEquals(SipSession.TIMEOUT_OCCURRED, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionActive());
+        assertTrue(subscription.getEventErrors().size() > 0);
+        subscription.clearEventErrors();
+
+        // TEST NOTIFY TIMEOUT WHILE IN TERMINATED STATE
+        // terminate the subscription from the referrer side
+        // prepare the far end to respond to unSUBSCRIBE
+        assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Done"));
+        Thread.sleep(100);
+        // send the un-SUBSCRIBE
+        assertTrue(subscription.unsubscribe(100));
+        assertFalse(subscription.isRemovalComplete());
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertTrue(subscription.processResponse(1000));
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertNoSubscriptionErrors(subscription);
+        // now test notify timeout
+        reqevent = subscription.waitNotify(200);
+        assertNull(reqevent);
+        assertEquals(SipSession.TIMEOUT_OCCURRED, subscription.getReturnCode());
+        assertTrue(subscription.isSubscriptionTerminated());
+        assertTrue(subscription.getEventErrors().size() > 0);
+
+        subscription.dispose();
+
+    }
+
+    public void testErrorNotifyMissingEventHeader() throws Exception
+    {
+        // establish the subscription
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+        Thread.sleep(50);
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // tell far end to send a NOTIFY - then remove Event Header before
+        // processing it (after reception, else stack won't send it)
+        Request req = ub.getDialog().createRequest(Request.NOTIFY);
+        Request notifyMsg = ub.addNotifyHeaders(req, null, null,
+                SubscriptionStateHeader.ACTIVE, null, "SIP/2.0 200 OK\n", 30);
+        assertTrue(ub.sendNotify(notifyMsg, false));
+        // wait for & process the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        reqevent.getRequest().removeHeader(EventHeader.NAME);
+        Response response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_EVENT, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf("no event header") != -1);
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionPending());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_EVENT, response.getStatusCode());
+        assertTrue(subscription.replyToNotify(reqevent, response));
+    }
+
+    public void testErrorNotifyBadEventType() throws Exception
+    {
+        // establish the subscription
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+        Thread.sleep(50);
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // tell far end to send a NOTIFY - then corrupt event type before
+        // processing it (after reception, else stack won't send it)
+        Request req = ub.getDialog().createRequest(Request.NOTIFY);
+        Request notifyMsg = ub.addNotifyHeaders(req, null, null,
+                SubscriptionStateHeader.ACTIVE, null, "SIP/2.0 200 OK\n", 30);
+        assertTrue(ub.sendNotify(notifyMsg, false));
+        // wait for & process the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        ((EventHeader) reqevent.getRequest().getHeader(EventHeader.NAME))
+                .setEventType("doodah");
+        Response response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_EVENT, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf("unknown event") != -1);
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionPending());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_EVENT, response.getStatusCode());
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
