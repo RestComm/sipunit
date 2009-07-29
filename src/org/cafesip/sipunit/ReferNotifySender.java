@@ -96,21 +96,24 @@ public class ReferNotifySender extends PresenceNotifySender
     public boolean processRefer(long timeout, int statusCode,
             String reasonPhrase)
     {
-        return processRefer(timeout, statusCode, reasonPhrase, -1);
+        return processRefer(timeout, statusCode, reasonPhrase, -1, null);
     }
 
     /**
-     * Same as the other processRefer() except takes a duration for adding
-     * ExpiresHeader to the REFER response. This is for testing error handling
-     * by SipUnit on the outbound REFER side - the response shouldn't have an
-     * expires header.
+     * Same as the other processRefer() except allows for a couple of overrides
+     * for testing error handling by the far end outbound REFER side: (a) takes
+     * a duration for adding ExpiresHeader to the REFER response (the response
+     * shouldn't have an expires header), and (b) this method takes an
+     * EventHeader for overriding what would normally/correctly be sent back in
+     * the response (normally same as what was received in the request).
      */
     public boolean processRefer(long timeout, int statusCode,
-            String reasonPhrase, int duration)
+            String reasonPhrase, int duration, EventHeader overrideEvent)
     {
         setErrorMessage("");
 
-        PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase, duration);
+        PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase,
+                duration, overrideEvent);
         b.start();
         try
         {
@@ -136,13 +139,16 @@ public class ReferNotifySender extends PresenceNotifySender
 
         int duration;
 
+        EventHeader overrideEvent;
+
         public PhoneB(long timeout, int statusCode, String reasonPhrase,
-                int duration)
+                int duration, EventHeader overrideEvent)
         {
             this.timeout = timeout;
             this.statusCode = statusCode;
             this.reasonPhrase = reasonPhrase;
             this.duration = duration;
+            this.overrideEvent = overrideEvent;
         }
 
         public void run()
@@ -185,9 +191,16 @@ public class ReferNotifySender extends PresenceNotifySender
                             ub.enableAuthorization(((CallIdHeader) req
                                     .getHeader(CallIdHeader.NAME)).getCallId());
 
-                            // save original event header
-                            eventHeader = (EventHeader) req.getHeader(
-                                    EventHeader.NAME).clone();
+                            // save event header
+                            if (overrideEvent != null)
+                            {
+                                eventHeader = overrideEvent;
+                            }
+                            else
+                            {
+                                eventHeader = (EventHeader) req.getHeader(
+                                        EventHeader.NAME).clone();
+                            }
 
                             dialog = sendResponse(trans, statusCode,
                                     reasonPhrase, toTag, req, duration);

@@ -450,6 +450,12 @@ public class ReferSubscriber extends EventSubscriber
                         "expires header was received in the REFER response");
             }
         }
+
+        if (!eventForMe(response, lastSentRequest))
+        {
+            throw new SubscriptionError(SipSession.FAR_END_ERROR,
+                    "incorrect event id received in the REFER response");
+        }
     }
 
     protected void validateSubscriptionStateHeader(

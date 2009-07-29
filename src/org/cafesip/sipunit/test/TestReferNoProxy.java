@@ -33,6 +33,7 @@ import javax.sip.header.AcceptHeader;
 import javax.sip.header.CSeqHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
+import javax.sip.header.ExpiresHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -1131,7 +1132,7 @@ public class TestReferNoProxy extends SipTestCase
 
         ReferNotifySender ub = new ReferNotifySender(sipStack
                 .createSipPhone("sip:becky@cafesip.org"));
-        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK", 60));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK", 60, null));
         Thread.sleep(50);
 
         // User A: send REFER out-of-dialog
@@ -1147,41 +1148,178 @@ public class TestReferNoProxy extends SipTestCase
                 "expires header was received") != -1);
     }
 
-    // cannot test these as the stack won't send these SUBSCRIBE responses
-    // public void testErrorSubscribeResponseNoExpiry() throws Exception
-    // public void testErrorSubscribeResponseBadExpiry() throws Exception
-    // {
-    // // prepare referee side
-    // ReferNotifySender ub = new ReferNotifySender(sipStack
-    // .createSipPhone("sip:becky@cafesip.org"));
-    // assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
-    // Thread.sleep(50);
-    //
-    // // send REFER, get OK - minimal processing
-    // SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
-    // "INVITE", null, null, null, null, null);
-    // ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
-    // referTo, null, 5000, null);
-    // assertNotNull(subscription);
-    // assertTrue(subscription.processResponse(200));
-    //
-    // // receive NOTIFY, send OK
-    // assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-    // "SIP/2.0 200 OK", 30, false));
-    // RequestEvent notifyEvent = subscription.waitNotify(500);
-    // assertNotNull(notifyEvent);
-    // Response response = subscription.processNotify(notifyEvent);
-    // assertNotNull(response);
-    // assertEquals(SipResponse.OK, subscription.getReturnCode());
-    // assertTrue(subscription.replyToNotify(notifyEvent, response));
-    //
-    // // send refresh SUBSCRIBE, get OK w/expiry > sent expiry
-    // ub.processSubscribe(1000, SipResponse.OK, "OK", 25);
-    // assertTrue(subscription.refresh(20, 1000));
-    // assertFalse(subscription.processResponse(200));
-    // assertEquals(SipSession.FAR_END_ERROR, subscription.getReturnCode());
-    // assertTrue(subscription.getErrorMessage().indexOf("expiry") != -1);
-    // }
+    public void testErrorReferResponseBadEventID() throws Exception
+    {
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        EventHeader badEvent = ua.getParent().getHeaderFactory()
+                .createEventHeader("refer");
+        badEvent.setEventId("wrong-id");
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK", -1, badEvent));
+        Thread.sleep(50);
+
+        // User A: send REFER out-of-dialog
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, "my-event-id", 1000, null);
+        assertNotNull(subscription);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+        // Process the response
+        assertFalse(subscription.processResponse(1000));
+        assertEquals(SipSession.FAR_END_ERROR, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf("incorrect event id") != -1);
+    }
+
+    public void testErrorSubscribeResponseBadExpiry() throws Exception
+    {
+        // prepare referee side
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+
+        // send REFER, get OK - minimal processing
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // receive NOTIFY, send OK
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 200 OK", 30, false));
+        RequestEvent notifyEvent = subscription.waitNotify(500);
+        assertNotNull(notifyEvent);
+        Response response = subscription.processNotify(notifyEvent);
+        assertNotNull(response);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertTrue(subscription.replyToNotify(notifyEvent, response));
+
+        // send refresh SUBSCRIBE, get OK, intercept the response and change its
+        // expiry > sent expiry
+        ub.processSubscribe(1000, SipResponse.OK, "OK", 20, null);
+        assertTrue(subscription.refresh(20, 1000));
+        ((ExpiresHeader) subscription.getCurrentResponse().getResponse()
+                .getHeader(ExpiresHeader.NAME)).setExpires(25);
+        assertFalse(subscription.processResponse(200));
+        assertEquals(SipSession.FAR_END_ERROR, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf("expiry") != -1);
+    }
+
+    public void testErrorSubscribeResponseNoExpiry() throws Exception
+    {
+        // prepare referee side
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+
+        // send REFER, get OK - minimal processing
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // receive NOTIFY, send OK
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 200 OK", 30, false));
+        RequestEvent notifyEvent = subscription.waitNotify(500);
+        assertNotNull(notifyEvent);
+        Response response = subscription.processNotify(notifyEvent);
+        assertNotNull(response);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertTrue(subscription.replyToNotify(notifyEvent, response));
+
+        // send refresh SUBSCRIBE, get OK, intercept the response and remove its
+        // expires header
+        ub.processSubscribe(1000, SipResponse.OK, "OK", 20, null);
+        assertTrue(subscription.refresh(20, 1000));
+        subscription.getCurrentResponse().getResponse().removeHeader(
+                ExpiresHeader.NAME);
+        assertFalse(subscription.processResponse(200));
+        assertEquals(SipSession.FAR_END_ERROR, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf("no expires header") != -1);
+    }
+
+    public void testErrorNotifyBadExpiry() throws Exception
+    {
+        // prepare referee side
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+
+        // send REFER, get OK - minimal processing
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // receive NOTIFY, send OK
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 200 OK", 30, false));
+        RequestEvent notifyEvent = subscription.waitNotify(500);
+        assertNotNull(notifyEvent);
+        Response response = subscription.processNotify(notifyEvent);
+        assertNotNull(response);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertTrue(subscription.replyToNotify(notifyEvent, response));
+        assertTrue(subscription.getTimeLeft() > 28);
+
+        // send refresh SUBSCRIBE, get OK
+        ub.processSubscribe(1000, SipResponse.OK, "OK", 20, null);
+        assertTrue(subscription.refresh(20, 1000));
+        assertTrue(subscription.processResponse(200));
+        assertTrue(subscription.getTimeLeft() < 21);
+
+        // send NOTIFY with expiry too big
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 200 OK", 30, false));
+        notifyEvent = subscription.waitNotify(500);
+        assertNotNull(notifyEvent);
+        response = subscription.processNotify(notifyEvent);
+
+        assertEquals(Response.BAD_REQUEST, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf("received expiry >") != -1);
+    }
+
+    public void testErrorNotifyNoExpiry() throws Exception
+    {
+        // prepare referee side
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+
+        // send REFER, get OK - minimal processing
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // send NOTIFY then remove expires info upon reception
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 200 OK", 30, false));
+        RequestEvent notifyEvent = subscription.waitNotify(500);
+        assertNotNull(notifyEvent);
+        ((SubscriptionStateHeader) notifyEvent.getRequest().getHeader(
+                SubscriptionStateHeader.NAME)).setExpires(0);
+        Response response = subscription.processNotify(notifyEvent);
+        assertNotNull(response);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().contains("invalid expires"));
+        assertTrue(subscription.replyToNotify(notifyEvent, response));
+    }
 
     public void testErrorReferFatalResponseOutOfDialog() throws Exception
     {
@@ -1190,7 +1328,8 @@ public class TestReferNoProxy extends SipTestCase
 
         ReferNotifySender ub = new ReferNotifySender(sipStack
                 .createSipPhone("sip:becky@cafesip.org"));
-        assertTrue(ub.processRefer(5000, SipResponse.NOT_IMPLEMENTED, "NI", 60));
+        assertTrue(ub.processRefer(5000, SipResponse.NOT_IMPLEMENTED, "NI", 60,
+                null));
         Thread.sleep(50);
 
         // User A: send REFER out-of-dialog
@@ -1877,6 +2016,155 @@ public class TestReferNoProxy extends SipTestCase
         // check the response that was created & reply
         assertEquals(SipResponse.BAD_EVENT, response.getStatusCode());
         assertTrue(subscription.replyToNotify(reqevent, response));
+    }
+
+    public void testErrorNotifyMissingSubsStateHeader() throws Exception
+    {
+        // establish the subscription
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+        Thread.sleep(50);
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // tell far end to send a NOTIFY - then remove Subs State Header before
+        // processing it (after reception, else stack won't send it)
+        Request req = ub.getDialog().createRequest(Request.NOTIFY);
+        Request notifyMsg = ub.addNotifyHeaders(req, null, null,
+                SubscriptionStateHeader.ACTIVE, null, "SIP/2.0 200 OK\n", 30);
+        assertTrue(ub.sendNotify(notifyMsg, false));
+        // wait for & process the NOTIFY
+        RequestEvent reqevent = subscription.waitNotify(1000);
+        reqevent.getRequest().removeHeader(SubscriptionStateHeader.NAME);
+        Response response = subscription.processNotify(reqevent);
+        assertEquals(SipResponse.BAD_REQUEST, subscription.getReturnCode());
+        assertTrue(subscription.getErrorMessage().indexOf(
+                "no subscription state header") != -1);
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionPending());
+        // check the response that was created & reply
+        assertEquals(SipResponse.BAD_REQUEST, response.getStatusCode());
+        assertTrue(subscription.replyToNotify(reqevent, response));
+    }
+
+    public void testErrorNotifyBadEventID() throws Exception
+    {
+        // establish the subscription
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+        Thread.sleep(50);
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, "my-event-id", 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        assertEquals(0, subscription.getEventErrors().size());
+
+        // tell far end to send a NOTIFY with wrong event ID
+        Request req = ub.getDialog().createRequest(Request.NOTIFY);
+        Request notifyMsg = ub.addNotifyHeaders(req, null, null,
+                SubscriptionStateHeader.ACTIVE, null, "SIP/2.0 200 OK\n", 30);
+        ((EventHeader) notifyMsg.getHeader(EventHeader.NAME))
+                .setEventId("wrong-event-id");
+        assertTrue(ub.sendNotify(notifyMsg, false));
+
+        // wait for the NOTIFY - never received here because
+        // SipPhone.processRequestEvent() sees it as orphan and responds with
+        // 481, but we'll get that error event
+        Thread.sleep(500);
+        assertEquals(1, subscription.getEventErrors().size());
+        assertTrue(subscription.getEventErrors().get(0).contains("orphan"));
+        RequestEvent reqevent = subscription.waitNotify(100);
+        assertNull(reqevent);
+        assertEquals(2, subscription.getEventErrors().size());
+        assertEquals(0, subscription.getTimeLeft());
+        assertTrue(subscription.isSubscriptionPending());
+    }
+
+    public void testStrayNotify() throws Exception
+    {
+        testErrorNotifyBadEventID();
+    }
+
+    public void testMultipleSubscriptionsPerReferTo() throws Exception
+    {
+        // prepare referee side
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+
+        // send REFER 1, get OK - minimal processing
+        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
+                "INVITE", null, null, null, null, null);
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, "eventid-1", 5000, null);
+        assertNotNull(subscription);
+        assertTrue(subscription.processResponse(200));
+
+        // receive NOTIFY, send OK
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                "SIP/2.0 200 OK", 30, false));
+        RequestEvent notifyEvent = subscription.waitNotify(500);
+        assertNotNull(notifyEvent);
+        Response response = subscription.processNotify(notifyEvent);
+        assertNotNull(response);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertTrue(subscription.replyToNotify(notifyEvent, response));
+
+        // send REFER 2, sets up a second subscription
+        ReferNotifySender ub2 = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub2.processRefer(1000, SipResponse.OK, "OK"));
+        Thread.sleep(50);
+        ReferSubscriber subscription2 = ua.refer("sip:becky@cafesip.org",
+                referTo, "eventid-2", 5000, null);
+        assertNotNull(subscription2);
+        assertTrue(subscription2.processResponse(200));
+
+        // receive NOTIFY, send OK
+        assertTrue(ub2.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "no-resource", "SIP/2.0 200 OK", -1, false));
+        notifyEvent = subscription2.waitNotify(500);
+        assertNotNull(notifyEvent);
+        response = subscription2.processNotify(notifyEvent);
+        assertNotNull(response);
+        assertEquals(SipResponse.OK, subscription2.getReturnCode());
+        assertTrue(subscription2.replyToNotify(notifyEvent, response));
+
+        // check refer list methods on SipPhone
+        assertEquals(2, ua.getRefererList().size());
+        assertTrue(ua.getRefererList().contains(subscription));
+        assertTrue(ua.getRefererList().contains(subscription2));
+        assertEquals(2, ua.getRefererInfo(referTo).size());
+        assertTrue(ua.getRefererInfo(referTo).contains(subscription));
+        assertTrue(ua.getRefererInfo(referTo).contains(subscription2));
+        assertEquals(1, ua.getRefererInfoByDialog(subscription.getDialogId())
+                .size());
+        assertTrue(ua.getRefererInfoByDialog(subscription.getDialogId())
+                .contains(subscription));
+        assertEquals(1, ua.getRefererInfoByDialog(subscription2.getDialogId())
+                .size());
+        assertTrue(ua.getRefererInfoByDialog(subscription2.getDialogId())
+                .contains(subscription2));
+        // remove one of them from the list & recheck results
+        subscription2.dispose();
+        assertEquals(1, ua.getRefererList().size());
+        assertTrue(ua.getRefererList().contains(subscription));
+        assertEquals(1, ua.getRefererInfo(referTo).size());
+        assertTrue(ua.getRefererInfo(referTo).contains(subscription));
+        assertEquals(1, ua.getRefererInfoByDialog(subscription.getDialogId())
+                .size());
+        assertTrue(ua.getRefererInfoByDialog(subscription.getDialogId())
+                .contains(subscription));
     }
 
     public void testExample() throws Exception

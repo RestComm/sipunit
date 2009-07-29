@@ -1035,6 +1035,12 @@ public class EventSubscriber implements MessageListener, SipActionObject
                     status, req.getRequest());
             response.setReasonPhrase(reason);
 
+            if (req.getServerTransaction() != null)
+            {
+                req.getServerTransaction().sendResponse(response);
+                return;
+            }
+
             ((SipProvider) req.getSource()).sendResponse(response);
         }
         catch (Exception e)
@@ -1339,6 +1345,12 @@ public class EventSubscriber implements MessageListener, SipActionObject
             return false;
         }
 
+        return eventForMe(msg, lastSentRequest);
+    }
+
+    protected boolean eventForMe(javax.sip.message.Message msg,
+            Request lastSentRequest)
+    {
         EventHeader eventhdr = (EventHeader) msg.getHeader(EventHeader.NAME);
         EventHeader sentEventhdr = (EventHeader) lastSentRequest
                 .getHeader(EventHeader.NAME);
