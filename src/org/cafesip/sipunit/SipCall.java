@@ -1687,7 +1687,7 @@ public class SipCall implements SipActionObject, MessageListener
 
             parent.addAuthorizations(callId.getCallId(), req);
             MaxForwardsHeader mf = parent.getHeaderFactory()
-                    .createMaxForwardsHeader(10);
+                    .createMaxForwardsHeader(70);
             req.setHeader(mf);
 
             if (newContact != null)

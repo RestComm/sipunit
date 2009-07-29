@@ -1539,7 +1539,7 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertHeaderNotPresent(req, ReasonHeader.NAME);
 
             // check override headers
-            assertHeaderContains(req, MaxForwardsHeader.NAME, "10");
+            assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
 
             // send response - test new contact only
             // _____________________________________________
@@ -1616,7 +1616,7 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertHeaderNotPresent(req, ReasonHeader.NAME);
 
             // check override headers
-            assertHeaderContains(req, MaxForwardsHeader.NAME, "10");
+            assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
 
             // send response - test body only
             // _____________________________________________
