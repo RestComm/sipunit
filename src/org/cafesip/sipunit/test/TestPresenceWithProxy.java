@@ -54,19 +54,21 @@ import org.cafesip.sipunit.SipTransaction;
  * can run on the localhost. This class contains a subset of tests from
  * TestPresenceNoProxy test class.
  * 
- * THIS CLASS IS UNDER CONSTRUCTION. Please run the TestPresenceNoProxy class to
- * see the SUBSCRIBE/NOTIFY handling for the time being.
+ * ****** THIS CLASS IS ON HOLD ******** Please run the TestPresenceNoProxy or
+ * the TestSubscriptionsWithSipexProxy class to see the SUBSCRIBE/NOTIFY
+ * handling for the time being.
  * 
- * Tests in this class require a proxy - one that will authenticate using DIGEST
- * and that will pass SUBSCRIBE, NOTIFY messages through to the 'To' party. You
- * can use nist.gov's JAIN-SIP proxy for this test. I used the old one with the
- * original stack version - I had to make it set the lr param in the recordroute
- * header it sends out. Also, I had to make it do more than 20 server
- * transactions. It didn't work with the latest 1.2 sipstack so need to wait for
- * the new version to be incorporated into the jain-sip-presence-proxy before
- * trying to test with it using the latest stack. Start up the proxy before
- * running this test, and have the URIs used here in the list of users at the
- * proxy, all with password a1b2c3d4 - these URIs include: sip:becky@nist.gov,
+ * Tests in this class require a proxy server that will authenticate using
+ * DIGEST and that supports Type I presence aware clients - IE, one that will
+ * pass SUBSCRIBE, NOTIFY messages through to the User Agents. You can use
+ * nist.gov's JAIN-SIP proxy for this test. I used the old one with the original
+ * stack version - I had to make it set the lr param in the recordroute header
+ * it sends out. Also, I had to make it do more than 20 server transactions. It
+ * didn't work with the latest 1.2 sipstack so need to wait for the new version
+ * to be incorporated into the jain-sip-presence-proxy before trying to test
+ * with it using the latest stack. Start up the proxy before running this test,
+ * and have the URIs used here in the list of users at the proxy, all with
+ * password a1b2c3d4 - these URIs include: sip:becky@nist.gov,
  * sip:amit@nist.gov, sip:tom@nist.gov, sip:vidya@nist.gov. By default, the
  * proxy host is 127.0.0.1 and its listening port is 5060.
  * 

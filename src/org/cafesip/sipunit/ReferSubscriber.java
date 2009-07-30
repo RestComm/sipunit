@@ -338,7 +338,7 @@ public class ReferSubscriber extends EventSubscriber
      */
     public boolean refresh(Request req, long timeout)
     {
-        return refreshSubscription(req, timeout, false);
+        return refreshSubscription(req, timeout, parent.getProxyHost() != null);
     }
 
     /**

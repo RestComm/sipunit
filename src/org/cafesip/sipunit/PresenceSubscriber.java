@@ -30,6 +30,9 @@ import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
 import javax.sip.message.Request;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
 
 import org.cafesip.sipunit.presenceparser.pidf.Contact;
 import org.cafesip.sipunit.presenceparser.pidf.Note;
@@ -171,10 +174,23 @@ public class PresenceSubscriber extends EventSubscriber
 
         try
         {
-            Presence doc = (Presence) JAXBContext.newInstance(
+            Unmarshaller parser = JAXBContext.newInstance(
                     "org.cafesip.sipunit.presenceparser.pidf")
-                    .createUnmarshaller().unmarshal(
-                            new ByteArrayInputStream(bodyBytes));
+                    .createUnmarshaller();
+            parser.setEventHandler(new ValidationEventHandler()
+            {
+                public boolean handleEvent(ValidationEvent arg0)
+                {
+                    if (arg0.getMessage().startsWith("Unexpected element"))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                }
+            });
+            Presence doc = (Presence) parser
+                    .unmarshal(new ByteArrayInputStream(bodyBytes));
 
             // is it the correct presentity?
 
@@ -458,7 +474,7 @@ public class PresenceSubscriber extends EventSubscriber
             return false;
         }
 
-        return refreshSubscription(req, timeout, false);
+        return refreshSubscription(req, timeout, parent.getProxyHost() != null);
     }
 
     /**

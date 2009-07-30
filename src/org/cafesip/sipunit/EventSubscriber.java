@@ -992,8 +992,10 @@ public class EventSubscriber implements MessageListener, SipActionObject
         try
         {
             // bump up the sequence number
-            requestCSeq.setSeqNumber(requestCSeq.getSeqNumber() + 1);
-            msg.setHeader(requestCSeq);
+            long lastSeq = ((CSeqHeader) msg.getHeader(CSeqHeader.NAME))
+                    .getSeqNumber();
+            ((CSeqHeader) msg.getHeader(CSeqHeader.NAME))
+                    .setSeqNumber(++lastSeq);
 
             synchronized (responseBlock)
             {
