@@ -26,6 +26,7 @@ import javax.sip.address.SipURI;
 import javax.sip.header.AcceptHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
+import javax.sip.header.ProxyAuthorizationHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -395,6 +396,8 @@ public class ReferSubscriber extends EventSubscriber
         {
             return false;
         }
+
+        req.removeHeader(ProxyAuthorizationHeader.NAME);
 
         return unsubscribe(req, timeout);
     }

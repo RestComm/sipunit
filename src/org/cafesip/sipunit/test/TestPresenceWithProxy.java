@@ -55,8 +55,8 @@ import org.cafesip.sipunit.SipTransaction;
  * TestPresenceNoProxy test class.
  * 
  * ****** THIS CLASS IS ON HOLD ******** Please run the TestPresenceNoProxy or
- * the TestSubscriptionsWithSipexProxy class to see the SUBSCRIBE/NOTIFY
- * handling for the time being.
+ * the TestPresenceWithSipexProxy class to see the SUBSCRIBE/NOTIFY handling for
+ * the time being.
  * 
  * Tests in this class require a proxy server that will authenticate using
  * DIGEST and that supports Type I presence aware clients - IE, one that will

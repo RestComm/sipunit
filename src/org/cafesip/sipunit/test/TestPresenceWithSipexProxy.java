@@ -26,7 +26,6 @@ import java.util.Properties;
 
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
-import javax.sip.address.SipURI;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -34,8 +33,6 @@ import javax.sip.message.Response;
 import org.cafesip.sipunit.Credential;
 import org.cafesip.sipunit.PresenceDeviceInfo;
 import org.cafesip.sipunit.PresenceSubscriber;
-import org.cafesip.sipunit.ReferNotifySender;
-import org.cafesip.sipunit.ReferSubscriber;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
@@ -43,21 +40,11 @@ import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTestCase;
 
 /**
- * This class tests authentication challenges for SipUnit subscription-related
- * features. Tests in this class require a proxy that will authenticate using
- * DIGEST and that can:
- * 
- * <pre>
- * a) for presence: receive and respond to SUBSCRIBE messages and send NOTIFY 
- * messages. That is, a proxy server that supports Type II presence. Focus of these
- * tests are on the subscriber side. This class contains a subset of
- * tests from TestPresenceNoProxy test class.
- * 
- * b) for refer: pass received REFER requests/responses on to the target
- * registered User Agents and for refresh/unsubscribe do the same (when event type
- * = refer).
- * 
- * </pre>
+ * This class tests authentication challenges for a SipUnit presence subscriber.
+ * Tests in this class require a proxy that will authenticate using DIGEST and
+ * that can receive and respond to SUBSCRIBE messages and send NOTIFY messages.
+ * That is, a proxy server that supports Type II presence. The focus of these
+ * tests are on the subscriber side.
  * 
  * Start up the proxy before running this test, and have the URIs used here in
  * the list of users/subscribers at the proxy, all with password a1b2c3d4 -
@@ -70,7 +57,7 @@ import org.cafesip.sipunit.SipTestCase;
  * @author Becky McElroy
  * 
  */
-public class TestSubscriptionsWithSipexProxy extends SipTestCase
+public class TestPresenceWithSipexProxy extends SipTestCase
 {
     private SipStack sipStack;
 
@@ -123,7 +110,7 @@ public class TestSubscriptionsWithSipexProxy extends SipTestCase
 
     private Properties properties = new Properties(defaultProperties);
 
-    public TestSubscriptionsWithSipexProxy(String arg0)
+    public TestPresenceWithSipexProxy(String arg0)
     {
         super(arg0);
         properties.putAll(System.getProperties());
@@ -605,128 +592,4 @@ public class TestSubscriptionsWithSipexProxy extends SipTestCase
         }
     }
 
-    public void testBasicReferOutOfDialog() throws Exception
-    {
-        // create any refer-To URI
-        SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
-                "INVITE", null, null, null, null, null);
-
-        // create & prepare the referee simulator (User B) to respond to REFER
-        SipPhone ub = sipStack.createSipPhone(properties
-                .getProperty("sipunit.proxy.host"), testProtocol, proxyPort,
-                "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-        ub.addUpdateCredential(new Credential(properties
-                .getProperty("sipunit.test.domain"), "becky", "a1b2c3d4"));
-        ub.register(null, 3600);
-        assertLastOperationSuccess(
-                "Caller registration using pre-set credentials failed - "
-                        + ub.format(), ub);
-        ReferNotifySender referee = new ReferNotifySender(ub);
-
-        // prepare referee to receive REFER and respond with OK
-        assertTrue(referee.processRefer(5000, SipResponse.OK, "OK"));
-        Thread.sleep(50);
-
-        // ********* I. Send REFER out-of-dialog, initiate subscription
-
-        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
-                referTo, null, 5000, null);
-        assertNotNull(subscription); // REFER sending successful, received a
-        // response
-        assertEquals(SipResponse.OK, subscription.getReturnCode());
-        assertTrue(subscription.isSubscriptionPending());
-
-        // process the received REFER response, check results
-        assertTrue(subscription.processResponse(1000));
-        assertTrue(subscription.isSubscriptionActive());
-        assertNoSubscriptionErrors(subscription);
-
-        // User B send active-state NOTIFY to A
-        Thread.sleep(50);
-        String notifyBody = "SIP/2.0 200 OK\n";
-        assertTrue(referee.sendNotify(SubscriptionStateHeader.ACTIVE, null,
-                notifyBody, 2400, false));
-
-        // User A: get the NOTIFY
-        RequestEvent reqevent = subscription.waitNotify(500);
-        assertNotNull(reqevent);
-        // optionally examine NOTIFY in full detail using JAIN SIP:
-        Request request = reqevent.getRequest();
-        assertEquals(2400, ((SubscriptionStateHeader) request
-                .getHeader(SubscriptionStateHeader.NAME)).getExpires());
-        assertBodyContains(new SipRequest(reqevent), "200 OK");
-
-        // process the NOTIFY
-        Response resp = subscription.processNotify(reqevent);
-        assertNotNull(resp);
-
-        // check the NOTIFY processing results
-        assertTrue(subscription.isSubscriptionActive());
-        assertTrue(subscription.getTimeLeft() <= 2400
-                && subscription.getTimeLeft() > 2300);
-        assertEquals(SipResponse.OK, subscription.getReturnCode());
-        assertNoSubscriptionErrors(subscription);
-        assertEquals(SipResponse.OK, resp.getStatusCode());
-        assertTrue(resp.getReasonPhrase().equals("OK"));
-
-        // User A: reply to the NOTIFY
-        assertTrue(subscription.replyToNotify(reqevent, resp));
-
-        // ********** II. Refresh the subscription
-
-        // TODO - like unsubscribe below, when sipex doesn't reject event refer
-
-        // ********** III. Terminate the subscription from the referrer side
-
-        // prepare the far end to respond to unSUBSCRIBE
-        assertTrue(referee.processSubscribe(5000, SipResponse.OK, "OK Done"));
-        Thread.sleep(100);
-
-        // send the un-SUBSCRIBE
-        assertTrue(subscription.unsubscribe(500));
-        if (!subscription.isRemovalComplete())
-        {
-            // process the received SUBSCRIBE response - TODO uncomment below
-            // when sipex allows event refer
-            // for now:
-            subscription.processResponse(1000); // TODO remove
-            reqevent = subscription.waitNotify(500); // TODO remove
-            subscription.processNotify(reqevent); // TODO remove
-            // assertTrue(subscription.processResponse(1000));
-            // assertTrue(subscription.isSubscriptionTerminated());
-            // assertEquals("Unsubscribe", subscription.getTerminationReason());
-            // assertEquals(0, subscription.getTimeLeft());
-            // assertEquals(SipResponse.OK, subscription.getReturnCode());
-            // resp = subscription.getCurrentResponse().getResponse();
-            // assertEquals("OK Done", resp.getReasonPhrase());
-            // assertNoSubscriptionErrors(subscription);
-            //
-            // // User B: send terminated NOTIFY
-            // Thread.sleep(500);
-            // notifyBody = "SIP/2.0 100 Trying\n";
-            // assertTrue(referee.sendNotify(SubscriptionStateHeader.TERMINATED,
-            // "Unsubscribed", notifyBody, 0, false));
-            // Thread.sleep(10);
-            //
-            // // User A: get the NOTIFY
-            // reqevent = subscription.waitNotify(500);
-            // assertNotNull(reqevent);
-            // assertNoSubscriptionErrors(subscription);
-            // request = reqevent.getRequest();
-            //
-            // // process the NOTIFY
-            // resp = subscription.processNotify(reqevent);
-            // assertNotNull(resp);
-            //
-            // // check the NOTIFY processing results
-            // assertTrue(subscription.isSubscriptionTerminated());
-            // assertEquals(SipResponse.OK, subscription.getReturnCode());
-            // assertNoSubscriptionErrors(subscription);
-            //
-            // // reply to the NOTIFY
-            // assertTrue(subscription.replyToNotify(reqevent, resp));
-        }
-
-        referee.dispose();
-    }
 }

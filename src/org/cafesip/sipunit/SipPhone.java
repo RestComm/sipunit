@@ -1435,6 +1435,7 @@ public class SipPhone extends SipSession implements SipActionObject,
     private void processRequestEvent(RequestEvent requestEvent)
     {
         Request request = requestEvent.getRequest();
+        Dialog d = requestEvent.getDialog();
 
         if (request.getMethod().equals(Request.NOTIFY) == false)
         {
@@ -1488,14 +1489,17 @@ public class SipPhone extends SipSession implements SipActionObject,
         }
         else if (event.getEventType().equals("refer"))
         {
-            List<ReferSubscriber> refers = getRefererInfoByDialog(requestEvent
-                    .getDialog().getDialogId());
-            for (ReferSubscriber s : refers)
+            if (d != null)
             {
-                if (s.messageForMe(request) == true)
+                List<ReferSubscriber> refers = getRefererInfoByDialog(d
+                        .getDialogId());
+                for (ReferSubscriber s : refers)
                 {
-                    s.processEvent(requestEvent);
-                    return;
+                    if (s.messageForMe(request) == true)
+                    {
+                        s.processEvent(requestEvent);
+                        return;
+                    }
                 }
             }
         }
