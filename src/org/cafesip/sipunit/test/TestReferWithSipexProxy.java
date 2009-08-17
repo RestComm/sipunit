@@ -322,37 +322,21 @@ public class TestReferWithSipexProxy extends SipTestCase
             assertEquals(0, subscription.getEventErrors().size());
             reqevent = subscription.waitNotify(200);
 
-            // following results because stack has terminated the dialog
-            assertEquals(2, subscription.getEventErrors().size());
-            assertTrue(subscription.getEventErrors().get(0).contains(
-                    "orphan NOTIFY"));
-            assertTrue(subscription
-                    .getEventErrors()
-                    .get(1)
-                    .contains(
-                            "maximum amount of time to wait for a NOTIFY message has elapsed"));
+            assertNotNull(reqevent);
+            assertNoSubscriptionErrors(subscription);
+            request = reqevent.getRequest();
 
-            // but RFC 3265 says upon receiving a SUBSCRIBE with expires=0,
-            // notifier will send a NOTIFY request containing resource state in
-            // the same dialog - but the received NOTIFY reqevent's dialog is
-            // null so we cannot find the associated subscription for it
-            // and continue the processing as expected: (TODO post to list)
+            // process the NOTIFY
+            resp = subscription.processNotify(reqevent);
+            assertNotNull(resp);
 
-            // assertNotNull(reqevent);
-            // assertNoSubscriptionErrors(subscription);
-            // request = reqevent.getRequest();
-            //
-            // // process the NOTIFY
-            // resp = subscription.processNotify(reqevent);
-            // assertNotNull(resp);
-            //
-            // // check the NOTIFY processing results
-            // assertTrue(subscription.isSubscriptionTerminated());
-            // assertEquals(SipResponse.OK, subscription.getReturnCode());
-            // assertNoSubscriptionErrors(subscription);
-            //
-            // // reply to the NOTIFY
-            // assertTrue(subscription.replyToNotify(reqevent, resp));
+            // check the NOTIFY processing results
+            assertTrue(subscription.isSubscriptionTerminated());
+            assertEquals(SipResponse.OK, subscription.getReturnCode());
+            assertNoSubscriptionErrors(subscription);
+
+            // reply to the NOTIFY
+            assertTrue(subscription.replyToNotify(reqevent, resp));
         }
 
         referee.dispose();
