@@ -290,7 +290,53 @@ public class TestReferWithSipexProxy extends SipTestCase
 
         // ********** II. Refresh the subscription
 
-        // TODO - like unsubscribe below
+        // prepare the far end to respond to SUBSCRIBE
+        assertTrue(referee.processSubscribe(5000, SipResponse.OK,
+                "OK Refreshed"));
+        Thread.sleep(100);
+
+        // send the SUBSCRIBE
+        assertTrue(subscription.refresh(3600, 500));
+        assertEquals(SipResponse.PROXY_AUTHENTICATION_REQUIRED, subscription
+                .getReturnCode());
+        assertTrue(subscription.isSubscriptionActive());
+
+        // process the received response, check results
+        assertTrue(subscription.processResponse(1000));
+        assertTrue(subscription.isSubscriptionActive());
+        assertTrue(subscription.getTimeLeft() <= 3600
+                && subscription.getTimeLeft() > 3500);
+        assertNoSubscriptionErrors(subscription);
+
+        // User B send active-state NOTIFY to A
+        Thread.sleep(50);
+        notifyBody = "SIP/2.0 200 Okey Dokey\n";
+        assertTrue(referee.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                notifyBody, 2200, false));
+
+        // User A: get the NOTIFY
+        reqevent = subscription.waitNotify(500);
+        assertNotNull(reqevent);
+        request = reqevent.getRequest();
+        assertEquals(2200, ((SubscriptionStateHeader) request
+                .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+        assertBodyContains(new SipRequest(reqevent), "200 Okey Dokey");
+
+        // process the NOTIFY
+        resp = subscription.processNotify(reqevent);
+        assertNotNull(resp);
+
+        // check the NOTIFY processing results
+        assertTrue(subscription.isSubscriptionActive());
+        assertTrue(subscription.getTimeLeft() <= 2200
+                && subscription.getTimeLeft() > 2100);
+        assertEquals(SipResponse.OK, subscription.getReturnCode());
+        assertNoSubscriptionErrors(subscription);
+        assertEquals(SipResponse.OK, resp.getStatusCode());
+        assertTrue(resp.getReasonPhrase().equals("OK"));
+
+        // User A: reply to the NOTIFY
+        assertTrue(subscription.replyToNotify(reqevent, resp));
 
         // ********** III. Terminate the subscription from the referrer side
 
@@ -315,8 +361,11 @@ public class TestReferWithSipexProxy extends SipTestCase
             Thread.sleep(500);
             notifyBody = "SIP/2.0 100 Trying\n";
             assertTrue(referee.sendNotify(SubscriptionStateHeader.TERMINATED,
-                    "timeout", notifyBody, 0, true));
+                    "timeout", notifyBody, 0, false));
             Thread.sleep(10);
+            // TODO - why if send Notify via proxy (last parm above = true), it
+            // cannot propagate the Notify response, tho it does fine for REFER
+            // and SUBSCRIBE?
 
             // User A: get the NOTIFY
             assertEquals(0, subscription.getEventErrors().size());

@@ -289,6 +289,8 @@ public class ReferSubscriber extends EventSubscriber
             return false;
         }
 
+        req.removeHeader(ProxyAuthorizationHeader.NAME);
+
         return refresh(req, timeout);
 
     }
