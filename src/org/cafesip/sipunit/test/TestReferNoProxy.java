@@ -23,17 +23,22 @@ import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Properties;
 
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
+import javax.sip.address.Address;
 import javax.sip.address.SipURI;
 import javax.sip.header.AcceptHeader;
 import javax.sip.header.CSeqHeader;
+import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.EventHeader;
 import javax.sip.header.ExpiresHeader;
+import javax.sip.header.Header;
+import javax.sip.header.OrganizationHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -41,6 +46,7 @@ import javax.sip.message.Response;
 import org.cafesip.sipunit.ReferNotifySender;
 import org.cafesip.sipunit.ReferSubscriber;
 import org.cafesip.sipunit.SipCall;
+import org.cafesip.sipunit.SipMessage;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
@@ -2167,6 +2173,270 @@ public class TestReferNoProxy extends SipTestCase
                 .contains(subscription));
     }
 
+    public void testOutboundIndialogAdditionalHeaders() throws Exception
+    {
+        // Setup - Establish a call from A to B
+        SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        SipCall b = ub.createSipCall();
+        assertTrue(b.listenForIncomingCall());
+        SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertNotNull(a);
+        assertTrue(b.waitForIncomingCall(1000));
+        assertTrue(b.sendIncomingCallResponse(Response.OK,
+                "Answer - Hello world", 0));
+        Thread.sleep(200);
+        assertAnswered(a);
+        assertTrue(a.sendInviteOkAck());
+        Thread.sleep(200);
+
+        // B side - prepare to receive REFER
+        ReferNotifySender referHandler = new ReferNotifySender(ub);
+        referHandler.setDialog(b.getDialog());
+        assertTrue(referHandler.processRefer(2000, SipResponse.ACCEPTED,
+                "Accepted"));
+
+        // A side - send a REFER message with additional/replace headers & body
+
+        SipURI referTo = ua
+                .getUri(
+                        "sip:",
+                        "dave@denver.example.org",
+                        "udp",
+                        null,
+                        null,
+                        null,
+                        "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994",
+                        null, null);
+
+        ArrayList<Header> additionalHeaders = new ArrayList<Header>();
+        additionalHeaders.add(ua.getParent().getHeaderFactory()
+                .createOrganizationHeader("cafesip"));
+        additionalHeaders.add(ua.getParent().getHeaderFactory()
+                .createContentTypeHeader("applicationn", "texxt"));
+
+        ArrayList<Header> replaceHeaders = new ArrayList<Header>();
+        Address addr = ua.getParent().getAddressFactory().createAddress(
+                "sip:joe@shmoe.net");
+        ContactHeader hdr = ua.getParent().getHeaderFactory()
+                .createContactHeader(addr);
+        replaceHeaders.add(hdr);
+
+        ReferSubscriber subscription = ua.refer(a.getDialog(), referTo, null,
+                500, additionalHeaders, replaceHeaders, "myReferBody");
+        assertNotNull(subscription);
+
+        // B side - verify received REFER contents
+        RequestEvent requestEvent = referHandler.getLastReceivedRequest()
+                .getRequestEvent();
+        assertNotNull(requestEvent);
+        SipMessage msg = new SipRequest(requestEvent);
+        assertHeaderContains(msg, OrganizationHeader.NAME, "cafesip");
+        assertHeaderContains(msg, ContactHeader.NAME, "joe@shmoe.net");
+        ListIterator contactHdrs = requestEvent.getRequest().getHeaders(
+                ContactHeader.NAME);
+        contactHdrs.next();
+        contactHdrs.remove();
+        assertFalse(contactHdrs.hasNext());
+        assertHeaderContains(msg, ContentTypeHeader.NAME, "applicationn/texxt");
+        assertBodyContains(msg, "myReferBod");
+
+        // we're done
+        a.disposeNoBye();
+        b.disposeNoBye();
+
+    }
+
+    public void testOutboundIndialogAdditionalHeadersAsStrings()
+            throws Exception
+    {
+        // Setup - Establish a call from A to B
+        SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        SipCall b = ub.createSipCall();
+        assertTrue(b.listenForIncomingCall());
+        SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertNotNull(a);
+        assertTrue(b.waitForIncomingCall(1000));
+        assertTrue(b.sendIncomingCallResponse(Response.OK,
+                "Answer - Hello world", 0));
+        Thread.sleep(200);
+        assertAnswered(a);
+        assertTrue(a.sendInviteOkAck());
+        Thread.sleep(200);
+
+        // B side - prepare to receive REFER
+        ReferNotifySender referHandler = new ReferNotifySender(ub);
+        referHandler.setDialog(b.getDialog());
+        assertTrue(referHandler.processRefer(2000, SipResponse.ACCEPTED,
+                "Accepted"));
+
+        // A side - send a REFER message with additional/replace headers & body
+
+        SipURI referTo = ua
+                .getUri(
+                        "sip:",
+                        "dave@denver.example.org",
+                        "udp",
+                        null,
+                        null,
+                        null,
+                        "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994",
+                        null, null);
+
+        ArrayList<String> additionalHeaders = new ArrayList<String>();
+        additionalHeaders.add(ua.getParent().getHeaderFactory()
+                .createOrganizationHeader("cafesip").toString());
+
+        ArrayList<String> replaceHeaders = new ArrayList<String>();
+        Address addr = ua.getParent().getAddressFactory().createAddress(
+                "sip:joe@shmoe.net");
+        ContactHeader hdr = ua.getParent().getHeaderFactory()
+                .createContactHeader(addr);
+        replaceHeaders.add(hdr.toString());
+
+        ReferSubscriber subscription = ua.refer(a.getDialog(), referTo, null,
+                500, "myReferBody", "applicationn", "texxt", additionalHeaders,
+                replaceHeaders);
+        assertNotNull(subscription);
+
+        // B side - verify received REFER contents
+        RequestEvent requestEvent = referHandler.getLastReceivedRequest()
+                .getRequestEvent();
+        assertNotNull(requestEvent);
+        SipMessage msg = new SipRequest(requestEvent);
+        assertHeaderContains(msg, OrganizationHeader.NAME, "cafesip");
+        assertHeaderContains(msg, ContactHeader.NAME, "joe@shmoe.net");
+        ListIterator contactHdrs = requestEvent.getRequest().getHeaders(
+                ContactHeader.NAME);
+        contactHdrs.next();
+        contactHdrs.remove();
+        assertFalse(contactHdrs.hasNext());
+        assertHeaderContains(msg, ContentTypeHeader.NAME, "applicationn/texxt");
+        assertBodyContains(msg, "myReferBod");
+
+        // we're done
+        a.disposeNoBye();
+        b.disposeNoBye();
+    }
+
+    public void testOutboundOutdialogAdditionalHeaders() throws Exception
+    {
+        // create & prepare the referee
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(5000, SipResponse.OK, "OK"));
+        Thread.sleep(500);
+
+        // A: send REFER with additional/replace headers & body
+
+        SipURI referTo = ua
+                .getUri(
+                        "sip:",
+                        "dave@denver.example.org",
+                        "udp",
+                        null,
+                        null,
+                        null,
+                        "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994",
+                        null, null);
+
+        ArrayList<Header> additionalHeaders = new ArrayList<Header>();
+        additionalHeaders.add(ua.getParent().getHeaderFactory()
+                .createOrganizationHeader("cafesip"));
+        additionalHeaders.add(ua.getParent().getHeaderFactory()
+                .createContentTypeHeader("applicationn", "texxt"));
+
+        ArrayList<Header> replaceHeaders = new ArrayList<Header>();
+        Address addr = ua.getParent().getAddressFactory().createAddress(
+                "sip:joe@shmoe.net");
+        ContactHeader hdr = ua.getParent().getHeaderFactory()
+                .createContactHeader(addr);
+        replaceHeaders.add(hdr);
+
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null, additionalHeaders, replaceHeaders,
+                "myReferBody");
+
+        assertNotNull(subscription);
+
+        // B side - verify received REFER contents
+        RequestEvent requestEvent = ub.getLastReceivedRequest()
+                .getRequestEvent();
+        assertNotNull(requestEvent);
+        SipMessage msg = new SipRequest(requestEvent);
+        assertHeaderContains(msg, OrganizationHeader.NAME, "cafesip");
+        assertHeaderContains(msg, ContactHeader.NAME, "joe@shmoe.net");
+        ListIterator contactHdrs = requestEvent.getRequest().getHeaders(
+                ContactHeader.NAME);
+        contactHdrs.next();
+        contactHdrs.remove();
+        assertFalse(contactHdrs.hasNext());
+        assertHeaderContains(msg, ContentTypeHeader.NAME, "applicationn/texxt");
+        assertBodyContains(msg, "myReferBod");
+
+    }
+
+    public void testOutboundOutdialogAdditionalHeadersAsStrings()
+            throws Exception
+    {
+
+        // create & prepare the referee
+        ReferNotifySender ub = new ReferNotifySender(sipStack
+                .createSipPhone("sip:becky@cafesip.org"));
+        assertTrue(ub.processRefer(5000, SipResponse.OK, "OK"));
+        Thread.sleep(500);
+
+        // A: send REFER with additional/replace headers & body
+
+        SipURI referTo = ua
+                .getUri(
+                        "sip:",
+                        "dave@denver.example.org",
+                        "udp",
+                        null,
+                        null,
+                        null,
+                        "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994",
+                        null, null);
+
+        ArrayList<String> additionalHeaders = new ArrayList<String>();
+        additionalHeaders.add(ua.getParent().getHeaderFactory()
+                .createOrganizationHeader("cafesip").toString());
+        additionalHeaders.add(ua.getParent().getHeaderFactory()
+                .createContentTypeHeader("applicationn", "texxt").toString());
+
+        ArrayList<String> replaceHeaders = new ArrayList<String>();
+        Address addr = ua.getParent().getAddressFactory().createAddress(
+                "sip:joe@shmoe.net");
+        ContactHeader hdr = ua.getParent().getHeaderFactory()
+                .createContactHeader(addr);
+        replaceHeaders.add(hdr.toString());
+
+        ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org",
+                referTo, null, 5000, null, "myReferBody", "applicationn",
+                "texxt", additionalHeaders, replaceHeaders);
+        assertNotNull(subscription);
+
+        // B side - verify received REFER contents
+        RequestEvent requestEvent = ub.getLastReceivedRequest()
+                .getRequestEvent();
+        assertNotNull(requestEvent);
+        SipMessage msg = new SipRequest(requestEvent);
+        assertHeaderContains(msg, OrganizationHeader.NAME, "cafesip");
+        assertHeaderContains(msg, ContactHeader.NAME, "joe@shmoe.net");
+        ListIterator contactHdrs = requestEvent.getRequest().getHeaders(
+                ContactHeader.NAME);
+        contactHdrs.next();
+        contactHdrs.remove();
+        assertFalse(contactHdrs.hasNext());
+        assertHeaderContains(msg, ContentTypeHeader.NAME, "applicationn/texxt");
+        assertBodyContains(msg, "myReferBod");
+
+    }
+
     public void testExample() throws Exception
     {
         // create a refer-To URI
@@ -2282,4 +2552,5 @@ public class TestReferNoProxy extends SipTestCase
             subscription.dispose();
         }
     }
+
 }
