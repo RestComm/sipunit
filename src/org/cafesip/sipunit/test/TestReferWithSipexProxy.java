@@ -54,10 +54,11 @@ import org.cafesip.sipunit.SipTestCase;
  * a) to make the refer subscription SUBSCRIBE messages get passed on to the 
  * User Agent endpoint provided in the test below rather than getting passed
  * to the Presence handling jiplet, remove the 'SUBSCRIBE' element from the
- * jiplet-mapping for SipExchangeProxyJiplet, and remove the whole 
+ * jiplet-mapping for SipExchangeProxyJiplet (including the 'not', '/not', 'equals' 
+ * and '/equals' lines enclosing the 'SUBSCRIBE' value), and remove the whole 
  * jiplet-mapping for SipExchangeBuddyListJiplet.
  * 
- * b) in the security-constraint element, add a jiplet-name element under the
+ * b) in the security-constraint element, add a jiplet-name element inside the
  * jiplet-names element for the SipExchangeProxyJiplet, like the ones already
  * there for SipExchangeRegistrarJiplet and SipExchangeBuddyListJiplet.
  * 
