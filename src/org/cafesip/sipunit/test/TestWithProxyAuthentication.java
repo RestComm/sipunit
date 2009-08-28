@@ -21,8 +21,10 @@ package org.cafesip.sipunit.test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.EventObject;
 import java.util.Properties;
 
+import javax.sip.ResponseEvent;
 import javax.sip.address.Address;
 import javax.sip.address.SipURI;
 import javax.sip.address.URI;
@@ -33,6 +35,7 @@ import javax.sip.header.EventHeader;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.PriorityHeader;
 import javax.sip.header.ReasonHeader;
+import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import org.cafesip.sipunit.Credential;
@@ -50,13 +53,27 @@ import org.cafesip.sipunit.SipTransaction;
  * 
  * Tests in this class require that a Proxy/registrar server be running with
  * authentication turned on. The Authentication scheme is Digest. Defaults:
- * proxy host = 192.168.1.103, port = 5060, protocol = udp; user amit password
+ * proxy host = 192.168.112.1, port = 5060, protocol = udp; user amit password
  * a1b2c3d4 and user becky password a1b2c3d4 defined at the proxy for domain
  * cafesip.org. The sipunit test stack uses port 9091.
  * 
  * Example open-source Proxy/registrars include SipExchange (cafesip.org) and
  * nist.gov's JAIN-SIP Proxy for the People
  * (http://snad.ncsl.nist.gov/proj/iptel/).
+ * 
+ * When using CafeSip SipExchange for this test, you need to modify a default
+ * config setting to make the proxy challenge requests other than REGISTER. Open
+ * the sipexchange.ear in your JBoss deploy directory and within that, open
+ * sipex-jiplets.spr (it is a normal zip archive and can be opened with
+ * something like WinZip). Edit the JIP-INF/jip.xml file in the
+ * sipex-jiplets.spr. In the security-constraint element toward the bottom, add
+ * a jiplet-name element inside the jiplet-names element for the
+ * SipExchangeProxyJiplet, like the ones already there for
+ * SipExchangeRegistrarJiplet and SipExchangeBuddyListJiplet. Start up the
+ * SipExchange server before running this test, and have the URIs used here
+ * provisioned at the proxy, all with password a1b2c3d4 - these URIs include:
+ * sip:becky@<property "sipunit.test.domain" below>, sip:amit@<property
+ * "sipunit.test.domain" below>.
  * 
  * @author Becky McElroy
  * 
@@ -105,7 +122,7 @@ public class TestWithProxyAuthentication extends SipTestCase
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
         defaultProperties.setProperty("sipunit.test.domain", "cafesip.org");
-        defaultProperties.setProperty("sipunit.proxy.host", "192.168.1.101");
+        defaultProperties.setProperty("sipunit.proxy.host", "192.168.112.1");
         defaultProperties.setProperty("sipunit.proxy.port", "5060");
     }
 
@@ -210,8 +227,8 @@ public class TestWithProxyAuthentication extends SipTestCase
                     .toString(), ua.getContactInfo().getURI());
 
             assertEquals("The default contact is wrong", "sip:amit@"
-                    + ua.getStackAddress() + ':' + myPort + ";lr;transport="
-                    + testProtocol, ua.getContactInfo().getURI());
+                    + ua.getStackAddress() + ':' + myPort + ";transport="
+                    + testProtocol + ";lr", ua.getContactInfo().getURI());
         }
         catch (Exception ex)
         {
@@ -474,8 +491,21 @@ public class TestWithProxyAuthentication extends SipTestCase
             b.listenForDisconnect();
             Thread.sleep(1000);
 
-            a.disconnect();
-            assertLastOperationSuccess("a disc - " + a.format(), a);
+            // a.disconnect();
+            // instead, send the BYE myself without credentials due to
+            // SipExchange rejecting cached credentials (bug 2845998)
+            Request bye = a.getDialog().createRequest(Request.BYE);
+            SipTransaction trans = ua.sendRequestWithTransaction(bye, false, a
+                    .getDialog());
+            assertNotNull(trans);
+            EventObject respEvent = ua.waitResponse(trans, 1000);
+            assertNotNull(respEvent);
+            assertTrue(respEvent instanceof ResponseEvent);
+            Response resp = ((ResponseEvent) respEvent).getResponse();
+            Request newBye = ua.processAuthChallenge(resp, bye, null, null);
+            assertNotNull(newBye);
+            assertNotNull(ua.sendRequestWithTransaction(newBye, false, a
+                    .getDialog()));
 
             b.waitForDisconnect(5000);
             assertLastOperationSuccess("b wait disc - " + b.format(), b);

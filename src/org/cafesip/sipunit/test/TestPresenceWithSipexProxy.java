@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
+import javax.sip.address.SipURI;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -46,13 +47,13 @@ import org.cafesip.sipunit.SipTestCase;
  * That is, a proxy server that supports Type II presence. The focus of these
  * tests are on the subscriber side.
  * 
- * Start up the proxy before running this test, and have the URIs used here in
- * the list of users/subscribers at the proxy, all with password a1b2c3d4 -
- * these URIs include: sip:becky@<property "sipunit.test.domain" below>,
- * sip:amit@<property "sipunit.test.domain" below>.
+ * Start up the proxy before running this test, and have the URIs used here
+ * provisioned at the proxy, all with password a1b2c3d4 - these URIs include:
+ * sip:becky@<property "sipunit.test.domain" below>, sip:amit@<property
+ * "sipunit.test.domain" below>.
  * 
  * Make sure the users have accepted each other as contacts before running these
- * tests.
+ * tests. Also, clear out any registrations at the server for these users.
  * 
  * @author Becky McElroy
  * 
@@ -374,7 +375,15 @@ public class TestPresenceWithSipexProxy extends SipTestCase
             assertEquals("open", dev.getBasicStatus());
             assertEquals(-1.0, dev.getContactPriority(), 0.001);
             assertNotNull(dev.getContactURI());
-            assertEquals(ub.getContactInfo().getURI(), dev.getContactURI());
+            SipURI ubURI = (SipURI) ub.getContactInfo().getContactHeader()
+                    .getAddress().getURI();
+            String devURI = dev.getContactURI();
+            assertTrue(devURI.indexOf(ubURI.getScheme()) != -1);
+            assertTrue(devURI.indexOf(ubURI.getHost()) != -1);
+            assertTrue(devURI.indexOf(String.valueOf(ubURI.getPort())) != -1);
+            assertTrue(devURI.indexOf(ubURI.getTransportParam()) != -1);
+            assertTrue(devURI.indexOf(ubURI.getUser()) != -1);
+            assertTrue(devURI.indexOf("lr") != -1);
             assertEquals(0, dev.getDeviceExtensions().size());
             assertEquals(0, dev.getDeviceNotes().size());
             assertEquals("1", dev.getId());
@@ -591,5 +600,4 @@ public class TestPresenceWithSipexProxy extends SipTestCase
             fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
         }
     }
-
 }

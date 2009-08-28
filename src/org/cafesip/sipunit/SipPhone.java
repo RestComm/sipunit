@@ -576,6 +576,10 @@ public class SipPhone extends SipSession implements SipActionObject,
     }
 
     /**
+     * This method is public for test purposes and for use when using low level
+     * SipSession methods for sending/receiving messages. A test program using
+     * high level SipUnit doesn't need to call this method.
+     * 
      * This method modifies the given request to include the authorization
      * header(s) required by the given response. It may cache in SipPhone's
      * authorizations list the AuthorizationHeader(s) created here for use
@@ -594,12 +598,18 @@ public class SipPhone extends SipSession implements SipActionObject,
      * the authorizations list for later re-use.
      * 
      * @param response
+     *            the challenge that was received
      * @param req_msg
+     *            the request originally sent (that was challenged)
      * @param username
+     *            see above
      * @param password
-     * @return
+     *            see above
+     * @return the original request with the authorization header(s) added, or
+     *         null if username and password weren't passed in and the
+     *         SipPhone's credentials list doesn't have an entry for the realm.
      */
-    protected Request processAuthChallenge(Response response, Request req_msg,
+    public Request processAuthChallenge(Response response, Request req_msg,
             String username, String password)
     {
         initErrorInfo();
@@ -758,7 +768,11 @@ public class SipPhone extends SipSession implements SipActionObject,
 
     }
 
-    protected Request processAuthChallenge(Response response, Request req_msg)
+    /**
+     * This method is the same as the other processAuthChallenge() without the
+     * user/password option.
+     */
+    public Request processAuthChallenge(Response response, Request req_msg)
     {
         return processAuthChallenge(response, req_msg, null, null);
     }

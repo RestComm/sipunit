@@ -31,7 +31,7 @@ import org.cafesip.sipunit.SipTestCase;
  * This class tests multiple SipStacks on the same machine.
  * 
  * Tests in this class require that a Proxy/registrar server be running with
- * authentication turned off. Defaults: proxy host = 192.168.1.102, port = 5060,
+ * authentication turned off. Defaults: proxy host = 192.168.112.1, port = 5060,
  * protocol = udp.
  * 
  * @author Becky McElroy
@@ -59,7 +59,7 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
 
     private SipStack sipStack2;
 
-    private static String PROXY_HOST = "192.168.1.101";
+    private static String PROXY_HOST = "192.168.112.1";
 
     private static int PROXY_PORT = 5060;
 

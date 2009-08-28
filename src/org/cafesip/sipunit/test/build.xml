@@ -119,7 +119,7 @@
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
 			<sysproperty key="sipunit.test.domain" value="cafesip.org" />
-			<sysproperty key="sipunit.proxy.host" value="192.168.1.101" />
+			<sysproperty key="sipunit.proxy.host" value="192.168.112.1" />
 			<sysproperty key="sipunit.proxy.port" value="5060" />
 
 			<formatter type="brief" usefile="false" />
@@ -139,7 +139,7 @@
 			<sysproperty key="sipunit.test.protocol" value="udp" />
 
 			<sysproperty key="sipunit.test.domain" value="cafesip.org" />
-			<sysproperty key="sipunit.proxy.host" value="192.168.1.101" />
+			<sysproperty key="sipunit.proxy.host" value="192.168.112.1" />
 			<sysproperty key="sipunit.proxy.port" value="5060" />
 
 			<formatter type="brief" usefile="false" />

@@ -48,7 +48,7 @@ import org.cafesip.sipunit.SipTransaction;
  * This class tests SipUnit API methods.
  * 
  * Tests in this class require that a Proxy/registrar server be running with
- * authentication turned off. Defaults: proxy host = 192.168.1.102, port = 5060,
+ * authentication turned off. Defaults: proxy host = 192.168.112.1, port = 5060,
  * protocol = udp; user amit@cafesip.org password a1b2c3d4 and user
  * becky@cafesip.org password a1b2c3d4 defined at the proxy.
  * 
@@ -65,7 +65,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
 
     private String thisHostAddr;
 
-    private static String PROXY_HOST = "192.168.1.101";
+    private static String PROXY_HOST = "192.168.112.1";
 
     private static int PROXY_PORT = 5060;
 

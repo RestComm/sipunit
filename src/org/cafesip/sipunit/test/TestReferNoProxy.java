@@ -227,7 +227,7 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals("udp", uri.getTransportParam());
         assertEquals("SUBSCRIBE", uri.getMethodParam());
         assertEquals("abc", uri.getMAddrParam());
-        assertTrue("sip:sipmaster@192.168.1.11:5060;transport=udp;method=SUBSCRIBE;maddr=abc"
+        assertTrue("sip:sipmaster@192.168.1.11:5060;method=SUBSCRIBE;transport=udp;maddr=abc"
                 .equalsIgnoreCase(uri.toString()));
 
         // test joinUriHeader, Map<String, String> otherUriHeaders
