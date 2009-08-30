@@ -503,7 +503,7 @@ public class SipSession implements SipListener, SipActionObject
             return;
         }
 
-        if (trans.getState().getValue() == TransactionState._TERMINATED)
+        if (response.getResponse().getStatusCode() > 199)
         {
             synchronized (respTransactions)
             {

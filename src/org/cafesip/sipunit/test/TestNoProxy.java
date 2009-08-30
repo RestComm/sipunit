@@ -31,6 +31,7 @@ import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.ServerTransaction;
 import javax.sip.TimeoutEvent;
+import javax.sip.TransactionState;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
 import javax.sip.address.URI;
@@ -3639,5 +3640,66 @@ public class TestNoProxy extends SipTestCase
             e.printStackTrace();
             fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * This test has to be done manually. For this test, you must introduce a
+     * delay (Thread.sleep(500);) in
+     * org.cafesip.sipunit.SipStack.processResponse() before it loops through
+     * the listeners and calls their processResponse() method.
+     */
+    public void ManualTestTransTerminationRaceCondition() throws Exception
+    {
+        // test OK reception terminating transaction before TRYING gets
+        // processed by SipSession
+        SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+        ub.listenRequestMessage();
+        Thread.sleep(100);
+
+        SipCall a = ua.createSipCall();
+        a.initiateOutgoingCall("sip:becky@nist.gov", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(a.format(), a);
+
+        RequestEvent inc_req = ub.waitRequest(5000);
+        assertNotNull(ub.format(), inc_req);
+
+        Response response = ub.getParent().getMessageFactory().createResponse(
+                Response.TRYING, inc_req.getRequest());
+        SipTransaction transb = ub.sendReply(inc_req, response);
+        assertNotNull(ub.format(), transb);
+        // trying response sent
+
+        URI callee_contact = ub.getParent().getAddressFactory().createURI(
+                "sip:becky@" + properties.getProperty("javax.sip.IP_ADDRESS")
+                        + ':' + myPort);
+        Address contact = ub.getParent().getAddressFactory().createAddress(
+                callee_contact);
+
+        String to_tag = ub.generateNewTag();
+
+        ub.sendReply(transb, Response.OK, null, to_tag, contact, -1);
+        assertLastOperationSuccess(ub.format(), ub);
+        // OK sent
+
+        Thread.sleep(500);
+
+        // receive it on the 'a' side
+
+        assertTrue(a.waitOutgoingCallResponse(1000));
+        ResponseEvent event = a.getLastReceivedResponse().getResponseEvent();
+        assertEquals("Unexpected 1st response received", Response.TRYING, event
+                .getResponse().getStatusCode());
+        ClientTransaction ct = event.getClientTransaction();
+        assertEquals(TransactionState._TERMINATED, ct.getState().getValue());
+
+        assertTrue(a.waitOutgoingCallResponse(2000));
+        event = a.getLastReceivedResponse().getResponseEvent();
+        assertEquals("Unexpected 2nd response received", Response.OK, event
+                .getResponse().getStatusCode());
+        ct = event.getClientTransaction();
+        assertEquals(TransactionState._TERMINATED, ct.getState().getValue());
+
     }
 }
