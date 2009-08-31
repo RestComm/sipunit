@@ -197,6 +197,8 @@ public class SipSession implements SipListener, SipActionObject
 
     // key = String request method, value = ArrayList of RequestListener
 
+    private boolean loopback;
+
     protected SipSession(SipStack stack, String proxyHost, String proxyProto,
             int proxyPort, String me) throws InvalidArgumentException,
             ParseException
@@ -430,7 +432,8 @@ public class SipSession implements SipListener, SipActionObject
         // the original 'To' party, also there may be multiple devices for one
         // "me" address of record)
         // If no match, check 'To' = me
-        // (so that local messaging without proxy still works)
+        // (so that local messaging without proxy still works) - but ONLY IF
+        // setLoopback() has been called
 
         SipStack.trace("SipSession: request received !");
         SipStack.trace("     me ('To' check) = " + me);
@@ -441,6 +444,13 @@ public class SipSession implements SipListener, SipActionObject
         if (destMatch((SipURI) my_contact_info.getContactHeader().getAddress()
                 .getURI(), (SipURI) req_msg.getRequestURI()) == false)
         {
+            if (!loopback)
+            {
+                SipStack
+                        .trace("     skipping 'To' check, we're not loopback (see setLoopback())");
+                return;
+            }
+
             // check 'To' for a match
             if (to.getAddress().getURI().toString().equals(me) == false)
             {
@@ -2406,6 +2416,31 @@ public class SipSession implements SipListener, SipActionObject
     public String getStackAddress()
     {
         return this.myhost;
+    }
+
+    /**
+     * @return Returns the loopback. See setLoopback().
+     */
+    public boolean isLoopback()
+    {
+        return loopback;
+    }
+
+    /**
+     * Under normal circumstances, the SipUnit SipPhone/SipSession shouldn't
+     * accept a request if the Request URI doesn't match it's contact address,
+     * even if the 'To' header matches the SipPhone's address. By calling this
+     * method with parm loopback = true, this object will accept a request if
+     * the 'To' header matches even if the Request URI doesn't - so that local
+     * messaging tests without proxy still work. This is for direct UA-UA
+     * testing convenience. This should not be the default, however.
+     * 
+     * @param loopback
+     *            The loopback to set.
+     */
+    public void setLoopback(boolean loopback)
+    {
+        this.loopback = loopback;
     }
 
     public void processIOException(IOExceptionEvent arg0)

@@ -972,6 +972,7 @@ public class TestWithProxyAuthentication extends SipTestCase
         ua.addUpdateCredential(new Credential(properties
                 .getProperty("sipunit.test.domain"), "amit", "a1b2c3d4"));
         ua.register(null, 3600);
+        ua.setLoopback(true);
 
         assertLastOperationSuccess(
                 "Caller registration using pre-set credentials failed - "
@@ -1099,6 +1100,7 @@ public class TestWithProxyAuthentication extends SipTestCase
         ua.addUpdateCredential(new Credential(properties
                 .getProperty("sipunit.test.domain"), "amit", "a1b2c3d4"));
         ua.register(null, 3600);
+        ua.setLoopback(true);
 
         assertLastOperationSuccess(
                 "Caller registration using pre-set credentials failed - "
@@ -1517,6 +1519,7 @@ public class TestWithProxyAuthentication extends SipTestCase
                             + properties.getProperty("sipunit.test.domain"));
             ub.addUpdateCredential(new Credential(properties
                     .getProperty("sipunit.test.domain"), "becky", "a1b2c3d4"));
+            ub.setLoopback(true);
             ub.register(null, 9600);
             assertLastOperationSuccess(
                     "Callee registration using pre-set credentials failed - "
@@ -1530,6 +1533,8 @@ public class TestWithProxyAuthentication extends SipTestCase
             SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
                     .getProperty("javax.sip.IP_ADDRESS")
                     + ':' + myPort + '/' + testProtocol);
+            // TODO - this is direct to ub for now - sipex discards reinvite
+            // (bug 2847529)
 
             assertLastOperationSuccess(ua.format(), ua);
 

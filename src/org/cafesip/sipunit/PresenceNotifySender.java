@@ -97,6 +97,7 @@ public class PresenceNotifySender implements MessageListener
     public PresenceNotifySender(SipPhone userb)
     {
         ub = userb;
+        ub.setLoopback(true);
         ub.listenRequestMessage();
         receivedRequests = Collections
                 .synchronizedList(new ArrayList<SipRequest>());

@@ -168,6 +168,7 @@ public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
         try
         {
             ua = sipStack1.createSipPhone("sip:amit@nist.gov");
+            ua.setLoopback(true);
         }
         catch (Exception ex)
         {
@@ -192,6 +193,7 @@ public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             SipCall a = ua.createSipCall();
             SipCall b = ub.createSipCall();

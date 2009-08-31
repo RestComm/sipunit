@@ -145,6 +145,7 @@ public class TestPresenceNoProxy extends SipTestCase
         try
         {
             ua = sipStack.createSipPhone("sip:amit@nist.gov");
+            ua.setLoopback(true);
         }
         catch (Exception ex)
         {

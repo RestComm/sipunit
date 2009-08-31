@@ -154,6 +154,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             ua = sipStack.createSipPhone("sip:amit@nist.gov");
+            ua.setLoopback(true);
         }
         catch (Exception ex)
         {
@@ -178,6 +179,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             ub.listenRequestMessage();
             Thread.sleep(100);
@@ -291,6 +293,7 @@ public class TestNoProxy extends SipTestCase
                 try
                 {
                     SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+                    ub.setLoopback(true);
                     ub.listenRequestMessage();
                     SipCall b = ub.createSipCall();
 
@@ -451,6 +454,7 @@ public class TestNoProxy extends SipTestCase
                 try
                 {
                     SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+                    ub.setLoopback(true);
                     ub.listenRequestMessage();
                     SipCall b = ub.createSipCall();
 
@@ -602,6 +606,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             SipCall a = ua.createSipCall();
             SipCall b = ub.createSipCall();
@@ -674,6 +679,7 @@ public class TestNoProxy extends SipTestCase
         {
             SipCall a = ua.createSipCall();
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             ub.listenRequestMessage();
             Thread.sleep(50);
@@ -887,6 +893,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             SipCall b = ub.createSipCall(); // incoming call
             b.listenForIncomingCall();
@@ -963,6 +970,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             SipCall b = ub.createSipCall(); // incoming call
             b.listenForIncomingCall();
@@ -1040,6 +1048,7 @@ public class TestNoProxy extends SipTestCase
                 try
                 {
                     SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+                    ub.setLoopback(true);
 
                     SipCall b = ub.createSipCall();
 
@@ -1111,6 +1120,7 @@ public class TestNoProxy extends SipTestCase
                 try
                 {
                     SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+                    ub.setLoopback(true);
 
                     SipCall b = ub.createSipCall();
 
@@ -1214,6 +1224,7 @@ public class TestNoProxy extends SipTestCase
                 try
                 {
                     SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+                    ub.setLoopback(true);
 
                     SipCall b = ub.createSipCall();
 
@@ -1305,6 +1316,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             SipCall b = ub.createSipCall(); // incoming call
             b.listenForIncomingCall();
@@ -1411,6 +1423,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             SipCall b = ub.createSipCall(); // incoming call
             b.listenForIncomingCall();
@@ -1513,6 +1526,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             ub.listenRequestMessage();
             Thread.sleep(100);
@@ -1645,6 +1659,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             // establish a call
             SipCall b = ub.createSipCall();
@@ -1969,6 +1984,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             ub.listenRequestMessage();
             Thread.sleep(100);
@@ -2399,6 +2415,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             ub.listenRequestMessage();
             Thread.sleep(100);
@@ -3033,6 +3050,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             // establish a call
             SipCall b = ub.createSipCall();
@@ -3103,6 +3121,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             // establish a call
             SipCall b = ub.createSipCall();
@@ -3183,6 +3202,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             // establish a call
             SipCall b = ub.createSipCall();
@@ -3291,6 +3311,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             // establish a call
             SipCall b = ub.createSipCall();
@@ -3396,6 +3417,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             // establish a call
             SipCall b = ub.createSipCall();
@@ -3548,6 +3570,7 @@ public class TestNoProxy extends SipTestCase
         try
         {
             SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
 
             // establish a call
             SipCall b = ub.createSipCall();
@@ -3653,6 +3676,7 @@ public class TestNoProxy extends SipTestCase
         // test OK reception terminating transaction before TRYING gets
         // processed by SipSession
         SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+        ub.setLoopback(true);
         ub.listenRequestMessage();
         Thread.sleep(100);
 

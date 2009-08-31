@@ -148,6 +148,7 @@ public class TestReferNoProxy extends SipTestCase
         try
         {
             ua = sipStack.createSipPhone("sip:amit@nist.gov");
+            ua.setLoopback(true);
         }
         catch (Exception ex)
         {
@@ -494,6 +495,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // create and set up the far end
         SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        ub.setLoopback(true);
         SipCall b = ub.createSipCall();
         assertTrue(b.listenForIncomingCall());
 
@@ -661,6 +663,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // create and set up the far end
         SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        ub.setLoopback(true);
         SipCall b = ub.createSipCall();
         assertTrue(b.listenForIncomingCall());
 
@@ -948,6 +951,7 @@ public class TestReferNoProxy extends SipTestCase
 
         // create and set up the far end
         SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        ub.setLoopback(true);
         SipCall b = ub.createSipCall();
         assertTrue(b.listenForIncomingCall());
 
@@ -1349,6 +1353,7 @@ public class TestReferNoProxy extends SipTestCase
     {
         // create and set up the far end
         SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        ub.setLoopback(true);
         SipCall b = ub.createSipCall();
         assertTrue(b.listenForIncomingCall());
 
@@ -2177,6 +2182,7 @@ public class TestReferNoProxy extends SipTestCase
     {
         // Setup - Establish a call from A to B
         SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        ub.setLoopback(true);
         SipCall b = ub.createSipCall();
         assertTrue(b.listenForIncomingCall());
         SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
@@ -2253,6 +2259,7 @@ public class TestReferNoProxy extends SipTestCase
     {
         // Setup - Establish a call from A to B
         SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+        ub.setLoopback(true);
         SipCall b = ub.createSipCall();
         assertTrue(b.listenForIncomingCall());
         SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
