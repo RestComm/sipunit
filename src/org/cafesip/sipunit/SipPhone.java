@@ -144,12 +144,11 @@ public class SipPhone extends SipSession implements SipActionObject,
     }
 
     /**
-     * This method is used to register with the SIP proxy server that was
-     * specified when this SipPhone was created. If none was specified, the
-     * REGISTER message is sent using information from this SipPhone's URI
-     * (address of record). In either case, if the host is not a numeric IP
-     * address (w.x.y.z), DNS will be used to resolve the host name to an
-     * address.
+     * This method is used for SIP registration. By default, the Request-URI is
+     * derived from this SipPhone's proxy host, or if no proxy was specified
+     * when this SipPhone was created, the Request-URI address information is
+     * taken from this SipPhone's URI (address of record). For other Request-URI
+     * alternatives, see the register() method that takes parameter requestUri.
      * <p>
      * Initially, a REGISTER message is sent without any user name and password.
      * If the server returns an OK, this method returns a true value.
@@ -211,10 +210,50 @@ public class SipPhone extends SipSession implements SipActionObject,
      *            The maximum amount of time to wait for a response, in
      *            milliseconds. Use a value of 0 to wait indefinitely.
      * @return false if registration fails or an error is encountered, true
-     *         otherwise.
+     *         otherwise. In case of false, call getErrorMessage(),
+     *         getReturnCode() and/or getException() methods to find out why.
      */
     public boolean register(String user, String password, String contact,
             int expiry, long timeout)
+    {
+        AddressFactory addrFactory = parent.getAddressFactory();
+        SipURI requestUri = null;
+
+        try
+        {
+            if (proxyHost != null)
+            {
+                requestUri = addrFactory.createSipURI(null, proxyHost);
+                requestUri.setPort(proxyPort);
+                requestUri.setTransportParam(proxyProto);
+            }
+
+            return register(requestUri, user, password, contact, expiry,
+                    timeout);
+        }
+        catch (Exception ex)
+        {
+            setReturnCode(EXCEPTION_ENCOUNTERED);
+            setException(ex);
+            setErrorMessage("Exception: " + ex.getClass().getName() + ": "
+                    + ex.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * This method is the same as the register(String user, String password,
+     * String contact, int expiry, long timeout) method except for the
+     * Request-URI used in the outgoing REGISTER method. If the requestUri
+     * parameter passed into this method is null, the Request-URI for the
+     * REGISTER is derived from this SipPhone's URI, or address of record (for
+     * example, if this SipPhone's address of record is "sip:amit@cafesip.org",
+     * the REGISTER Request-URI will be sip:cafesip.org). Otherwise, the
+     * requestUri passed in is used for the REGISTER Request-URI.
+     * 
+     */
+    public boolean register(SipURI requestUri, String user, String password,
+            String contact, int expiry, long timeout)
     {
         initErrorInfo();
 
@@ -223,25 +262,17 @@ public class SipPhone extends SipSession implements SipActionObject,
             AddressFactory addr_factory = parent.getAddressFactory();
             HeaderFactory hdr_factory = parent.getHeaderFactory();
 
-            SipURI request_uri = null;
-
-            if (proxyHost == null)
+            if (requestUri == null)
             {
-                request_uri = addr_factory.createSipURI(null,
+                requestUri = addr_factory.createSipURI(null,
                         ((SipURI) (myAddress.getURI())).getHost());
-                request_uri.setPort(((SipURI) (myAddress.getURI())).getPort());
+                requestUri.setPort(((SipURI) (myAddress.getURI())).getPort());
                 if (((SipURI) (myAddress.getURI())).getTransportParam() != null)
                 {
-                    request_uri
+                    requestUri
                             .setTransportParam(((SipURI) (myAddress.getURI()))
                                     .getTransportParam());
                 }
-            }
-            else
-            {
-                request_uri = addr_factory.createSipURI(null, proxyHost);
-                request_uri.setPort(proxyPort);
-                request_uri.setTransportParam(proxyProto);
             }
 
             String method = Request.REGISTER;
@@ -283,7 +314,7 @@ public class SipPhone extends SipSession implements SipActionObject,
 
             ArrayList<ViaHeader> via_headers = getViaHeaders();
 
-            Request msg = parent.getMessageFactory().createRequest(request_uri,
+            Request msg = parent.getMessageFactory().createRequest(requestUri,
                     method, callid_header, cseq, from_header, to_header,
                     via_headers, max_forwards);
 
@@ -364,8 +395,9 @@ public class SipPhone extends SipSession implements SipActionObject,
     }
 
     /**
-     * This method is equivalent to the other register() method with no
-     * authorization parameters passed in. Call this method if no authorization
+     * This method is equivalent to the register(String user, String password,
+     * String contact, int expiry, long timeout) method except with no
+     * authorization parameters specified. Call this method if no authorization
      * will be needed or after setting up the SipPhone's credentials list.
      * 
      * @param contact
