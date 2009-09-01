@@ -18,8 +18,6 @@
  */
 package org.cafesip.sipunit.test;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Properties;
 
 import javax.sip.message.Response;
@@ -40,7 +38,7 @@ import org.cafesip.sipunit.SipTestCase;
  * This class tests SipUnit with Stun. It uses a STUN server to find out the
  * public IP address and port it should use when communicating with a SIP server
  * on the internet. Then it creates 2 test SipPhones, registers both caller and
- * callee parties with the pulic SIP server, makes a call from caller to callee,
+ * callee parties with a public SIP server, makes a call from caller to callee,
  * then the callee disconnects. (IE, the caller and callee user agents
  * (SipPhones) are running via this test class behind your firewall, registering
  * with the public sip server and communicating with each other through the
@@ -49,12 +47,21 @@ import org.cafesip.sipunit.SipTestCase;
  * Thanks to manchi for notes on STUN support and for the example code which is
  * used here (getPublicAddress()).
  * 
- * I used the public SIP server sip.antisip.com for this test. It works! First
- * you need to go to http://sip.antisip.com and create yourself 2 accounts, one
- * for ua (user 'a' in this test) and another for ub (user 'b'). Replace in this
- * file occurences of your-sip.antisip.com-account1 and
- * your-sip.antisip.com-account2 (and their passwords) with the 2 accounts you
- * created at sip.antisip.com.
+ * At a public SIP server you'll need 2 accounts for this test, one for ua (user
+ * 'a' in this test) and another for ub (user 'b'). Replace in this file
+ * occurences of your-publicserver-account1 and your-publicserver-account2 (and
+ * their passwords) with the 2 accounts at the public server.
+ * 
+ * Also edit the defaultProperties below and substitute your values for:
+ * 
+ * <pre>
+ * - javax.sip.IP_ADDRESS (use your local/internal machine address that your router to the
+ * outside world knows about)
+ * - stun.server (the address of some STUN server on the internet)
+ * - sipunit.test.domain (the domain part of your 2 public SIP account addresses)
+ * - sipunit.proxy.host (the host/address of your public SIP server where your accounts are)
+ * - sipunit.proxy.port (the SIP port used by your public SIP server if not the default 5060)
+ * </pre>
  * 
  * This class uses Stun4j, the OpenSource Java Solution for NAT and Firewall
  * Traversal. It is distributable under the LGPL license. See the terms of
@@ -85,17 +92,7 @@ public class TestWithStun extends SipTestCase
     private static final Properties defaultProperties = new Properties();
     static
     {
-        String host = null;
-        try
-        {
-            host = InetAddress.getLocalHost().getHostAddress();
-        }
-        catch (UnknownHostException e)
-        {
-            host = "localhost";
-        }
-
-        defaultProperties.setProperty("javax.sip.IP_ADDRESS", host);
+        defaultProperties.setProperty("javax.sip.IP_ADDRESS", "192.168.1.101");
         defaultProperties.setProperty("javax.sip.STACK_NAME", "testAgent");
         defaultProperties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
         defaultProperties.setProperty("gov.nist.javax.sip.DEBUG_LOG",
@@ -111,8 +108,12 @@ public class TestWithStun extends SipTestCase
         defaultProperties.setProperty("sipunit.test.port", "5060");
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
-        defaultProperties.setProperty("sipunit.test.domain", "sip.antisip.com");
-        defaultProperties.setProperty("sipunit.proxy.host", "sip.antisip.com");
+        defaultProperties.setProperty("stun.server",
+                "<some-stun-server-address>");
+        defaultProperties.setProperty("sipunit.test.domain",
+                "<your-public-SIP-accounts-domain>");
+        defaultProperties.setProperty("sipunit.proxy.host",
+                "<your-public-SIP-server-host>");
         defaultProperties.setProperty("sipunit.proxy.port", "5060");
     }
 
@@ -143,7 +144,7 @@ public class TestWithStun extends SipTestCase
         }
 
         testProtocol = properties.getProperty("sipunit.test.protocol");
-        myUrl = "sip:your-sip.antisip.com-account1@"
+        myUrl = "sip:your-publicserver-account1@"
                 + properties.getProperty("sipunit.test.domain");
 
     }
@@ -189,21 +190,11 @@ public class TestWithStun extends SipTestCase
 
     public boolean getPublicAddress()
     {
-        StunAddress localAddr = null;
-        StunAddress serverAddr = null;
+        StunAddress localAddr = new StunAddress(properties
+                .getProperty("javax.sip.IP_ADDRESS"), myPort);
+        StunAddress serverAddr = new StunAddress(properties
+                .getProperty("stun.server"), 3478);
 
-        try
-        {
-            localAddr = new StunAddress(InetAddress.getLocalHost()
-                    .getHostAddress(), myPort);
-        }
-        catch (UnknownHostException e)
-        {
-            e.printStackTrace();
-            return false;
-        }
-
-        serverAddr = new StunAddress("stun.fwdnet.net", 3478);
         NetworkConfigurationDiscoveryProcess addressDiscovery = new NetworkConfigurationDiscoveryProcess(
                 localAddr, serverAddr);
 
@@ -254,8 +245,8 @@ public class TestWithStun extends SipTestCase
     {
         ua.addUpdateCredential(new Credential(properties
                 .getProperty("sipunit.test.domain"),
-                "your-sip.antisip.com-account1",
-                "your-sip.antisip.com-account1-password"));
+                "your-publicserver-account1",
+                "your-publicserver-account1-password"));
 
         try
         {
@@ -269,12 +260,12 @@ public class TestWithStun extends SipTestCase
 
             SipPhone ub = sipStack.createSipPhone(properties
                     .getProperty("sipunit.proxy.host"), testProtocol,
-                    proxyPort, "sip:your-sip.antisip.com-account2@"
+                    proxyPort, "sip:your-publicserver-account2@"
                             + properties.getProperty("sipunit.test.domain"));
             ub.addUpdateCredential(new Credential(properties
                     .getProperty("sipunit.test.domain"),
-                    "your-sip.antisip.com-account2",
-                    "your-sip.antisip.com-account2-password"));
+                    "your-publicserver-account2",
+                    "your-publicserver-account2-password"));
 
             // set public address on ub
             ub.setPublicAddress(publicIP, publicPort);
@@ -288,7 +279,7 @@ public class TestWithStun extends SipTestCase
             b.listenForIncomingCall();
             Thread.sleep(50);
 
-            SipCall a = ua.makeCall("sip:your-sip.antisip.com-account2@"
+            SipCall a = ua.makeCall("sip:your-publicserver-account2@"
                     + properties.getProperty("sipunit.test.domain"), null);
 
             assertLastOperationSuccess(ua.format(), ua);
