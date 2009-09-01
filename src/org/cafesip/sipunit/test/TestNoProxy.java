@@ -3114,6 +3114,122 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    public void testCancelAfter100Trying() throws Exception
+    {
+        SipStack.trace("testCancelAfter100Trying");
+
+        SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+        ub.setLoopback(true);
+
+        // establish a call
+        SipCall b = ub.createSipCall();
+        b.listenForIncomingCall();
+        Thread.sleep(100);
+        SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(ua.format(), ua);
+
+        assertTrue(b.waitForIncomingCall(1000));
+        assertTrue(b.sendIncomingCallResponse(Response.TRYING, "Trying", -1));
+        assertLastOperationSuccess("b send TRYING - " + b.format(), b);
+        Thread.sleep(400);
+        assertResponseReceived(SipResponse.TRYING, a);
+        Thread.sleep(100);
+
+        // Initiate the Cancel
+        b.listenForCancel();
+        SipTransaction cancel = a.sendCancel();
+        assertNotNull(cancel);
+
+        // Respond to the Cancel
+        SipTransaction trans1 = b.waitForCancel(1000);
+        b.stopListeningForRequests();
+        assertNotNull(trans1);
+        assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+        assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
+        a.waitForCancelResponse(cancel, 2000);
+        assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+        Thread.sleep(100);
+
+        // close the INVITE transaction
+        assertTrue("487 NOT SENT", b.sendIncomingCallResponse(
+                SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+        Thread.sleep(300);
+        assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
+                SipResponse.REQUEST_TERMINATED, a);
+
+        // done, finish up
+        ub.dispose();
+    }
+
+    public void testCancelBeforeInvite() throws Exception
+    {
+        SipStack.trace("testCancelBeforeInvite");
+
+        SipCall a = ua.createSipCall();
+        SipTransaction cancel = a.sendCancel();
+        assertNull(cancel);
+        assertEquals(SipSession.INVALID_OPERATION, a.getReturnCode());
+    }
+
+    public void testCancelBeforeAnyResponse() throws Exception
+    {
+        SipStack.trace("testCancelBeforeAnyResponse");
+
+        SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+        ub.setLoopback(true);
+
+        // send INVITE
+        SipCall b = ub.createSipCall();
+        b.listenForIncomingCall();
+        Thread.sleep(100);
+        SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(ua.format(), ua);
+
+        assertTrue(b.waitForIncomingCall(1000));
+
+        // Initiate the Cancel
+        SipTransaction cancel = a.sendCancel();
+        assertNull(cancel);
+        assertEquals(SipSession.INVALID_OPERATION, a.getReturnCode());
+
+        // done, finish up
+        ub.dispose();
+    }
+
+    public void testCancelAfterFinalResponse() throws Exception
+    {
+        SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+        ub.setLoopback(true);
+
+        SipCall b = ub.createSipCall();
+        b.listenForIncomingCall();
+        Thread.sleep(50);
+
+        SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(ua.format(), ua);
+
+        assertTrue(b.waitForIncomingCall(1000));
+        assertTrue(b.sendIncomingCallResponse(Response.OK,
+                "Answer - Hello world", 0));
+        Thread.sleep(300);
+
+        assertAnswered("Outgoing call leg not answered", a);
+
+        // Initiate the Cancel
+        SipTransaction cancel = a.sendCancel();
+        assertNull(cancel);
+        assertEquals(SipSession.INVALID_OPERATION, a.getReturnCode());
+
+        // done, finish up
+        ub.dispose();
+    }
+
     // this method tests cancel from a to b
     public void testCancelWith481()
     {

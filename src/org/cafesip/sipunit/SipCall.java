@@ -30,6 +30,7 @@ import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.ServerTransaction;
 import javax.sip.TimeoutEvent;
+import javax.sip.TransactionState;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
 import javax.sip.address.SipURI;
@@ -3139,21 +3140,22 @@ public class SipCall implements SipActionObject, MessageListener
     {
         initErrorInfo();
 
-        if (dialog == null || dialog.getState() == null)
+        if (transaction == null)
         {
             setReturnCode(SipSession.INVALID_OPERATION);
             setErrorMessage((String) SipSession.statusCodeDescription
                     .get(new Integer(returnCode))
-                    + " - dialog not yet initialized (i.e. no provisional response received for the original request), can't send CANCEL");
+                    + " - transaction is null... Have you called SipPhone.makeCall() or SipCall.initiateOutgoingCall()?");
             return null;
         }
 
-        if (dialog.getState().getValue() != DialogState.EARLY.getValue())
+        if (!TransactionState.PROCEEDING.equals(transaction
+                .getClientTransaction().getState()))
         {
             setReturnCode(SipSession.INVALID_OPERATION);
             setErrorMessage((String) SipSession.statusCodeDescription
                     .get(new Integer(returnCode))
-                    + " - dialog has been confirmed or terminated (i.e. already received a final response), can't send CANCEL");
+                    + " - cannot send CANCEL: either a provisional response hasn't been received yet or a final response has already been received");
             return null;
         }
 
@@ -3161,9 +3163,9 @@ public class SipCall implements SipActionObject, MessageListener
         {
             Request req = transaction.getClientTransaction().createCancel();
             parent.addAuthorizations(callId.getCallId(), req);
-            MaxForwardsHeader mf = parent.getHeaderFactory()
-                    .createMaxForwardsHeader(10);
-            req.setHeader(mf);
+            // MaxForwardsHeader mf = parent.getHeaderFactory()
+            // .createMaxForwardsHeader(70);
+            // req.setHeader(mf);
 
             SipStack.dumpMessage("We have created this CANCEL", req);
 
