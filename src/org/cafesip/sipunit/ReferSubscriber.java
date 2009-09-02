@@ -106,7 +106,7 @@ public class ReferSubscriber extends EventSubscriber
      *            NOTIFYs from the server as well as for sending subsequent
      *            SUBSCRIBEs) unless changed by the caller later when calling
      *            refresh() or unsubscribe().
-     * @return
+     * @return a SUBSCRIBE request
      */
     public Request createSubscribeMessage(int duration, String eventId)
     {

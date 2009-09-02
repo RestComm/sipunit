@@ -113,7 +113,7 @@ public class PresenceSubscriber extends EventSubscriber
      *            SUBSCRIBEs) unless changed by the caller later on another
      *            SipPhone buddy method call (refreshBuddy(), removeBuddy(),
      *            fetch, etc.).
-     * @return
+     * @return a SUBSCRIBE request
      */
     public Request createSubscribeMessage(int duration, String eventId)
     {

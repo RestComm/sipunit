@@ -62,8 +62,8 @@ import org.cafesip.sipunit.SipTransaction;
  * (http://snad.ncsl.nist.gov/proj/iptel/).
  * 
  * When using CafeSip SipExchange for this test, you need to modify a default
- * config setting to make the proxy challenge requests other than REGISTER. Open
- * the sipexchange.ear in your JBoss deploy directory and within that, open
+ * config setting to make the proxy challenge all requests. Open the
+ * sipexchange.ear in your JBoss deploy directory and within that, open
  * sipex-jiplets.spr (it is a normal zip archive and can be opened with
  * something like WinZip). Edit the JIP-INF/jip.xml file in the
  * sipex-jiplets.spr. In the security-constraint element toward the bottom, add
@@ -494,6 +494,7 @@ public class TestWithProxyAuthentication extends SipTestCase
             // a.disconnect();
             // instead, send the BYE myself without credentials due to
             // SipExchange rejecting cached credentials (bug 2845998)
+            // and handle the challenge myself
             Request bye = a.getDialog().createRequest(Request.BYE);
             SipTransaction trans = ua.sendRequestWithTransaction(bye, false, a
                     .getDialog());
@@ -502,6 +503,8 @@ public class TestWithProxyAuthentication extends SipTestCase
             assertNotNull(respEvent);
             assertTrue(respEvent instanceof ResponseEvent);
             Response resp = ((ResponseEvent) respEvent).getResponse();
+            assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp
+                    .getStatusCode());
             Request newBye = ua.processAuthChallenge(resp, bye, null, null);
             assertNotNull(newBye);
             assertNotNull(ua.sendRequestWithTransaction(newBye, false, a
@@ -672,8 +675,25 @@ public class TestWithProxyAuthentication extends SipTestCase
 
             Thread.sleep(2000);
 
-            a.disconnect();
-            assertLastOperationSuccess("a disc - " + a.format(), a);
+            // a.disconnect();
+            // assertLastOperationSuccess("a disc - " + a.format(), a);
+            // instead, send the BYE myself without credentials due to
+            // SipExchange rejecting cached credentials (bug 2845998)
+            // and handle the challenge myself
+            Request bye = a.getDialog().createRequest(Request.BYE);
+            SipTransaction trans = ua.sendRequestWithTransaction(bye, false, a
+                    .getDialog());
+            assertNotNull(trans);
+            EventObject respEvent = ua.waitResponse(trans, 1000);
+            assertNotNull(respEvent);
+            assertTrue(respEvent instanceof ResponseEvent);
+            Response resp = ((ResponseEvent) respEvent).getResponse();
+            assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp
+                    .getStatusCode());
+            Request newBye = ua.processAuthChallenge(resp, bye, null, null);
+            assertNotNull(newBye);
+            assertNotNull(ua.sendRequestWithTransaction(newBye, false, a
+                    .getDialog()));
 
             b.join();
         }
@@ -816,8 +836,25 @@ public class TestWithProxyAuthentication extends SipTestCase
 
             Thread.sleep(2000);
 
-            a.disconnect();
-            assertLastOperationSuccess("a disc - " + a.format(), a);
+            // a.disconnect();
+            // assertLastOperationSuccess("a disc - " + a.format(), a);
+            // instead, send the BYE myself without credentials due to
+            // SipExchange rejecting cached credentials (bug 2845998)
+            // and handle the challenge myself
+            Request bye = a.getDialog().createRequest(Request.BYE);
+            SipTransaction trans = ua.sendRequestWithTransaction(bye, false, a
+                    .getDialog());
+            assertNotNull(trans);
+            EventObject respEvent = ua.waitResponse(trans, 1000);
+            assertNotNull(respEvent);
+            assertTrue(respEvent instanceof ResponseEvent);
+            Response resp = ((ResponseEvent) respEvent).getResponse();
+            assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp
+                    .getStatusCode());
+            Request newBye = ua.processAuthChallenge(resp, bye, null, null);
+            assertNotNull(newBye);
+            assertNotNull(ua.sendRequestWithTransaction(newBye, false, a
+                    .getDialog()));
 
             b.join();
         }
@@ -952,8 +989,25 @@ public class TestWithProxyAuthentication extends SipTestCase
 
             Thread.sleep(2000);
 
-            a.disconnect();
-            assertLastOperationSuccess("a disc - " + a.format(), a);
+            // a.disconnect();
+            // assertLastOperationSuccess("a disc - " + a.format(), a);
+            // instead, send the BYE myself without credentials due to
+            // SipExchange rejecting cached credentials (bug 2845998)
+            // and handle the challenge myself
+            Request bye = a.getDialog().createRequest(Request.BYE);
+            SipTransaction trans = ua.sendRequestWithTransaction(bye, false, a
+                    .getDialog());
+            assertNotNull(trans);
+            EventObject respEvent = ua.waitResponse(trans, 1000);
+            assertNotNull(respEvent);
+            assertTrue(respEvent instanceof ResponseEvent);
+            Response resp = ((ResponseEvent) respEvent).getResponse();
+            assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp
+                    .getStatusCode());
+            Request newBye = ua.processAuthChallenge(resp, bye, null, null);
+            assertNotNull(newBye);
+            assertNotNull(ua.sendRequestWithTransaction(newBye, false, a
+                    .getDialog()));
 
             b.join();
         }

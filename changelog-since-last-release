@@ -1,4 +1,4 @@
-SipUnit 0.0.8b
+SipUnit 1.0.0
 - see SVN log since 0.0.7b release
 
 SipUnit 0.0.7b
@@ -34,7 +34,7 @@ SipUnit 0.0.4b
 - fixed minor bugs
 
 TODO NEXT: 
-- add CANCEL, MESSAGE, REFER
+- add MESSAGE
 - incorporate multiple listening points per provider
 - ant test script: add more overridable test properties as needed (auth username, password, etc.)
 - modify remaining two test classes so they can be invoked from the ant test script like the others

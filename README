@@ -10,6 +10,10 @@ sipunit/lib/JainSipRi1.2.jar = jain-sip project jain-sip-ri-1.2.119.jar
 sipunit/lib/JainSipApi1.2.jar = jain-sip project jain-sip-api-1.2.jar
 sipunit/lib/jain-sdp-1.0.jar = jain-sip project jain-sdp-1.0.119.jar
 
+JUnit: as of August 27, 2009 (JUnit Release 4.7)
+sipunit/lib/junit.jar = junit-4.7.jar
+
+
 For installation instructions and all other documentation, visit 
 	http://www.cafesip.org/projects/sipunit/
 
