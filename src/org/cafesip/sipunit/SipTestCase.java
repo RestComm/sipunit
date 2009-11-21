@@ -18,14 +18,6 @@
  */
 package org.cafesip.sipunit;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.ListIterator;
-
-import javax.sip.header.CSeqHeader;
-import javax.sip.header.Header;
-import javax.sip.message.Request;
-
 import junit.framework.TestCase;
 
 /**
@@ -37,23 +29,41 @@ import junit.framework.TestCase;
  * methods of this class in addition to any of the JUnit Assert methods to
  * verify the results of the test.
  * <p>
- * 
- * To write a SIP application test class, or program: <br>
+ * The SipAssert class is a static equivalent of this class that you can
+ * alternatively use when you can't or don't want to extend SipTestCase.
+ * SipTestCase uses SipAssert to perform the assertions.
+ * <p>
+ * To write a SIP application test class, or program, pre-JUnit 4 style: <br>
  * 
  * <li>1) implement a subclass of SipTestCase <br>
  * <li>2) define instance attributes that store information needed by each test
- * in the class <br>
+ * in the class, such as for SipUnit SipStack, SipPhone objects <br>
  * <li>3) initialize the setup for each test by overriding method setUp() <br>
  * <li>4) clean-up after each test by overriding tearDown() <br>
  * <li>5) write one or more tests, each of which is a method beginning with the
- * letters "test"
+ * letters "test", that use SipUnit objects and SipTestCase assertions
+ * <p>
+ * 
+ * To write a SIP application test class, or program, JUnit 4 style: <br>
+ * 
+ * <li>1) write a pojo with JUnit 4 annotations (see release notes for JUnit 4.X
+ * releases at junit.org for details) <br>
+ * <li>2) define instance attributes that store information needed by each test
+ * in the class, such as for SipUnit SipStack, SipPhone objects <br>
+ * <li>3) initialize/cleanup tests using methods annotated with @Before, @After
+ * per JUnit 4 annotations <br>
+ * <li>4) use static imports for the SipAssert methods that your tests will use
+ * <br>
+ * <li>5) write one or more test methods that use SipUnit objects and SipAssert
+ * assertions
  * <p>
  * 
  * The code in the SIP application test class creates SipUnit API objects, calls
  * their methods to set up and initiate action toward a SIP test target, and
  * verifies the results involving the test target using the assert methods of
- * this class and the standard JUnit assert methods. Messages are only displayed
- * when an assert fails. See below for an example test class.
+ * this class or SipAssert, along with the standard JUnit assert methods.
+ * Messages are only displayed when an assert fails. See below for an example
+ * test class.
  * <p>
  * 
  * To execute the test program and run the tests, use the standard JUnit test
@@ -63,7 +73,8 @@ import junit.framework.TestCase;
  * EXAMPLE SIP APPLICATION TEST CLASS: (see the SipUnit User Guide for more
  * information on how to use the API effectively)
  * 
- * <pre><code>
+ * <pre>
+ * &lt;code&gt;
  * 
  *  
  *   
@@ -165,15 +176,8 @@ import junit.framework.TestCase;
  *                      fail(&quot;Exception: &quot; + e.getClass().getName() + &quot;: &quot; + e.getMessage());
  *                  }
  *              }
- *         
- *        
- *       
- *      
- *     
- *    
- *   
- *  
- * </code></pre>
+ * &lt;/code&gt;
+ * </pre>
  * 
  * @author aab
  * 
@@ -223,7 +227,7 @@ public class SipTestCase extends TestCase
      */
     public void assertLastOperationSuccess(SipActionObject op)
     {
-        assertLastOperationSuccess(null, op);
+        SipAssert.assertLastOperationSuccess(null, op);
     }
 
     /**
@@ -237,8 +241,7 @@ public class SipTestCase extends TestCase
      */
     public void assertLastOperationSuccess(String msg, SipActionObject op)
     {
-        assertNotNull("Null assert object passed in", op);
-        assertTrue(msg, op.getErrorMessage().length() == 0);
+        SipAssert.assertLastOperationSuccess(msg, op);
     }
 
     /**
@@ -249,7 +252,7 @@ public class SipTestCase extends TestCase
      */
     public void assertLastOperationFail(SipActionObject op)
     {
-        assertLastOperationFail(null, op);
+        SipAssert.assertLastOperationFail(null, op);
     }
 
     /**
@@ -263,8 +266,7 @@ public class SipTestCase extends TestCase
      */
     public void assertLastOperationFail(String msg, SipActionObject op)
     {
-        assertNotNull("Null assert object passed in", op);
-        assertTrue(msg, op.getErrorMessage().length() > 0);
+        SipAssert.assertLastOperationFail(msg, op);
     }
 
     /**
@@ -279,7 +281,8 @@ public class SipTestCase extends TestCase
      */
     public void assertHeaderPresent(SipMessage sipMessage, String header)
     {
-        assertHeaderPresent(null, sipMessage, header); // header is case
+        SipAssert.assertHeaderPresent(null, sipMessage, header); // header is
+        // case
         // sensitive?
     }
 
@@ -298,8 +301,7 @@ public class SipTestCase extends TestCase
     public void assertHeaderPresent(String msg, SipMessage sipMessage,
             String header)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        assertTrue(msg, sipMessage.getHeaders(header).hasNext());
+        SipAssert.assertHeaderPresent(msg, sipMessage, header);
     }
 
     /**
@@ -313,7 +315,7 @@ public class SipTestCase extends TestCase
      */
     public void assertHeaderNotPresent(SipMessage sipMessage, String header)
     {
-        assertHeaderNotPresent(null, sipMessage, header);
+        SipAssert.assertHeaderNotPresent(null, sipMessage, header);
     }
 
     /**
@@ -331,8 +333,7 @@ public class SipTestCase extends TestCase
     public void assertHeaderNotPresent(String msg, SipMessage sipMessage,
             String header)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        assertFalse(msg, sipMessage.getHeaders(header).hasNext());
+        SipAssert.assertHeaderNotPresent(msg, sipMessage, header);
     }
 
     /**
@@ -354,8 +355,8 @@ public class SipTestCase extends TestCase
     public void assertHeaderContains(SipMessage sipMessage, String header,
             String value)
     {
-        assertHeaderContains(null, sipMessage, header, value); // value is case
-        // sensitive?
+        SipAssert.assertHeaderContains(null, sipMessage, header, value);
+        // value is case sensitive?
     }
 
     /**
@@ -380,20 +381,7 @@ public class SipTestCase extends TestCase
     public void assertHeaderContains(String msg, SipMessage sipMessage,
             String header, String value)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        ListIterator<Header> l = sipMessage.getHeaders(header);
-        while (l.hasNext())
-        {
-            String h = ((Header) l.next()).toString();
-
-            if (h.indexOf(value) != -1)
-            {
-                assertTrue(true);
-                return;
-            }
-        }
-
-        fail(msg);
+        SipAssert.assertHeaderContains(msg, sipMessage, header, value);
     }
 
     /**
@@ -415,7 +403,7 @@ public class SipTestCase extends TestCase
     public void assertHeaderNotContains(SipMessage sipMessage, String header,
             String value)
     {
-        assertHeaderNotContains(null, sipMessage, header, value);
+        SipAssert.assertHeaderNotContains(null, sipMessage, header, value);
     }
 
     /**
@@ -440,19 +428,7 @@ public class SipTestCase extends TestCase
     public void assertHeaderNotContains(String msg, SipMessage sipMessage,
             String header, String value)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        ListIterator<Header> l = sipMessage.getHeaders(header);
-        while (l.hasNext())
-        {
-            String h = ((Header) l.next()).toString();
-
-            if (h.indexOf(value) != -1)
-            {
-                fail(msg);
-            }
-        }
-
-        assertTrue(true);
+        SipAssert.assertHeaderNotContains(msg, sipMessage, header, value);
     }
 
     /**
@@ -467,7 +443,7 @@ public class SipTestCase extends TestCase
      */
     public void assertResponseReceived(int statusCode, MessageListener obj)
     {
-        assertResponseReceived(null, statusCode, obj);
+        SipAssert.assertResponseReceived(null, statusCode, obj);
     }
 
     /**
@@ -487,7 +463,8 @@ public class SipTestCase extends TestCase
     public void assertResponseReceived(int statusCode, String method,
             long sequenceNumber, MessageListener obj)
     {
-        assertResponseReceived(null, statusCode, method, sequenceNumber, obj);
+        SipAssert.assertResponseReceived(null, statusCode, method,
+                sequenceNumber, obj);
     }
 
     /**
@@ -506,25 +483,7 @@ public class SipTestCase extends TestCase
     public void assertResponseReceived(String msg, int statusCode,
             MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertTrue(msg, responseReceived(statusCode, obj));
-    }
-
-    private boolean responseReceived(int statusCode, MessageListener obj)
-    {
-        ArrayList<SipResponse> responses = obj.getAllReceivedResponses();
-
-        Iterator<SipResponse> i = responses.iterator();
-        while (i.hasNext())
-        {
-            int response_code = (i.next()).getStatusCode();
-            if (response_code == statusCode)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        SipAssert.assertResponseReceived(msg, statusCode, obj);
     }
 
     /**
@@ -547,38 +506,8 @@ public class SipTestCase extends TestCase
     public void assertResponseReceived(String msg, int statusCode,
             String method, long sequenceNumber, MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertTrue(msg, responseReceived(statusCode, method, sequenceNumber,
-                obj));
-    }
-
-    private boolean responseReceived(int statusCode, String method,
-            long sequenceNumber, MessageListener obj)
-    {
-        ArrayList<SipResponse> responses = obj.getAllReceivedResponses();
-
-        Iterator<SipResponse> i = responses.iterator();
-        while (i.hasNext())
-        {
-            SipResponse resp = i.next();
-            if (resp.getStatusCode() == statusCode)
-            {
-                CSeqHeader hdr = (CSeqHeader) resp.getMessage().getHeader(
-                        CSeqHeader.NAME);
-                if (hdr != null)
-                {
-                    if (hdr.getMethod().equals(method))
-                    {
-                        if (hdr.getSeqNumber() == sequenceNumber)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
+        SipAssert.assertResponseReceived(msg, statusCode, method,
+                sequenceNumber, obj);
     }
 
     /**
@@ -594,7 +523,7 @@ public class SipTestCase extends TestCase
      */
     public void assertResponseNotReceived(int statusCode, MessageListener obj)
     {
-        assertResponseNotReceived(null, statusCode, obj);
+        SipAssert.assertResponseNotReceived(null, statusCode, obj);
     }
 
     /**
@@ -613,8 +542,7 @@ public class SipTestCase extends TestCase
     public void assertResponseNotReceived(String msg, int statusCode,
             MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertFalse(msg, responseReceived(statusCode, obj));
+        SipAssert.assertResponseNotReceived(msg, statusCode, obj);
     }
 
     /**
@@ -635,7 +563,8 @@ public class SipTestCase extends TestCase
     public void assertResponseNotReceived(int statusCode, String method,
             long sequenceNumber, MessageListener obj)
     {
-        assertResponseNotReceived(null, statusCode, method, sequenceNumber, obj);
+        SipAssert.assertResponseNotReceived(null, statusCode, method,
+                sequenceNumber, obj);
     }
 
     /**
@@ -658,9 +587,8 @@ public class SipTestCase extends TestCase
     public void assertResponseNotReceived(String msg, int statusCode,
             String method, long sequenceNumber, MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertFalse(msg, responseReceived(statusCode, method, sequenceNumber,
-                obj));
+        SipAssert.assertResponseNotReceived(msg, statusCode, method,
+                sequenceNumber, obj);
     }
 
     /**
@@ -674,7 +602,7 @@ public class SipTestCase extends TestCase
      */
     public void assertRequestReceived(String method, MessageListener obj)
     {
-        assertRequestReceived(null, method, obj);
+        SipAssert.assertRequestReceived(null, method, obj);
     }
 
     /**
@@ -691,7 +619,7 @@ public class SipTestCase extends TestCase
     public void assertRequestReceived(String method, long sequenceNumber,
             MessageListener obj)
     {
-        assertRequestReceived(null, method, sequenceNumber, obj);
+        SipAssert.assertRequestReceived(null, method, sequenceNumber, obj);
     }
 
     /**
@@ -709,28 +637,7 @@ public class SipTestCase extends TestCase
     public void assertRequestReceived(String msg, String method,
             MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertTrue(msg, requestReceived(method, obj));
-    }
-
-    private boolean requestReceived(String method, MessageListener obj)
-    {
-        ArrayList<SipRequest> requests = obj.getAllReceivedRequests();
-
-        Iterator<SipRequest> i = requests.iterator();
-        while (i.hasNext())
-        {
-            Request req = (Request) i.next().getMessage();
-            if (req != null)
-            {
-                if (req.getMethod().equals(method))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        SipAssert.assertRequestReceived(msg, method, obj);
     }
 
     /**
@@ -750,36 +657,7 @@ public class SipTestCase extends TestCase
     public void assertRequestReceived(String msg, String method,
             long sequenceNumber, MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertTrue(msg, requestReceived(method, sequenceNumber, obj));
-    }
-
-    private boolean requestReceived(String method, long sequenceNumber,
-            MessageListener obj)
-    {
-        ArrayList<SipRequest> requests = obj.getAllReceivedRequests();
-
-        Iterator<SipRequest> i = requests.iterator();
-        while (i.hasNext())
-        {
-            Request req = (Request) i.next().getMessage();
-            if (req != null)
-            {
-                CSeqHeader hdr = (CSeqHeader) req.getHeader(CSeqHeader.NAME);
-                if (hdr != null)
-                {
-                    if (hdr.getMethod().equals(method))
-                    {
-                        if (hdr.getSeqNumber() == sequenceNumber)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
+        SipAssert.assertRequestReceived(msg, method, sequenceNumber, obj);
     }
 
     /**
@@ -794,7 +672,7 @@ public class SipTestCase extends TestCase
      */
     public void assertRequestNotReceived(String method, MessageListener obj)
     {
-        assertRequestNotReceived(null, method, obj);
+        SipAssert.assertRequestNotReceived(null, method, obj);
     }
 
     /**
@@ -812,8 +690,7 @@ public class SipTestCase extends TestCase
     public void assertRequestNotReceived(String msg, String method,
             MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertFalse(msg, requestReceived(method, obj));
+        SipAssert.assertRequestNotReceived(msg, method, obj);
     }
 
     /**
@@ -831,7 +708,7 @@ public class SipTestCase extends TestCase
     public void assertRequestNotReceived(String method, long sequenceNumber,
             MessageListener obj)
     {
-        assertRequestNotReceived(null, method, sequenceNumber, obj);
+        SipAssert.assertRequestNotReceived(null, method, sequenceNumber, obj);
     }
 
     /**
@@ -851,8 +728,7 @@ public class SipTestCase extends TestCase
     public void assertRequestNotReceived(String msg, String method,
             long sequenceNumber, MessageListener obj)
     {
-        assertNotNull("Null assert object passed in", obj);
-        assertFalse(msg, requestReceived(method, sequenceNumber, obj));
+        SipAssert.assertRequestNotReceived(msg, method, sequenceNumber, obj);
     }
 
     /**
@@ -863,7 +739,7 @@ public class SipTestCase extends TestCase
      */
     public void assertAnswered(SipCall call)
     {
-        assertAnswered(null, call);
+        SipAssert.assertAnswered(null, call);
     }
 
     /**
@@ -877,8 +753,7 @@ public class SipTestCase extends TestCase
      */
     public void assertAnswered(String msg, SipCall call)
     {
-        assertNotNull("Null assert object passed in", call);
-        assertTrue(msg, call.isCallAnswered());
+        SipAssert.assertAnswered(msg, call);
     }
 
     /**
@@ -890,7 +765,7 @@ public class SipTestCase extends TestCase
      */
     public void assertNotAnswered(SipCall call)
     {
-        assertNotAnswered(null, call);
+        SipAssert.assertNotAnswered(null, call);
     }
 
     /**
@@ -904,8 +779,7 @@ public class SipTestCase extends TestCase
      */
     public void assertNotAnswered(String msg, SipCall call)
     {
-        assertNotNull("Null assert object passed in", call);
-        assertFalse(msg, call.isCallAnswered());
+        SipAssert.assertNotAnswered(msg, call);
     }
 
     /**
@@ -916,7 +790,7 @@ public class SipTestCase extends TestCase
      */
     public void assertBodyPresent(SipMessage sipMessage)
     {
-        assertBodyPresent(null, sipMessage);
+        SipAssert.assertBodyPresent(null, sipMessage);
     }
 
     /**
@@ -930,8 +804,7 @@ public class SipTestCase extends TestCase
      */
     public void assertBodyPresent(String msg, SipMessage sipMessage)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        assertTrue(msg, sipMessage.getContentLength() > 0);
+        SipAssert.assertBodyPresent(msg, sipMessage);
     }
 
     /**
@@ -942,7 +815,7 @@ public class SipTestCase extends TestCase
      */
     public void assertBodyNotPresent(SipMessage sipMessage)
     {
-        assertBodyNotPresent(null, sipMessage);
+        SipAssert.assertBodyNotPresent(null, sipMessage);
     }
 
     /**
@@ -956,8 +829,7 @@ public class SipTestCase extends TestCase
      */
     public void assertBodyNotPresent(String msg, SipMessage sipMessage)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        assertFalse(msg, sipMessage.getContentLength() > 0);
+        SipAssert.assertBodyNotPresent(msg, sipMessage);
     }
 
     /**
@@ -975,7 +847,7 @@ public class SipTestCase extends TestCase
      */
     public void assertBodyContains(SipMessage sipMessage, String value)
     {
-        assertBodyContains(null, sipMessage, value);
+        SipAssert.assertBodyContains(null, sipMessage, value);
     }
 
     /**
@@ -997,17 +869,7 @@ public class SipTestCase extends TestCase
     public void assertBodyContains(String msg, SipMessage sipMessage,
             String value)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        assertBodyPresent(msg, sipMessage);
-        String body = new String(sipMessage.getRawContent());
-
-        if (body.indexOf(value) != -1)
-        {
-            assertTrue(true);
-            return;
-        }
-
-        fail(msg);
+        SipAssert.assertBodyContains(msg, sipMessage, value);
     }
 
     /**
@@ -1025,7 +887,7 @@ public class SipTestCase extends TestCase
      */
     public void assertBodyNotContains(SipMessage sipMessage, String value)
     {
-        assertBodyNotContains(null, sipMessage, value);
+        SipAssert.assertBodyNotContains(null, sipMessage, value);
     }
 
     /**
@@ -1047,18 +909,7 @@ public class SipTestCase extends TestCase
     public void assertBodyNotContains(String msg, SipMessage sipMessage,
             String value)
     {
-        assertNotNull("Null assert object passed in", sipMessage);
-        if (sipMessage.getContentLength() > 0)
-        {
-            String body = new String(sipMessage.getRawContent());
-
-            if (body.indexOf(value) != -1)
-            {
-                fail(msg);
-            }
-        }
-
-        assertTrue(true);
+        SipAssert.assertBodyNotContains(msg, sipMessage, value);
     }
 
     /**
@@ -1072,7 +923,7 @@ public class SipTestCase extends TestCase
      */
     public void assertNoSubscriptionErrors(EventSubscriber subscription)
     {
-        assertNoSubscriptionErrors(null, subscription);
+        SipAssert.assertNoSubscriptionErrors(null, subscription);
     }
 
     /**
@@ -1089,46 +940,7 @@ public class SipTestCase extends TestCase
     public void assertNoSubscriptionErrors(String msg,
             EventSubscriber subscription)
     {
-        assertNotNull("Null assert object passed in", subscription);
-
-        StringBuffer buf = new StringBuffer(
-                msg == null ? "Subscription error(s)" : msg);
-        Iterator<String> i = subscription.getEventErrors().iterator();
-        while (i.hasNext())
-        {
-            buf.append(" : ");
-            buf.append((String) i.next());
-        }
-
-        assertEquals(buf.toString(), 0, subscription.getEventErrors().size());
+        SipAssert.assertNoSubscriptionErrors(msg, subscription);
     }
-
-    // Later: ContentDispositionHeader, ContentEncodingHeader,
-    // ContentLanguageHeader,
-    // ContentLengthHeader, ContentTypeHeader, MimeVersionHeader
-
-    /*
-     * From seeing how to remove our stuff from the failure stack:
-     * 
-     * catch (AssertionFailedError e) // adjust stack trace { ArrayList stack =
-     * new ArrayList(); StackTraceElement[] t = e.getStackTrace(); String
-     * thisclass = this.getClass().getName(); for (int i = 0; i < t.length; i++)
-     * { StackTraceElement ele = t[i]; System.out.println("Element = " +
-     * ele.toString()); if (thisclass.equals(ele.getClass().getName()) == true)
-     * { continue; } stack.add(t[i]); }
-     * 
-     * StackTraceElement[] new_stack = new StackTraceElement[stack.size()];
-     * e.setStackTrace((StackTraceElement[]) stack.toArray(new_stack)); throw e;
-     * }
-     */
-
-    /*
-     * public class Arguments { public static void notNull(Object arg) { if(arg
-     * == null) { IllegalArgumentException t = new IllegalArgumentException();
-     * reorient(t); throw t; } } private static void reorient(Throwable t) {
-     * StackTraceElement[] elems = t.getStackTrace(); StackTraceElement[]
-     * subElems = new StackTraceElement[elems.length-1]; System.arrayCopy(elems,
-     * 1, subElems, 0, elems.length-1); t.setStackTrace(t); } }
-     */
 
 }

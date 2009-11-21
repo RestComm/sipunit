@@ -23,7 +23,7 @@ package org.cafesip.sipunit;
  * on behalf of a user program. This interface provides a uniform way of
  * determining the result of an operation - success or failure, and in the case
  * of failure, the reason for failure. This interface is primarily used by
- * SipTestCase.
+ * SipTestCase/SipAssert.
  * 
  * @author Becky McElroy
  * 

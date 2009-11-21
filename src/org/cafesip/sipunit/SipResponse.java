@@ -27,9 +27,9 @@ import javax.sip.message.Response;
  * The SipResponse class provides static response status code definitions and
  * text, and it also provides high level getter methods for a response received
  * from the network. With regard to the latter, this class is primarily used for
- * SipTestCase assertions dealing with SIP message body and headers. The test
- * program passes this object to these assert methods. The test program can
- * obtain this object by calling the getLastReceivedResponse() or
+ * SipTestCase/SipAssert assertions dealing with SIP message body and headers.
+ * The test program passes this object to these assert methods. The test program
+ * can obtain this object by calling the getLastReceivedResponse() or
  * getAllReceivedResponses() on the MessageListener object (such as SipCall or
  * Subscription) when using the high-level API or it can create this object
  * using the ResponseEvent/Response object returned by a waitXyz() method (such
@@ -269,9 +269,9 @@ public class SipResponse extends SipMessage
     /**
      * A constructor for this class, applicable when using the low-level SipUnit
      * API. Call this method to create a SipResponse object after calling
-     * SipSession.waitResponse(), so that you can use the SipTestCase assert
-     * methods pertaining to SIP message body and headers (by passing in this
-     * object).
+     * SipSession.waitResponse(), so that you can use the SipTestCase/SipAssert
+     * assert methods pertaining to SIP message body and headers (by passing in
+     * this object).
      * 
      * @param response
      *            the Response object contained within the ResponseEvent object

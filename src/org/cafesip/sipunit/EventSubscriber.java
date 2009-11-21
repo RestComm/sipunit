@@ -1677,8 +1677,8 @@ public class EventSubscriber implements MessageListener, SipActionObject
      * No CSEQ header in received NOTIFY, error or exception resending request
      * with authorization header, unexpected null transaction object at response
      * timeout, etc. You should at various points call
-     * SipTestCase.assertNoEventErrors() during a test to verify none have been
-     * encountered.
+     * assertNoSubscriptionErrors() method on SipTestCase or SipAssert during a
+     * test to verify none have been encountered.
      * <p>
      * The case where a NOTIFY is received by a SipPhone but there is no
      * matching subscription results in 481 response being sent back and an

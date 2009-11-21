@@ -23,10 +23,10 @@ import javax.sip.message.Request;
 
 /**
  * The SipRequest class provides high level getter methods for a request
- * received from the network. It is primarily used for SipTestCase assertions
- * dealing with SIP message body and headers. The test program passes this
- * object to these assert methods. The test program can obtain this object by
- * calling the getLastReceivedRequest() or getAllReceivedRequests() on the
+ * received from the network. It is primarily used for SipTestCase/SipAssert
+ * assertions dealing with SIP message body and headers. The test program passes
+ * this object to these assert methods. The test program can obtain this object
+ * by calling the getLastReceivedRequest() or getAllReceivedRequests() on the
  * MessageListener object (such as SipCall or Subscription) when using the
  * high-level API or it can create this object using the RequestEvent/request
  * object returned by a waitXyz() method (such as SipSession.waitRequest()) when
@@ -76,9 +76,9 @@ public class SipRequest extends SipMessage
     /**
      * A constructor for this class, applicable when using the low-level SipUnit
      * API. Call this method to create a SipRequest object after calling
-     * SipSession.waitRequest(), so that you can use the SipTestCase assert
-     * methods pertaining to SIP message body and headers (by passing in this
-     * object).
+     * SipSession.waitRequest(), so that you can use the SipTestCase/SipAssert
+     * assert methods pertaining to SIP message body and headers (by passing in
+     * this object).
      * 
      * @param request
      *            the Request contained within the RequestEvent object returned
