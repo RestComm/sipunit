@@ -109,6 +109,9 @@ public class TestNoProxy extends SipTestCase
         defaultProperties.setProperty("sipunit.trace", "true");
         defaultProperties.setProperty("sipunit.test.port", "5061");
         defaultProperties.setProperty("sipunit.test.protocol", "udp");
+        defaultProperties.setProperty(
+                "gov.nist.javax.sip.PASS_INVITE_NON_2XX_ACK_TO_LISTENER",
+                "true");
     }
 
     private Properties properties = new Properties(defaultProperties);
@@ -3841,5 +3844,83 @@ public class TestNoProxy extends SipTestCase
         ct = event.getClientTransaction();
         assertEquals(TransactionState._TERMINATED, ct.getState().getValue());
 
+    }
+
+    public void testReceivingACKAfterCancel() throws Exception
+    {
+        SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+        ub.setLoopback(true);
+
+        // establish a call
+        SipCall callee = ub.createSipCall();
+        callee.listenForIncomingCall();
+
+        SipCall a = ua.makeCall("sip:becky@nist.gov", properties
+                .getProperty("javax.sip.IP_ADDRESS")
+                + ':' + myPort + '/' + testProtocol);
+        assertLastOperationSuccess(ua.format(), ua);
+
+        callee.waitForIncomingCall(1000);
+        SipRequest req1 = callee.getLastReceivedRequest();
+        String lastRequest = (req1 == null) ? "no request received" : req1
+                .getMessage().toString();
+        assertRequestReceived(
+                "SIP: INVITE not received<br>(last received request is "
+                        + lastRequest + ")", SipRequest.INVITE, callee);
+
+        callee.sendIncomingCallResponse(SipResponse.SESSION_PROGRESS,
+                "Session Progress", 0, null, "application", "sdp", null, null);
+        assertLastOperationSuccess(
+                "SIP: 183 Session Progress is not correcly sent", callee);
+
+        callee.listenForCancel();
+
+        Thread.sleep(500);
+        SipTransaction callingCancelTrans = a.sendCancel();
+        assertNotNull(callingCancelTrans);
+
+        SipTransaction calleeCancelTrans = callee.waitForCancel(1000);
+        SipRequest req2 = callee.getLastReceivedRequest();
+        String lastRequest2 = (req2 == null) ? "no request received" : req2
+                .getMessage().toString();
+        assertRequestReceived(
+                "SIP: CANCEL is not received<br>(last received request is "
+                        + lastRequest2 + ")", SipRequest.CANCEL, callee);
+
+        callee.respondToCancel(calleeCancelTrans, SipResponse.OK, "OK", 0);
+        assertLastOperationSuccess("SIP: could not send 200 OK for the CANCEL",
+                callee);
+        Thread.sleep(200);
+
+        // see if caller got the cancel OK
+        assertTrue(a.waitForCancelResponse(callingCancelTrans, 1000));
+        assertEquals(200, a.getLastReceivedResponse().getStatusCode());
+        assertHeaderContains(a.getLastReceivedResponse(), CSeqHeader.NAME,
+                "CANCEL");
+
+        // let callee respond to original INVITE transaction
+        callee
+                .sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED,
+                        "Request Terminated", 0, null, "application", "sdp",
+                        null, null);
+        assertLastOperationSuccess(
+                "SIP: could not send 487 Request Terminated send for the CANCEL",
+                callee);
+        Thread.sleep(500);
+
+        // see if caller got the 487
+        assertEquals(SipResponse.REQUEST_TERMINATED, a
+                .getLastReceivedResponse().getStatusCode());
+
+        // stack sends ACK, give it some time
+        Thread.sleep(200);
+
+        callee.waitForAck(1000);
+        SipRequest req3 = callee.getLastReceivedRequest();
+        lastRequest = (req3 == null) ? "no request received" : req3
+                .getMessage().toString();
+        assertRequestReceived(
+                "SIP: ACK not received<br>(last received request is "
+                        + lastRequest + ")", SipRequest.ACK, callee);
     }
 }
