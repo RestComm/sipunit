@@ -18,6 +18,7 @@
  */
 package org.cafesip.sipunit;
 
+import javax.sip.address.URI;
 import javax.sip.header.ContactHeader;
 
 /**
@@ -92,6 +93,17 @@ public class SipContact
     public String getURI()
     {
         return contactHeader.getAddress().getURI().toString();
+    }
+
+    /**
+     * The method getURIasURI() returns the contact URI as a javax.sip.address
+     * URI.
+     * 
+     * @return The contact URI as a URI object.
+     */
+    public URI getURIasURI()
+    {
+        return contactHeader.getAddress().getURI();
     }
 
     /**

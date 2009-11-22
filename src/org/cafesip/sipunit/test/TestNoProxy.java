@@ -3610,10 +3610,10 @@ public class TestNoProxy extends SipTestCase
             assertEquals(aDialog, request.getRequestEvent().getDialog());
 
             // spot check request message received
-            String bContactURI = ((ContactHeader) request.getMessage()
-                    .getHeader(ContactHeader.NAME)).getAddress().getURI()
-                    .toString();
-            assertEquals(ub.getContactInfo().getURI(), bContactURI);
+            URI receivedContactUri = ((ContactHeader) request.getMessage().getHeader(
+                    ContactHeader.NAME)).getAddress().getURI();
+            assertEquals(ub.getContactInfo().getURI(), receivedContactUri.toString());
+            assertTrue(ub.getContactInfo().getURIasURI().equals(receivedContactUri));
             assertHeaderContains(request, ContentTypeHeader.NAME, "subapp");
             assertBodyContains(request, "my reinvite");
 
