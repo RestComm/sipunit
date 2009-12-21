@@ -1954,8 +1954,16 @@ public class TestWithProxyAuthentication extends SipTestCase
             // check a
             assertTrue(a.waitForCancelResponse(cancel, 5000));
             Thread.sleep(500);
-            // assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
-            // TODO - SipExchange proxy sends a 480 - check that
+            assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+
+            // check that the original INVITE transaction got responded to
+            Thread.sleep(100);
+            assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
+                    SipResponse.REQUEST_TERMINATED, a);
+
+            // close the INVITE transaction on the called leg
+            assertTrue("487 NOT SENT", b.sendIncomingCallResponse(
+                    SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
         }
         catch (Exception e)
         {

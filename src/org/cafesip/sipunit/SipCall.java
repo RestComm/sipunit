@@ -3643,4 +3643,19 @@ public class SipCall implements SipActionObject, MessageListener
 
         return true;
     }
+
+    /**
+     * Gets the SIP Call ID for this incoming or outgoing call.
+     * 
+     * @return Returns the callId.
+     */
+    public String getCallId()
+    {
+        if (callId == null)
+        {
+            return "";
+        }
+
+        return callId.getCallId();
+    }
 }
