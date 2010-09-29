@@ -16,7 +16,24 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.proxynoauth;
+
+import static org.cafesip.sipunit.SipAssert.assertAnswered;
+import static org.cafesip.sipunit.SipAssert.assertBodyContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderNotContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderNotPresent;
+import static org.cafesip.sipunit.SipAssert.assertHeaderPresent;
+import static org.cafesip.sipunit.SipAssert.assertLastOperationFail;
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.assertNotAnswered;
+import static org.cafesip.sipunit.SipAssert.assertResponseNotReceived;
+import static org.cafesip.sipunit.SipAssert.assertResponseReceived;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -41,8 +58,10 @@ import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
 import org.cafesip.sipunit.SipTransaction;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests SipUnit API methods.
@@ -57,7 +76,7 @@ import org.cafesip.sipunit.SipTransaction;
  * @author Becky McElroy
  * 
  */
-public class TestWithProxyNoAuthentication extends SipTestCase
+public class TestWithProxyNoAuthentication
 {
     private SipStack sipStack;
 
@@ -71,14 +90,11 @@ public class TestWithProxyNoAuthentication extends SipTestCase
 
     private static String PROXY_PROTO = "udp";
 
-    public TestWithProxyNoAuthentication(String arg0)
+    public TestWithProxyNoAuthentication()
     {
-        super(arg0);
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -106,9 +122,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         }
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
@@ -118,6 +132,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
     /**
      * This test illustrates usage of SipTestCase.
      */
+    @Test
     public void testBothSidesCallerDisc()
     {
         // invoke the Sip operation, then separately check positive result;
@@ -255,6 +270,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         }
     }
 
+    @Test
     public void testBothSidesCalleeDisc()
     {
         ua.register(null, 1800);
@@ -342,6 +358,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         }
     }
 
+    @Test
     public void testBasicRegistration() // no authentication
     {
         ua.register("sip:amit@209.42.0.1", 695);
@@ -365,6 +382,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         assertLastOperationSuccess("unregistering user a - " + ua.format(), ua);
     }
 
+    @Test
     public void testSingleReply()
     {
         // test: sendRequestWithTrans(String invite, viaProxy),
@@ -457,6 +475,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         return;
     }
 
+    @Test
     public void testMultipleReplies()
     {
         // test: sendRequestWithTrans(Request invite),
@@ -501,8 +520,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
             invite.addHeader(hdr_factory.createContactHeader(contact_address));
 
             invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
-            ArrayList via_headers = ua.getViaHeaders();
-            invite.addHeader((ViaHeader) via_headers.get(0));
+            ArrayList<ViaHeader> via_headers = ua.getViaHeaders();
+            invite.addHeader(via_headers.get(0));
 
             SipTransaction trans = ua.sendRequestWithTransaction(invite, false,
                     null);
@@ -591,6 +610,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         return;
     }
 
+    @Test
     public void testStatelessRequestStatefulResponse()
     {
         // test: sendUnidirectionalReq(String invite, not viaProxy),
@@ -728,6 +748,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
         return;
     }
 
+    @Test
     public void testSendInviteNoProxy()
     {
         try
@@ -761,8 +782,8 @@ public class TestWithProxyNoAuthentication extends SipTestCase
             invite.addHeader(hdr_factory.createContactHeader(contact_address));
 
             invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
-            ArrayList via_headers = ua.getViaHeaders();
-            invite.addHeader((ViaHeader) via_headers.get(0));
+            ArrayList<ViaHeader> via_headers = ua.getViaHeaders();
+            invite.addHeader(via_headers.get(0));
 
             Address route_address = addr_factory.createAddress("sip:becky@"
                     + thisHostAddr + ":5061");
@@ -830,6 +851,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
 
     }
 
+    @Test
     public void testMakeCall()
     {
         ua.register("amit", "a1b2c3d4", null, 0, 10000);
@@ -856,6 +878,7 @@ public class TestWithProxyNoAuthentication extends SipTestCase
     /**
      * Test: asynchronous SipPhone.makeCall(), callee disc
      */
+    @Test
     public void testBothSidesAsynchMakeCall()
     {
         ua.register("amit", "a1b2c3d4", null, 0, 10000);

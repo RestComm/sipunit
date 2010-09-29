@@ -16,7 +16,19 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.noproxy;
+
+import static org.cafesip.sipunit.SipAssert.assertAnswered;
+import static org.cafesip.sipunit.SipAssert.assertBodyContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderContains;
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -52,8 +64,10 @@ import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipSession;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
 import org.cafesip.sipunit.SipTransaction;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests SipUnit refer functionality. Currently only the outbound
@@ -63,7 +77,7 @@ import org.cafesip.sipunit.SipTransaction;
  * 
  * @author Becky McElroy
  */
-public class TestReferNoProxy extends SipTestCase
+public class TestReferNoProxy
 {
     private SipStack sipStack;
 
@@ -105,10 +119,8 @@ public class TestReferNoProxy extends SipTestCase
 
     private Properties properties = new Properties(defaultProperties);
 
-    public TestReferNoProxy(String arg0)
+    public TestReferNoProxy()
     {
-        super(arg0);
-
         properties.putAll(System.getProperties());
 
         try
@@ -125,9 +137,7 @@ public class TestReferNoProxy extends SipTestCase
 
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -158,15 +168,14 @@ public class TestReferNoProxy extends SipTestCase
         }
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
         sipStack.dispose();
     }
 
+    @Test
     public void testGetURI() throws Exception
     {
         // test scheme and userHostPort
@@ -275,6 +284,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(uri.toString().indexOf("body=This is my body") > 0);
     }
 
+    @Test
     public void testOutboundOutdialogBasicWithUnsubscribe() throws Exception
     {
         // A sends out-of-dialog REFER to B, gets OK response
@@ -487,6 +497,7 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals(0, ua.getRefererList().size());
     }
 
+    @Test
     public void testOutboundIndialogBasic() throws Exception
     {
         // A calls B, call established
@@ -652,6 +663,7 @@ public class TestReferNoProxy extends SipTestCase
         b.disposeNoBye();
     }
 
+    @Test
     public void testOutboundIndialogBrefersAwithRefresh() throws Exception
     {
         // A calls B, call established
@@ -941,6 +953,7 @@ public class TestReferNoProxy extends SipTestCase
         b.disposeNoBye();
     }
 
+    @Test
     public void testOutboundIndialogNotifyBeforeReferResponse()
             throws Exception
     {
@@ -1103,6 +1116,7 @@ public class TestReferNoProxy extends SipTestCase
         b.disposeNoBye();
     }
 
+    @Test
     public void testErrorReferNoResponse() throws Exception
     {
         SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
@@ -1114,6 +1128,7 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals(SipSession.TIMEOUT_OCCURRED, ua.getReturnCode());
     }
 
+    @Test
     public void testErrorReferNoSubsequentResponse() throws Exception
     {
         SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
@@ -1135,6 +1150,7 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals(SipSession.TIMEOUT_OCCURRED, subscription.getReturnCode());
     }
 
+    @Test
     public void testErrorReferResponseWithExpiry() throws Exception
     {
         SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
@@ -1158,6 +1174,7 @@ public class TestReferNoProxy extends SipTestCase
                 "expires header was received") != -1);
     }
 
+    @Test
     public void testErrorReferResponseBadEventID() throws Exception
     {
         SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
@@ -1183,6 +1200,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.getErrorMessage().indexOf("incorrect event id") != -1);
     }
 
+    @Test
     public void testErrorSubscribeResponseBadExpiry() throws Exception
     {
         // prepare referee side
@@ -1220,6 +1238,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.getErrorMessage().indexOf("expiry") != -1);
     }
 
+    @Test
     public void testErrorSubscribeResponseNoExpiry() throws Exception
     {
         // prepare referee side
@@ -1257,6 +1276,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.getErrorMessage().indexOf("no expires header") != -1);
     }
 
+    @Test
     public void testErrorNotifyBadExpiry() throws Exception
     {
         // prepare referee side
@@ -1301,6 +1321,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.getErrorMessage().indexOf("received expiry >") != -1);
     }
 
+    @Test
     public void testErrorNotifyNoExpiry() throws Exception
     {
         // prepare referee side
@@ -1331,6 +1352,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(notifyEvent, response));
     }
 
+    @Test
     public void testErrorReferFatalResponseOutOfDialog() throws Exception
     {
         SipURI referTo = ua.getUri("sip:", "dave@denver.example.org", "udp",
@@ -1349,6 +1371,7 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals(SipResponse.NOT_IMPLEMENTED, ua.getReturnCode());
     }
 
+    @Test
     public void testErrorReferFatalResponseInDialog() throws Exception
     {
         // create and set up the far end
@@ -1393,6 +1416,7 @@ public class TestReferNoProxy extends SipTestCase
         assertEquals(SipResponse.NOT_ACCEPTABLE_HERE, ua.getReturnCode());
     }
 
+    @Test
     public void testErrorNotifyBadBodyPendingState() throws Exception
     {
         // prepare far end referee side
@@ -1482,6 +1506,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyBadBodyActiveState() throws Exception
     {
         // prepare far end referee side
@@ -1571,6 +1596,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyBadBodyTerminatedState() throws Exception
     {
         // prepare far end referee side
@@ -1708,6 +1734,7 @@ public class TestReferNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testErrorNotifyBadContentTypeSubtypePendingState()
             throws Exception
     {
@@ -1764,6 +1791,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyBadContentTypeSubtypeActiveState()
             throws Exception
     {
@@ -1820,6 +1848,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyMissingBody() throws Exception
     {
         // establish the subscription
@@ -1854,6 +1883,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyMissingCtHeader() throws Exception
     {
         // establish the subscription
@@ -1887,6 +1917,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testNotifyTimeouts() throws Exception
     {
         // create a refer-To URI
@@ -1962,6 +1993,7 @@ public class TestReferNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testErrorNotifyMissingEventHeader() throws Exception
     {
         // establish the subscription
@@ -1995,6 +2027,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyBadEventType() throws Exception
     {
         // establish the subscription
@@ -2029,6 +2062,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyMissingSubsStateHeader() throws Exception
     {
         // establish the subscription
@@ -2063,6 +2097,7 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.replyToNotify(reqevent, response));
     }
 
+    @Test
     public void testErrorNotifyBadEventID() throws Exception
     {
         // establish the subscription
@@ -2100,11 +2135,13 @@ public class TestReferNoProxy extends SipTestCase
         assertTrue(subscription.isSubscriptionPending());
     }
 
+    @Test
     public void testStrayNotify() throws Exception
     {
         testErrorNotifyBadEventID();
     }
 
+    @Test
     public void testMultipleSubscriptionsPerReferTo() throws Exception
     {
         // prepare referee side
@@ -2178,6 +2215,7 @@ public class TestReferNoProxy extends SipTestCase
                 .contains(subscription));
     }
 
+    @Test
     public void testOutboundIndialogAdditionalHeaders() throws Exception
     {
         // Setup - Establish a call from A to B
@@ -2254,6 +2292,7 @@ public class TestReferNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testOutboundIndialogAdditionalHeadersAsStrings()
             throws Exception
     {
@@ -2329,6 +2368,7 @@ public class TestReferNoProxy extends SipTestCase
         b.disposeNoBye();
     }
 
+    @Test
     public void testOutboundOutdialogAdditionalHeaders() throws Exception
     {
         // create & prepare the referee
@@ -2386,6 +2426,7 @@ public class TestReferNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testOutboundOutdialogAdditionalHeadersAsStrings()
             throws Exception
     {
@@ -2444,6 +2485,7 @@ public class TestReferNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testExample() throws Exception
     {
         // create a refer-To URI

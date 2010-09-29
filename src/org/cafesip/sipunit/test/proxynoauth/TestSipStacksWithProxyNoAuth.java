@@ -16,7 +16,13 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.proxynoauth;
+
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Properties;
 
@@ -25,7 +31,9 @@ import javax.sip.message.Response;
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests multiple SipStacks on the same machine.
@@ -52,9 +60,8 @@ import org.cafesip.sipunit.SipTestCase;
  *         refid="test.classpath" /> </junit> </target> </project>
  * 
  */
-public class TestSipStacksWithProxyNoAuth extends SipTestCase
+public class TestSipStacksWithProxyNoAuth
 {
-
     private SipStack sipStack1;
 
     private SipStack sipStack2;
@@ -71,10 +78,8 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
 
     private Properties properties2 = new Properties();
 
-    public TestSipStacksWithProxyNoAuth(String arg0)
+    public TestSipStacksWithProxyNoAuth()
     {
-        super(arg0);
-
         properties1.setProperty("javax.sip.RETRANSMISSION_FILTER", "true");
         properties1.setProperty("javax.sip.STACK_NAME", "testAgent");
         properties1.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
@@ -94,9 +99,7 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
         properties2.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -124,9 +127,7 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
         }
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
@@ -134,6 +135,7 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
         sipStack2.dispose();
     }
 
+    @Test
     public void testBothSides()
     {
         try
@@ -199,11 +201,10 @@ public class TestSipStacksWithProxyNoAuth extends SipTestCase
             a.waitForDisconnect(5000);
             assertLastOperationSuccess("a wait disc - " + a.format(), a);
 
-            // a.respondToDisconnect(); TODO - investigate - null pointer from
-            // stack or bad msg?
-            // assertLastOperationSuccess("a respond to disc - " + a.format(),
-            // a);
+            a.respondToDisconnect();
+            assertLastOperationSuccess("a respond to disc - " + a.format(), a);
 
+            Thread.sleep(1000);
             ub.dispose();
         }
         catch (Exception e)

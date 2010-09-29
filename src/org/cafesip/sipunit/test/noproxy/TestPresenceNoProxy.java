@@ -16,7 +16,16 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.noproxy;
+
+import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -44,8 +53,10 @@ import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipSession;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
 import org.cafesip.sipunit.SipTransaction;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests SipUnit presence functionality. Focus is on the "subscriber"
@@ -57,7 +68,7 @@ import org.cafesip.sipunit.SipTransaction;
  * @author Becky McElroy
  * 
  */
-public class TestPresenceNoProxy extends SipTestCase
+public class TestPresenceNoProxy
 {
     private SipStack sipStack;
 
@@ -101,9 +112,8 @@ public class TestPresenceNoProxy extends SipTestCase
 
     private Properties properties = new Properties(defaultProperties);
 
-    public TestPresenceNoProxy(String arg0)
+    public TestPresenceNoProxy()
     {
-        super(arg0);
         host = properties.getProperty("javax.sip.IP_ADDRESS");
 
         properties.putAll(System.getProperties());
@@ -122,9 +132,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -155,15 +163,14 @@ public class TestPresenceNoProxy extends SipTestCase
         }
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
         sipStack.dispose();
     }
 
+    @Test
     public void testBasicSubscription()
     {
         String buddy = "sip:becky@cafesip.org"; // I am amit
@@ -524,6 +531,7 @@ public class TestPresenceNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testEndSubscription()
     {
         String buddy = "sip:becky@cafesip.org"; // I am amit
@@ -681,6 +689,7 @@ public class TestPresenceNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testFetch()
     {
         String buddy = "sip:becky@cafesip.org"; // I am amit
@@ -915,6 +924,7 @@ public class TestPresenceNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testResponseRequestEvent()
     {
         String buddy = "sip:becky@cafesip.org"; // I am amit
@@ -967,6 +977,7 @@ public class TestPresenceNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testBadNotify()
     {
         String buddy = "sip:becky@cafesip.org"; // I am amit
@@ -1039,6 +1050,7 @@ public class TestPresenceNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testErrors()
     {
         try
@@ -1141,6 +1153,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testNotifyPresenceDataDetail()
     {
         String buddy = "sip:becky@cafesip.org"; // I am amit
@@ -1439,6 +1452,7 @@ public class TestPresenceNoProxy extends SipTestCase
     // TODO next: 2 SipPhone, 2 buddies each; 1 SipPHone
     // that
     // has 1 buddy and 1 SipCall; amit and becky on separate boxes.
+    @Test
     public void testStrayNotify() // with no matching Subscription
     {
         try
@@ -1575,6 +1589,7 @@ public class TestPresenceNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testOnePhoneThreeBuddies()
     {
         String buddyone = "sip:becky@cafesip.org";

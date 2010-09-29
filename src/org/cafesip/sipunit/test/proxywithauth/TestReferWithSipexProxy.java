@@ -16,7 +16,15 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.proxywithauth;
+
+import static org.cafesip.sipunit.SipAssert.assertBodyContains;
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -35,7 +43,9 @@ import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests authentication challenges for SipUnit REFER subscriptions.
@@ -73,7 +83,7 @@ import org.cafesip.sipunit.SipTestCase;
  * @author Becky McElroy
  * 
  */
-public class TestReferWithSipexProxy extends SipTestCase
+public class TestReferWithSipexProxy
 {
     private SipStack sipStack;
 
@@ -131,9 +141,8 @@ public class TestReferWithSipexProxy extends SipTestCase
 
     private Properties properties = new Properties(defaultProperties);
 
-    public TestReferWithSipexProxy(String arg0)
+    public TestReferWithSipexProxy()
     {
-        super(arg0);
         properties.putAll(System.getProperties());
 
         try
@@ -161,9 +170,7 @@ public class TestReferWithSipexProxy extends SipTestCase
 
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -206,9 +213,7 @@ public class TestReferWithSipexProxy extends SipTestCase
         ub = null;
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
@@ -222,6 +227,7 @@ public class TestReferWithSipexProxy extends SipTestCase
         sipStack.dispose();
     }
 
+    @Test
     public void testBasicReferOutOfDialog() throws Exception
     {
         // create any refer-To URI

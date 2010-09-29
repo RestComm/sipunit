@@ -16,7 +16,12 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.noproxy;
+
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.Properties;
 
@@ -25,7 +30,9 @@ import javax.sip.message.Response;
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests two SipStacks on the same machine. This test makes use of
@@ -45,7 +52,7 @@ import org.cafesip.sipunit.SipTestCase;
  * @author Becky McElroy
  * 
  */
-public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
+public class TestTwoOrMoreSipStacksNoProxy
 {
     private SipStack sipStack1;
 
@@ -95,9 +102,8 @@ public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
 
     private Properties properties2 = new Properties(defaultProperties2);
 
-    public TestTwoOrMoreSipStacksNoProxy(String arg0)
+    public TestTwoOrMoreSipStacksNoProxy()
     {
-        super(arg0);
         Properties input_props = new Properties();
         input_props.putAll(System.getProperties());
 
@@ -146,9 +152,7 @@ public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
 
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -178,9 +182,7 @@ public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
         }
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
@@ -188,6 +190,7 @@ public class TestTwoOrMoreSipStacksNoProxy extends SipTestCase
         sipStack2.dispose();
     }
 
+    @Test
     public void testBothSides()
     {
         try

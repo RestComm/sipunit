@@ -48,7 +48,7 @@
 
 	<target name="test-no-proxy" depends="init" description="Run basic tests with no proxy involved">
 		<junit fork="no" haltonfailure="yes" printsummary="no">
-			<test name="org.cafesip.sipunit.test.TestNoProxy" />
+			<test name="org.cafesip.sipunit.test.noproxy.TestNoProxy" />
 
 			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
 			<sysproperty key="sipunit.trace" value="false" />
@@ -61,7 +61,7 @@
 
 	<target name="test-no-proxy-presence" depends="init" description="Run presence tests with no proxy involved">
 		<junit fork="no" haltonfailure="yes" printsummary="no">
-			<test name="org.cafesip.sipunit.test.TestPresenceNoProxy" />
+			<test name="org.cafesip.sipunit.test.noproxy.TestPresenceNoProxy" />
 
 			<sysproperty key="javax.sip.STACK_NAME" value="testNotify" />
 			<sysproperty key="gov.nist.javax.sip.DEBUG_LOG" value="testNotify_debug.txt" />
@@ -77,7 +77,7 @@
 	
 	<target name="test-no-proxy-refer" depends="init" description="Run REFER tests with no proxy involved">
 	        <junit fork="no" haltonfailure="yes" printsummary="no">
-	            <test name="org.cafesip.sipunit.test.TestReferNoProxy" />
+	            <test name="org.cafesip.sipunit.test.noproxy.TestReferNoProxy" />
 
 	            <sysproperty key="javax.sip.STACK_NAME" value="testRefer" />
 	            <sysproperty key="gov.nist.javax.sip.DEBUG_LOG" value="testRefer_debug.txt" />
@@ -93,7 +93,7 @@
 
 	<target name="test-no-proxy-twostacks" depends="init" description="Run multiple stack (on one machine) tests with no proxy involved">
 		<junit fork="no" haltonfailure="yes" printsummary="no">
-			<test name="org.cafesip.sipunit.test.TestTwoOrMoreSipStacksNoProxy" />
+			<test name="org.cafesip.sipunit.test.noproxy.TestTwoOrMoreSipStacksNoProxy" />
 
 			<!-- This test class receives SipUnit-specific properties only -->
 
@@ -111,7 +111,7 @@
 
 	<target name="test-proxy-noauth-example" depends="init" description="Run example test with proxy but no authentication">
 		<junit fork="no" haltonfailure="yes" printsummary="no">
-			<test name="org.cafesip.sipunit.test.ExampleTestWithProxyNoAuth" />
+			<test name="org.cafesip.sipunit.test.proxynoauth.ExampleTestWithProxyNoAuth" />
 
 			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
 			<sysproperty key="sipunit.trace" value="false" />
@@ -131,7 +131,7 @@
 
 	<target name="test-proxy" depends="init" description="Run full test with proxy and authentication">
 		<junit fork="no" haltonfailure="yes" printsummary="no">
-			<test name="org.cafesip.sipunit.test.TestWithProxyAuthentication" />
+			<test name="org.cafesip.sipunit.test.proxywithauth.TestWithProxyAuthentication" />
 
 			<sysproperty key="javax.sip.STACK_NAME" value="testAgent" />
 			<sysproperty key="sipunit.trace" value="false" />
@@ -151,7 +151,7 @@
 	     seems related to timing, and the proxy discards NOTIFY. TODO try w/another proxy
 	<target name="test-proxy-presence" depends="init" description="Run presence test with proxy and authentication">
 		<junit fork="no" haltonfailure="yes" printsummary="no">
-			<test name="org.cafesip.sipunit.test.TestPresenceWithProxy" />
+			<test name="org.cafesip.sipunit.test.proxywithauth.TestPresenceWithProxy" />
 
 			<sysproperty key="javax.sip.STACK_NAME" value="testPresence" />
 			<sysproperty key="sipunit.trace" value="true" />
@@ -172,7 +172,7 @@
 
 	<target name="all-no-proxy-tests" depends="test-no-proxy, test-no-proxy-presence, test-no-proxy-refer, test-no-proxy-twostacks" description="Run all the tests that don't require a proxy" />
 	<target name="all-proxy-noauth-tests" depends="test-proxy-noauth-example" description="Run all the tests that use a proxy but without auth challenge" />
-	<!-- fix above, then uncomment: <target name="all-proxy-auth-tests" depends="test-proxy, test-proxy-presence" description="Run all the tests that use a proxy with auth challenge" /> -->
+	<!-- TODO, add TestWithProxyNoAuthentication to above; provide target for proxy with auth tests -->
 
 
 </project>

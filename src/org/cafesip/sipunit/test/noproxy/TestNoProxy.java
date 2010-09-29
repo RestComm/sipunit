@@ -16,7 +16,30 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.noproxy;
+
+import static org.cafesip.sipunit.SipAssert.assertAnswered;
+import static org.cafesip.sipunit.SipAssert.assertBodyContains;
+import static org.cafesip.sipunit.SipAssert.assertBodyNotContains;
+import static org.cafesip.sipunit.SipAssert.assertBodyNotPresent;
+import static org.cafesip.sipunit.SipAssert.assertBodyPresent;
+import static org.cafesip.sipunit.SipAssert.assertHeaderContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderNotContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderNotPresent;
+import static org.cafesip.sipunit.SipAssert.assertHeaderPresent;
+import static org.cafesip.sipunit.SipAssert.assertLastOperationFail;
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.assertNotAnswered;
+import static org.cafesip.sipunit.SipAssert.assertRequestNotReceived;
+import static org.cafesip.sipunit.SipAssert.assertRequestReceived;
+import static org.cafesip.sipunit.SipAssert.assertResponseNotReceived;
+import static org.cafesip.sipunit.SipAssert.assertResponseReceived;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -58,8 +81,10 @@ import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipSession;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
 import org.cafesip.sipunit.SipTransaction;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests SipUnit API methods.
@@ -70,9 +95,8 @@ import org.cafesip.sipunit.SipTransaction;
  * @author Becky McElroy
  * 
  */
-public class TestNoProxy extends SipTestCase
+public class TestNoProxy
 {
-
     private SipStack sipStack;
 
     private SipPhone ua;
@@ -116,9 +140,8 @@ public class TestNoProxy extends SipTestCase
 
     private Properties properties = new Properties(defaultProperties);
 
-    public TestNoProxy(String arg0)
+    public TestNoProxy()
     {
-        super(arg0);
         properties.putAll(System.getProperties());
 
         try
@@ -134,9 +157,7 @@ public class TestNoProxy extends SipTestCase
         testProtocol = properties.getProperty("sipunit.test.protocol");
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -167,15 +188,14 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
         sipStack.dispose();
     }
 
+    @Test
     public void testSendInviteWithRouteHeader() // add a Route Header to the
     // INVITE myself
     {
@@ -287,6 +307,7 @@ public class TestNoProxy extends SipTestCase
      * request beats the received response in actuality. The test program should
      * get both.
      */
+    @Test
     public void testRaceConditionRequestBeatsResponse()
     {
         final class PhoneB extends Thread
@@ -434,6 +455,8 @@ public class TestNoProxy extends SipTestCase
             a.disconnect();
             assertLastOperationSuccess("a disc - " + a.format(), a);
 
+            b.join();
+
         }
         catch (Exception e)
         {
@@ -448,6 +471,7 @@ public class TestNoProxy extends SipTestCase
      * response beats the received request in actuality. The test program should
      * get both.
      */
+    @Test
     public void testRaceConditionResponseBeatsRequest()
     {
         final class PhoneB extends Thread
@@ -595,6 +619,7 @@ public class TestNoProxy extends SipTestCase
             a.disconnect();
             assertLastOperationSuccess("a disc - " + a.format(), a);
 
+            b.join();
         }
         catch (Exception e)
         {
@@ -603,6 +628,7 @@ public class TestNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testBothSides() // test initiateOugoingCall(), passing routing
     // string
     {
@@ -674,6 +700,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testSipTestCaseMisc()
     // in this test, user a is handled at the SipCall level and user b at the
     // SipSession level (we send a body in the response)
@@ -870,6 +897,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testMakeCallFail()
     {
         try
@@ -889,6 +917,7 @@ public class TestNoProxy extends SipTestCase
     /**
      * Test: asynchronous SipPhone.makeCall() callee disc
      */
+    @Test
     public void testMakeCallCalleeDisconnect() // test the nonblocking version
     // of
     // SipPhone.makeCall() - A CALLS B
@@ -966,6 +995,7 @@ public class TestNoProxy extends SipTestCase
     /**
      * Test: asynchronous SipPhone.makeCall() caller disc
      */
+    @Test
     public void testMakeCallCallerDisconnect() // test the nonblocking version
     // of
     // SipPhone.makeCall() - A CALLS B
@@ -1041,6 +1071,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testBothSidesCallerDisc() // test the blocking version of
     // SipPhone.makeCall()
     {
@@ -1113,6 +1144,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testMakeCallExtraJainsipParms() // test the blocking version of
     // SipPhone.makeCall() with extra JAIN SIP parameters
     {
@@ -1217,6 +1249,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testMakeCallExtraStringParms() // test the blocking version of
     // SipPhone.makeCall() with extra String parameters
     {
@@ -1312,6 +1345,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testNonblockingMakeCallExtraJainsipParms() // test the
     // nonblocking
     // SipPhone.makeCall() with extra JAIN SIP parameters
@@ -1419,6 +1453,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testNonblockingMakeCallExtraStringParms() // test the
     // nonblocking
     // version of SipPhone.makeCall() with extra String parameters
@@ -1518,6 +1553,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testMultipleReplies()
     {
         // test: sendRequestWithTrans(Request invite),
@@ -1655,6 +1691,7 @@ public class TestNoProxy extends SipTestCase
 
     // this method tests re-invite from b to a,
     // TestWithProxyAuthentication does the other direction
+    @Test
     public void testReinvite()
     {
         SipStack.trace("testAdditionalMessageParms"); // using reinvite
@@ -1981,6 +2018,7 @@ public class TestNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testSendReplySipTransactionExtraInfo()
     {
         // test sendReply(SipTransaction, ....) options
@@ -2411,6 +2449,7 @@ public class TestNoProxy extends SipTestCase
         return;
     }
 
+    @Test
     public void testSendReplyRequestEventExtraInfo()
     {
         // test sendReply(RequestEvent, ....) options
@@ -3047,6 +3086,7 @@ public class TestNoProxy extends SipTestCase
     }
 
     // this method tests cancel from a to b
+    @Test
     public void testCancel()
     {
         SipStack.trace("testCancelWithoutHeader");
@@ -3117,6 +3157,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testCancelAfter100Trying() throws Exception
     {
         SipStack.trace("testCancelAfter100Trying");
@@ -3166,6 +3207,7 @@ public class TestNoProxy extends SipTestCase
         ub.dispose();
     }
 
+    @Test
     public void testCancelBeforeInvite() throws Exception
     {
         SipStack.trace("testCancelBeforeInvite");
@@ -3176,6 +3218,7 @@ public class TestNoProxy extends SipTestCase
         assertEquals(SipSession.INVALID_OPERATION, a.getReturnCode());
     }
 
+    @Test
     public void testCancelBeforeAnyResponse() throws Exception
     {
         SipStack.trace("testCancelBeforeAnyResponse");
@@ -3203,6 +3246,7 @@ public class TestNoProxy extends SipTestCase
         ub.dispose();
     }
 
+    @Test
     public void testCancelAfterFinalResponse() throws Exception
     {
         SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
@@ -3220,7 +3264,7 @@ public class TestNoProxy extends SipTestCase
         assertTrue(b.waitForIncomingCall(1000));
         assertTrue(b.sendIncomingCallResponse(Response.OK,
                 "Answer - Hello world", 0));
-        Thread.sleep(300);
+        Thread.sleep(500);
 
         assertAnswered("Outgoing call leg not answered", a);
 
@@ -3234,6 +3278,7 @@ public class TestNoProxy extends SipTestCase
     }
 
     // this method tests cancel from a to b
+    @Test
     public void testCancelWith481()
     {
         SipStack.trace("testCancelWithoutHeaderWith481");
@@ -3315,6 +3360,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testCancelExtraJainsipParms()
     {
         SipStack.trace("testCancelExtraJainsipParms");
@@ -3424,6 +3470,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testCancelExtraStringParms()
     {
         SipStack.trace("testCancelExtraStringParms");
@@ -3529,6 +3576,7 @@ public class TestNoProxy extends SipTestCase
         }
     }
 
+    @Test
     public void testReceivedRequestResponseEvents()
     {
         SipStack.trace("testReceivedRequestResponseEvents");
@@ -3610,10 +3658,12 @@ public class TestNoProxy extends SipTestCase
             assertEquals(aDialog, request.getRequestEvent().getDialog());
 
             // spot check request message received
-            URI receivedContactUri = ((ContactHeader) request.getMessage().getHeader(
-                    ContactHeader.NAME)).getAddress().getURI();
-            assertEquals(ub.getContactInfo().getURI(), receivedContactUri.toString());
-            assertTrue(ub.getContactInfo().getURIasURI().equals(receivedContactUri));
+            URI receivedContactUri = ((ContactHeader) request.getMessage()
+                    .getHeader(ContactHeader.NAME)).getAddress().getURI();
+            assertEquals(ub.getContactInfo().getURI(), receivedContactUri
+                    .toString());
+            assertTrue(ub.getContactInfo().getURIasURI().equals(
+                    receivedContactUri));
             assertHeaderContains(request, ContentTypeHeader.NAME, "subapp");
             assertBodyContains(request, "my reinvite");
 
@@ -3683,6 +3733,7 @@ public class TestNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testCancelRequestResponseEvents()
     {
         SipStack.trace("testCancelRequestResponseEvents");
@@ -3790,6 +3841,7 @@ public class TestNoProxy extends SipTestCase
      * org.cafesip.sipunit.SipStack.processResponse() before it loops through
      * the listeners and calls their processResponse() method.
      */
+    @Test
     public void ManualTestTransTerminationRaceCondition() throws Exception
     {
         // test OK reception terminating transaction before TRYING gets
@@ -3846,6 +3898,7 @@ public class TestNoProxy extends SipTestCase
 
     }
 
+    @Test
     public void testReceivingACKAfterCancel() throws Exception
     {
         SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");

@@ -16,7 +16,7 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.misc;
 
 import java.util.Properties;
 

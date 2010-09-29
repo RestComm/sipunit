@@ -16,7 +16,17 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.proxynoauth;
+
+import static org.cafesip.sipunit.SipAssert.assertHeaderContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderNotContains;
+import static org.cafesip.sipunit.SipAssert.assertHeaderNotPresent;
+import static org.cafesip.sipunit.SipAssert.assertHeaderPresent;
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -28,7 +38,9 @@ import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests some SipUnit API methods.
@@ -41,7 +53,7 @@ import org.cafesip.sipunit.SipTestCase;
  * For the Proxy/registrar, I used cafesip.org's SipExchange.
  */
 
-public class ExampleTestWithProxyNoAuth extends SipTestCase
+public class ExampleTestWithProxyNoAuth
 {
     private SipStack sipStack;
 
@@ -91,9 +103,8 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
 
     private Properties properties = new Properties(defaultProperties);
 
-    public ExampleTestWithProxyNoAuth(String arg0)
+    public ExampleTestWithProxyNoAuth()
     {
-        super(arg0);
         properties.putAll(System.getProperties());
 
         try
@@ -120,9 +131,7 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
         myUrl = "sip:amit@" + properties.getProperty("sipunit.test.domain");
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         sipStack = new SipStack(testProtocol, myPort, properties);
@@ -135,9 +144,7 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
                 myUrl);
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
@@ -149,6 +156,7 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
      * user b sends RINGING and OK, the test verifies these are received by user
      * a, then the call proceeds through disconnect (BYE).
      */
+    @Test
     public void testBothSidesCallerDisc()
     {
         // invoke the Sip operation, then separately check positive result;
@@ -273,15 +281,12 @@ public class ExampleTestWithProxyNoAuth extends SipTestCase
             b.waitForDisconnect(10000);
             assertLastOperationSuccess("b wait disc - " + b.format(), b);
 
-            // TODO investigate next line - NullPointer Exception from stack or
-            // msg bad?
-            // b.respondToDisconnect();
-            // assertLastOperationSuccess("b disc - " + b.format(), b);
+            b.respondToDisconnect();
+            assertLastOperationSuccess("b disc - " + b.format(), b);
 
-            // ub.unregister(null, 10000);
-            // assertLastOperationSuccess("unregistering user b - " +
-            // ub.format(),
-            // ub);
+            ub.unregister(null, 10000);
+            assertLastOperationSuccess("unregistering user b - " + ub.format(),
+                    ub);
         }
         catch (Exception e)
         {

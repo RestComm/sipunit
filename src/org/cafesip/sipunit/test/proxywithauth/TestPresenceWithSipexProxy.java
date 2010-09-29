@@ -16,7 +16,16 @@
  * limitations under the License.
  *
  */
-package org.cafesip.sipunit.test;
+package org.cafesip.sipunit.test.proxywithauth;
+
+import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -38,7 +47,9 @@ import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This class tests authentication challenges for a SipUnit presence subscriber.
@@ -47,18 +58,20 @@ import org.cafesip.sipunit.SipTestCase;
  * That is, a proxy server that supports Type II presence. The focus of these
  * tests are on the subscriber side.
  * 
- * Start up the proxy before running this test, and have the URIs used here
- * provisioned at the proxy, all with password a1b2c3d4 - these URIs include:
- * sip:becky@<property "sipunit.test.domain" below>, sip:amit@<property
+ * Start up the SipExchange server before running this test, and have the URIs
+ * used here provisioned at the server, all with password a1b2c3d4 - these URIs
+ * include: sip:becky@<property "sipunit.test.domain" below>, sip:amit@<property
  * "sipunit.test.domain" below>.
  * 
- * Make sure the users have accepted each other as contacts before running these
- * tests. Also, clear out any registrations at the server for these users.
+ * *** IMPORTANT *** Make sure the users have accepted each other as contacts
+ * before running these tests (IE, sipex 'buddies' table has a record for each
+ * subs with the other as the Contact and with Status=AUTHORIZED(=1)). Also,
+ * first clear out any registrations at the server for these users.
  * 
  * @author Becky McElroy
  * 
  */
-public class TestPresenceWithSipexProxy extends SipTestCase
+public class TestPresenceWithSipexProxy
 {
     private SipStack sipStack;
 
@@ -111,9 +124,8 @@ public class TestPresenceWithSipexProxy extends SipTestCase
 
     private Properties properties = new Properties(defaultProperties);
 
-    public TestPresenceWithSipexProxy(String arg0)
+    public TestPresenceWithSipexProxy()
     {
-        super(arg0);
         properties.putAll(System.getProperties());
 
         try
@@ -141,9 +153,7 @@ public class TestPresenceWithSipexProxy extends SipTestCase
 
     }
 
-    /*
-     * @see SipTestCase#setUp()
-     */
+    @Before
     public void setUp() throws Exception
     {
         try
@@ -186,9 +196,7 @@ public class TestPresenceWithSipexProxy extends SipTestCase
         ub = null;
     }
 
-    /*
-     * @see SipTestCase#tearDown()
-     */
+    @After
     public void tearDown() throws Exception
     {
         ua.dispose();
@@ -202,6 +210,7 @@ public class TestPresenceWithSipexProxy extends SipTestCase
         sipStack.dispose();
     }
 
+    @Test
     public void testBasicPresence()
     {
         String buddy = "sip:becky@"
