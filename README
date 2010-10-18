@@ -5,13 +5,13 @@ Author: Becky McElroy <sipunit@cafesip.org>
 
 Version: __VERSION__
 
-JAIN-SIP stack version: as of August 27, 2009
-sipunit/lib/JainSipRi1.2.jar = jain-sip project jain-sip-ri-1.2.119.jar
+JAIN-SIP stack version: as of October 17, 2010
+sipunit/lib/JainSipRi1.2.jar = jain-sip project jain-sip-ri-1.2.148.jar
 sipunit/lib/JainSipApi1.2.jar = jain-sip project jain-sip-api-1.2.jar
-sipunit/lib/jain-sdp-1.0.jar = jain-sip project jain-sdp-1.0.119.jar
+sipunit/lib/jain-sdp-1.0.jar = jain-sip project jain-sdp-1.0.148.jar
 
-JUnit: as of August 27, 2009 (JUnit Release 4.7)
-sipunit/lib/junit.jar = junit-4.7.jar
+JUnit: as of September 2010 (JUnit Release 4.8.2)
+sipunit/lib/junit.jar = junit-4.8.2.jar
 
 
 For installation instructions and all other documentation, visit 

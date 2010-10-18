@@ -503,7 +503,7 @@ public class TestWithProxyNoAuthentication
 
             Request invite = ua.getParent().getMessageFactory().createRequest(
                     "INVITE sip:becky@" + PROXY_HOST + ':' + PROXY_PORT
-                            + ";transport=" + PROXY_PROTO + " SIP/2.0\n");
+                            + ";transport=" + PROXY_PROTO + " SIP/2.0\r\n\r\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
             invite.addHeader(hdr_factory.createCSeqHeader((long) 1,
@@ -637,50 +637,19 @@ public class TestWithProxyNoAuthentication
 
             StringBuffer invite = new StringBuffer("INVITE sip:becky@"
                     + PROXY_HOST + ':' + PROXY_PORT + ";transport="
-                    + PROXY_PROTO + " SIP/2.0\n");
+                    + PROXY_PROTO + " SIP/2.0\r\n");
             String myuniquecallID = String.valueOf(System.currentTimeMillis());
             invite.append("Call-ID: " + myuniquecallID + "@" + thisHostAddr
-                    + "\n");
-            invite.append("CSeq: 1 INVITE\n");
-            invite.append("From: <sip:amit@cafesip.org>;tag=1181356482\n");
-            invite.append("To: <sip:becky@cafesip.org>\n");
-            invite.append("Contact: <sip:amit@" + thisHostAddr + ":5061>\n");
-            invite.append("Max-Forwards: 5\n");
+                    + "\r\n");
+            invite.append("CSeq: 1 INVITE\r\n");
+            invite.append("From: <sip:amit@cafesip.org>;tag=1181356482\r\n");
+            invite.append("To: <sip:becky@cafesip.org>\r\n");
+            invite.append("Contact: <sip:amit@" + thisHostAddr + ":5061>\r\n");
+            invite.append("Max-Forwards: 5\r\n");
             invite.append("Via: SIP/2.0/" + PROXY_PROTO + " " + thisHostAddr
-                    + ":5061;branch=322e3136382e312e3130303a3530363\n");
-            invite.append("Content-Length: 0\n");
-            invite.append("\n");
-
-            /*
-             * template for invite request object:
-             * 
-             * AddressFactory addr_factory = ua.getParent().getAddressFactory();
-             * HeaderFactory hdr_factory = ua.getParent().getHeaderFactory();
-             * 
-             * Request invite =
-             * ua.getParent().getMessageFactory().createRequest( "INVITE
-             * sip:becky@cafesip.org;transport=" + PROXY_PROTO + " SIP/2.0 ");
-             * 
-             * invite
-             * .addHeader(ua.getParent().getSipProvider().getNewCallId());
-             * invite.addHeader(hdr_factory.createCSeqHeader(1,
-             * Request.INVITE));
-             * invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua
-             * .generateNewTag()));
-             * 
-             * Address to_address = addr_factory.createAddress(addr_factory
-             * .createURI("sip:becky@cafesip.org"));
-             * invite.addHeader(hdr_factory.createToHeader(to_address, null));
-             * 
-             * Address contact_address = addr_factory.createAddress("sip:amit@"
-             * + thisHostAddr + ":5061");
-             * invite.addHeader(hdr_factory.createContactHeader
-             * (contact_address));
-             * 
-             * invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
-             * ArrayList via_headers = ua.getMyViaHeaders();
-             * invite.addHeader((ViaHeader) via_headers.get(0));
-             */
+                    + ":5061;branch=322e3136382e312e3130303a3530363\r\n");
+            invite.append("Content-Length: 0\r\n");
+            invite.append("\r\n");
 
             ua.sendUnidirectionalRequest(invite.toString(), false);
             assertLastOperationSuccess(ua.format(), ua);
@@ -765,7 +734,7 @@ public class TestWithProxyNoAuthentication
             HeaderFactory hdr_factory = ua.getParent().getHeaderFactory();
 
             Request invite = ua.getParent().getMessageFactory().createRequest(
-                    "INVITE sip:becky@cafesip.org SIP/2.0\n");
+                    "INVITE sip:becky@cafesip.org SIP/2.0\r\n\r\n");
 
             invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
             invite.addHeader(hdr_factory.createCSeqHeader((long) 1,

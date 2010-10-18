@@ -1862,6 +1862,7 @@ public class TestReferNoProxy
                 referTo, null, 5000, null);
         assertNotNull(subscription);
         assertTrue(subscription.processResponse(200));
+        Thread.sleep(100);
 
         // tell far end to send a bad NOTIFY - missing body
         Request req = ub.getDialog().createRequest(Request.NOTIFY);
@@ -1897,6 +1898,7 @@ public class TestReferNoProxy
                 referTo, null, 5000, null);
         assertNotNull(subscription);
         assertTrue(subscription.processResponse(200));
+        Thread.sleep(100);
 
         // tell far end to send a bad NOTIFY - missing CT Header
         Request req = ub.getDialog().createRequest(Request.NOTIFY);
@@ -2007,6 +2009,7 @@ public class TestReferNoProxy
                 referTo, null, 5000, null);
         assertNotNull(subscription);
         assertTrue(subscription.processResponse(200));
+        Thread.sleep(100);
 
         // tell far end to send a NOTIFY - then remove Event Header before
         // processing it (after reception, else stack won't send it)
@@ -2041,6 +2044,7 @@ public class TestReferNoProxy
                 referTo, null, 5000, null);
         assertNotNull(subscription);
         assertTrue(subscription.processResponse(200));
+        Thread.sleep(100);
 
         // tell far end to send a NOTIFY - then corrupt event type before
         // processing it (after reception, else stack won't send it)
@@ -2076,6 +2080,7 @@ public class TestReferNoProxy
                 referTo, null, 5000, null);
         assertNotNull(subscription);
         assertTrue(subscription.processResponse(200));
+        Thread.sleep(100);
 
         // tell far end to send a NOTIFY - then remove Subs State Header before
         // processing it (after reception, else stack won't send it)
@@ -2111,6 +2116,7 @@ public class TestReferNoProxy
                 referTo, "my-event-id", 5000, null);
         assertNotNull(subscription);
         assertTrue(subscription.processResponse(200));
+        Thread.sleep(100);
 
         assertEquals(0, subscription.getEventErrors().size());
 

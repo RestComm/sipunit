@@ -1468,7 +1468,7 @@ public class TestPresenceNoProxy
             // create and send NOTIFY out of the blue
             Request request = sipStack.getMessageFactory().createRequest(
                     "NOTIFY sip:amit@" + host + ':' + myPort + ";transport="
-                            + testProtocol + " SIP/2.0\n");
+                            + testProtocol + " SIP/2.0\r\n\r\n");
             String notify_body = "<?xml version='1.0' encoding='UTF-8'?> "
                     + " <presence entity='sip:anyone@cafesip.org' "
                     + "xmlns='urn:ietf:params:xml:ns:pidf'>" + "<tuple id='1'>"
@@ -1543,7 +1543,7 @@ public class TestPresenceNoProxy
 
             request = sipStack.getMessageFactory().createRequest(
                     "NOTIFY sip:amit@" + host + ':' + myPort + ";transport="
-                            + testProtocol + " SIP/2.0\n");
+                            + testProtocol + " SIP/2.0\r\n\r\n");
             notify_body = "<?xml version='1.0' encoding='UTF-8'?> <presence entity='"
                     + buddy
                     + "'xmlns='urn:ietf:params:xml:ns:pidf'><tuple id='1'><status><basic>closed</basic></status></tuple></presence>";
