@@ -34,7 +34,7 @@
 			</includes>
 		</fileSet>
 		<fileSet>
-			<directory>${project.reporting.outputDirectory}/apidocs</directory> <!-- TODO check -->
+			<directory>${project.reporting.outputDirectory}/apidocs</directory>
 			<outputDirectory>docs/api</outputDirectory>
 			<includes>
 				<include>**</include>
@@ -55,14 +55,7 @@
 			</includes>
 		</fileSet>
 		<fileSet>
-			<directory>src/test/java</directory>
-			<outputDirectory>examples</outputDirectory>
-			<includes>
-				<include>**</include>
-			</includes>
-		</fileSet>
-		<fileSet>
-			<directory>src/test</directory>    <!--  TODO fix - just have examples/org with .java and .class-->
+			<directory>src/test</directory>
 			<outputDirectory>examples</outputDirectory>
 			<includes>
 				<include>**</include>

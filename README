@@ -15,8 +15,8 @@ For tutorial-type examples, see
 	http://www.cafesip.org/projects/sipunit/user_guide.html#An_Example_of_Using_the_JAIN-SIP_API_
 	
 For actual example test classes using SipUnit, see the java files in the
-	examples/org/cafesip/sipunit/test/* directory. You can run the noproxy/TestNoProxy
-	test right away as long as sipunit/examples and the jar files from 
+	examples/java/org/cafesip/sipunit/test/* directories. You can run the noproxy/TestNoProxy
+	test right away as long as sipunit/examples/java and the jar files from 
 	sipunit/lib are in the classpath (more on running the test classes below). 
 	For running some of the other test classes, a proxy or stun server is required. For setup info,
 	see the header comments in each test java file and also visit 
@@ -26,10 +26,10 @@ TO RUN AN EXAMPLE TEST: see how at
 	http://www.cafesip.org/projects/sipunit/user_guide.html#mozTocId89601
 
 To debug what's happening during a SipUnit test, turn on the SipUnit trace by adding
-    this line of code to your test class setUp() method:
+    this line of code to your test class setUp() method after creating the SipStack:
          SipStack.setTraceEnabled(true);
           
-    You can also set the trace level to 32 instead of 16 to get even more output. Do it by setting the
+    You can also set the trace level to 32 instead of the default 16 to get even more output. Do it by setting the
     following property in the properties provided to SipStack creation: 
         properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
     
