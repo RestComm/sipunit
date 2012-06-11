@@ -366,7 +366,7 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * @return
+     * @return AllowEventsHeader
      * @throws ParseException
      */
     protected AllowEventsHeader getAllowEventsHeaderForResponse()
@@ -378,7 +378,7 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * @return
+     * @return SupportedHeader
      * @throws ParseException
      */
     protected SupportedHeader getSupportedHeaderForResponse()
@@ -390,7 +390,7 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * @return
+     * @return AcceptHeader
      * @throws ParseException
      */
     protected AcceptHeader getAcceptHeaderForResponse() throws ParseException
@@ -563,7 +563,7 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * @return
+     * @return content subtype
      */
     protected String getPackageContentSubType()
     {
@@ -571,7 +571,7 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * @return
+     * @return content type
      */
     protected String getPackageContentType()
     {
@@ -579,7 +579,7 @@ public class PresenceNotifySender implements MessageListener
     }
 
     /**
-     * @return
+     * @return event type
      */
     protected String getEventType()
     {

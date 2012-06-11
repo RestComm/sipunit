@@ -537,12 +537,11 @@ public class EventSubscriber implements MessageListener, SipActionObject
 
     /**
      * @param referToUri
-     * @param body
-     *            optional
      * @param eventId
      *            the event "id" to use in the REFER message, or null for no
      *            event "id" parameter.
-     * @return
+     * @param viaNonProxyRoute if not null, it will be the next hop
+     * @return Request
      * @throws ParseException
      */
     protected Request createReferMessage(SipURI referToUri, String eventId,

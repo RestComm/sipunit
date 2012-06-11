@@ -3944,7 +3944,7 @@ public class TestNoProxyTLS
         // stack sends ACK, give it some time
         Thread.sleep(200);
 
-        callee.waitForAck(1000);
+        callee.waitForAck(3000);
         SipRequest req3 = callee.getLastReceivedRequest();
         lastRequest = (req3 == null) ? "no request received" : req3
                 .getMessage().toString();

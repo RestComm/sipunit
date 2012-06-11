@@ -419,7 +419,7 @@ public class ReferNotifySender extends PresenceNotifySender
     }
 
     /**
-     * @return
+     * @return AllowEventsHeader
      * @throws ParseException
      */
     protected AllowEventsHeader getAllowEventsHeaderForResponse()
@@ -431,7 +431,7 @@ public class ReferNotifySender extends PresenceNotifySender
     }
 
     /**
-     * @return
+     * @return SupportedHeader
      * @throws ParseException
      */
     protected SupportedHeader getSupportedHeaderForResponse()
@@ -443,7 +443,7 @@ public class ReferNotifySender extends PresenceNotifySender
     }
 
     /**
-     * @return
+     * @return AcceptHeader
      * @throws ParseException
      */
     protected AcceptHeader getAcceptHeaderForResponse() throws ParseException
@@ -531,15 +531,15 @@ public class ReferNotifySender extends PresenceNotifySender
     }
 
     /**
-     * @return
+     * @return event type
      */
     protected String getEventType()
     {
         return "refer";
     }
 
-    /**
-     * @return
+    /** 
+     * @return content subtype
      */
     protected String getPackageContentSubType()
     {
@@ -547,7 +547,7 @@ public class ReferNotifySender extends PresenceNotifySender
     }
 
     /**
-     * @return
+     * @return content type
      */
     protected String getPackageContentType()
     {
