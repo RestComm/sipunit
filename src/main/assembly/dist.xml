@@ -9,7 +9,7 @@
 	</formats>
 
 	<includeBaseDirectory>true</includeBaseDirectory>
-	<baseDirectory>sipunit</baseDirectory>
+<!-- 	<baseDirectory>sipunit</baseDirectory> -->
 
 	<fileSets>
 		<fileSet>

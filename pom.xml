@@ -100,8 +100,8 @@
 		<dependency>
 			<groupId>javax.sip</groupId>
 			<artifactId>jain-sip-ri</artifactId>
-			<!-- <version>1.2.164</version> -->
-			<version>1.2.X-SNAPSHOT</version>
+			<version>1.2.164</version>
+<!-- 			<version>1.2.X-SNAPSHOT</version> -->
 		</dependency>
 
 		<dependency>
@@ -343,6 +343,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.1</version>
 				<executions>
 					<execution>
 						<id>distro-assembly</id>
