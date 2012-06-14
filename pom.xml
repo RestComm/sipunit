@@ -32,19 +32,19 @@
 		<developer>
 			<id>becky.mcelroy</id>
 			<name>Becky McElroy</name>
-			<email>becky.mcelroy@gmail.com</email>	
+			<email>becky.mcelroy@gmail.com</email>
 			<organization>CafeSip</organization>
-			<organizationUrl>http://www.cafesp.org/</organizationUrl>		
+			<organizationUrl>http://www.cafesip.org/</organizationUrl>
 		</developer>
 		<developer>
 			<id>amit.chatterjee</id>
 			<name>Amit Chatterjee</name>
-			<email>amit.chatterjee@cafesip.org</email>			
+			<email>amit.chatterjee@cafesip.org</email>
 			<organization>CafeSip</organization>
-			<organizationUrl>http://www.cafesp.org/</organizationUrl>		
+			<organizationUrl>http://www.cafesip.org/</organizationUrl>
 		</developer>
 	</developers>
-	
+
 	<licenses>
 		<license>
 			<name>Apache LICENSE</name>
@@ -57,20 +57,20 @@
 		<connection>scm:svn:http://cafesip.svn.sourceforge.net/svnroot/cafesip/sipunit</connection>
 		<developerConnection>scm:svn:http://cafesip.svn.sourceforge.net/svnroot/cafesip/sipunit</developerConnection>
 		<url>http://cafesip.svn.sourceforge.net/svnroot/cafesip/sipunit</url>
-	    </scm>
+	</scm>
 
 	<distributionManagement>
-	    <repository>
-	      <id>mobicents-releases-repository</id>
-	      <name>Mobicents Releases Repository</name>
-	      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-	    </repository>
-	    <snapshotRepository>
-	      <id>mobicents-snapshots-repository</id>
-	      <name>Mobicents Snapshots Repository</name>
-	      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-	    </snapshotRepository>
-	  </distributionManagement>
+		<repository>
+			<id>mobicents-releases-repository</id>
+			<name>Mobicents Releases Repository</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+		</repository>
+		<snapshotRepository>
+			<id>mobicents-snapshots-repository</id>
+			<name>Mobicents Snapshots Repository</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
@@ -176,12 +176,6 @@
 			<version>2.6.2</version>
 		</dependency>
 
-		<!-- <dependency> -->
-		<!-- <groupId>xsdlib</groupId> -->
-		<!-- <artifactId>xsdlib</artifactId> -->
-		<!-- <version>20030225</version> -->
-		<!-- </dependency> -->
-
 		<dependency>
 			<groupId>com.sun.msv.datatype.xsd</groupId>
 			<artifactId>xsdlib</artifactId>
@@ -222,9 +216,9 @@
 				</executions>
 			</plugin>
 
-			    <plugin>
-				<artifactId>maven-release-plugin</artifactId>             
-			    </plugin>
+			<plugin>
+				<artifactId>maven-release-plugin</artifactId>
+			</plugin>
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -237,6 +231,7 @@
 						<exclude>**/proxywithauth/*.java</exclude>
 					</excludes>
 					<useManifestOnlyJar>false</useManifestOnlyJar>
+					<forkMode>always</forkMode>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -316,12 +311,12 @@
 				</executions>
 			</plugin>
 			<plugin>
-        		<groupId>org.apache.maven.plugins</groupId>
-        		<artifactId>maven-javadoc-plugin</artifactId>
-        		<version>2.8.1</version>
-        		<configuration>
-          			<excludePackageNames>*.presenceparser.*</excludePackageNames>
-        		</configuration>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.8.1</version>
+				<configuration>
+					<excludePackageNames>*.presenceparser.*</excludePackageNames>
+				</configuration>
 				<executions>
 					<execution>
 						<id>generate-javadoc</id>
@@ -331,7 +326,7 @@
 						</goals>
 					</execution>
 				</executions>
-      		</plugin>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
@@ -370,86 +365,59 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
-				    <groupId>org.apache.maven.plugins</groupId>
-				    <artifactId>maven-source-plugin</artifactId>
-				    <version>2.1.2</version>
-				    <executions>
-				        <execution>
-				            <goals>
-				                <goal>jar</goal>
-				                <goal>test-jar</goal>
-				            </goals>
-				        </execution>
-				    </executions>
-                		</plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>2.1.2</version>
+					<executions>
+						<execution>
+							<goals>
+								<goal>jar</goal>
+								<goal>test-jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 			</plugins>
-        	</pluginManagement>
+		</pluginManagement>
 	</build>
 
 	<profiles>
 		<profile>
-                      <id>release-sign-artifacts</id>
-                      <activation>
-                        <property>
-                          <name>performRelease</name>
-                          <value>true</value>
-                        </property>
-                      </activation>
-                      <build>
-                        <plugins>
-                          <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-gpg-plugin</artifactId>
-                            <executions>
-                              <execution>
-                                <id>sign-artifacts</id>
-                                <phase>install</phase>
-                                <goals>
-                                  <goal>sign</goal>
-                                </goals>
-                              </execution>
-                            </executions>
-                          </plugin>
-                        </plugins>
-                      </build>
-                    </profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>install</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
 
 	<repositories>
 		<repository>
-			  <id>mobicents-public-repository-group</id>
-			  <name>Mobicens Public Maven Repository Group</name>
-			  <url>https://oss.sonatype.org/content/groups/public</url>
-			  <layout>default</layout>
-			  <releases>
-			    <enabled>true</enabled>
-			    <updatePolicy>never</updatePolicy>
-			  </releases>
-			  <snapshots>
-			    <enabled>true</enabled>
-			    <updatePolicy>never</updatePolicy>
-			  </snapshots>
-		</repository>
-		<repository>
-		  <id>jboss-public-repository-group</id>
-		  <name>JBoss Public Maven Repository Group</name>
-		  <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-		  <layout>default</layout>
-		  <releases>
-		    <enabled>true</enabled>
-		    <updatePolicy>never</updatePolicy>
-		  </releases>
-		  <snapshots>
-		    <enabled>true</enabled>
-		    <updatePolicy>never</updatePolicy>
-		  </snapshots>
-		</repository>
-		<repository>
-		<id>java.net-Public</id>
-		<name>Maven Java Net Snapshots and Releases</name>
-		<url>http://download.java.net/maven/2/</url>
-		<releases>
+			<id>mobicents-public-repository-group</id>
+			<name>Mobicens Public Maven Repository Group</name>
+			<url>https://oss.sonatype.org/content/groups/public</url>
+			<layout>default</layout>
+			<releases>
 				<enabled>true</enabled>
 				<updatePolicy>never</updatePolicy>
 			</releases>
@@ -457,6 +425,33 @@
 				<enabled>true</enabled>
 				<updatePolicy>never</updatePolicy>
 			</snapshots>
-	    </repository>				
+		</repository>
+		<repository>
+			<id>jboss-public-repository-group</id>
+			<name>JBoss Public Maven Repository Group</name>
+			<url>https://repository.jboss.org/nexus/content/groups/public/</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>java.net-Public</id>
+			<name>Maven Java Net Snapshots and Releases</name>
+			<url>http://download.java.net/maven/2/</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
 	</repositories>
 </project>
