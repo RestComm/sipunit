@@ -338,6 +338,7 @@ public class SipStack implements SipListener
             sipStack.deleteListeningPoint(sipProvider.getListeningPoints()[0]);
             sipProvider.removeSipListener(this);
             sipStack.deleteSipProvider(sipProvider);
+            sipFactory.resetFactory();
         }
         catch (Exception e)
         {
