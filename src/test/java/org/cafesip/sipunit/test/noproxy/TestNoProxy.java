@@ -179,6 +179,8 @@ public class TestNoProxy
     @After
     public void tearDown() throws Exception
     {
+    	//Needed for maven surefire on Linux 32bit
+    	Thread.sleep(1000);
 		if (ua != null) 
 		{
 			ua.dispose();
