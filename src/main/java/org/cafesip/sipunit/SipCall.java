@@ -3632,6 +3632,65 @@ public class SipCall implements SipActionObject, MessageListener
 
 		return true;
 	}
+	
+	/**
+     * The waitForAuthorisation() method waits for answer(401/407) to be received
+     * from the network. It ignores provisional responses, but will stop and
+     * return false on any progress/ringing response.
+     * If an authorisation request is received, a response will be sent and
+     * a success returned.
+     * <p>
+     * This method will block until any non-provisional message is received.
+     * <p>
+     * 
+     * @param timeout
+     *            The maximum amount of time to wait for each message, in
+     *            milliseconds. Use a value of 0 to wait indefinitely.
+     * @return true if an authorisation challenge was received and was
+     *            handled successfully. false, if the authorisation was not
+     *            requested, or on any failure response.
+     */
+    public boolean waitForAuthorisation(long timeout)
+    {
+        if (callAnswered == true)
+        {
+            return false;
+        }
+
+        while (true)
+        {
+            waitOutgoingCallResponse(timeout);
+            
+            if (returnCode == 100)
+            {
+                continue;
+            }
+
+            if ((returnCode == Response.UNAUTHORIZED)
+                    || (returnCode == Response.PROXY_AUTHENTICATION_REQUIRED))
+            {
+                Request msg = getSentRequest();
+
+                Response resp = (Response) getLastReceivedResponse().getMessage();
+                msg = parent.processAuthChallenge(resp, msg);
+
+                if (msg == null)
+                {
+                    return false;
+                }
+
+                if (!reInitiateOutgoingCall(msg))
+                {
+                    return false;
+                }
+            
+                return true;
+            }
+
+            setErrorMessage("Call did not ask for authorisation, got this instead: " + returnCode);
+            return false;
+        }
+    }
 
 	/**
 	 * This method returns the last received response with status code matching

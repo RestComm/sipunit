@@ -66,12 +66,15 @@ import javax.sip.header.Header;
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.PriorityHeader;
+import javax.sip.header.ProxyAuthorizationHeader;
 import javax.sip.header.ReasonHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
+import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import org.cafesip.sipunit.Credential;
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipMessage;
 import org.cafesip.sipunit.SipPhone;
@@ -80,6 +83,7 @@ import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipSession;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTransaction;
+import org.cafesip.sipunit.test.util.AuthUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -3946,5 +3950,81 @@ public class TestNoProxy
         assertRequestReceived(
                 "SIP: ACK not received<br>(last received request is "
                         + lastRequest + ")", SipRequest.ACK, callee);
+    }
+    
+    @Test
+    public void testWaitForAuthPositive()
+    {
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
+            
+            ua.addUpdateCredential(new Credential("nist.gov", "amit", "a1b2c3d4"));
+
+            SipCall a = ua.createSipCall();
+            SipCall b = ub.createSipCall();
+
+            b.listenForIncomingCall();
+            Thread.sleep(10);
+
+            assertTrue(a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress()
+                    + ':' + myPort + '/' + testProtocol));
+            assertTrue(b.waitForIncomingCall(10000));
+            
+			WWWAuthenticateHeader auth_header = AuthUtil
+					.getAuthenticationHeader(b.getLastReceivedRequest(), b.getHeaderFactory(), "nist.gov");
+            ArrayList<Header> addnl = new ArrayList<Header>();
+            addnl.add(auth_header);
+
+			assertTrue(b.sendIncomingCallResponse(
+					Response.PROXY_AUTHENTICATION_REQUIRED, null, -1, addnl,
+					null, null));
+			Thread.sleep(1000);
+
+            assertTrue(a.waitForAuthorisation(5000));
+            assertTrue(b.waitForIncomingCall(5000));
+            assertHeaderPresent(b.getLastReceivedRequest(), ProxyAuthorizationHeader.NAME);
+
+            ub.dispose();
+        }
+        catch (Exception e)
+        {
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+    
+    @Test
+    public void testWaitForAuthNegative()
+    {
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
+            ub.setLoopback(true);
+            
+            ua.addUpdateCredential(new Credential("nist.gov", "amit", "a1b2c3d4"));
+
+            SipCall a = ua.createSipCall();
+            SipCall b = ub.createSipCall();
+
+            b.listenForIncomingCall();
+            Thread.sleep(10);
+
+            assertTrue(a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress()
+                    + ':' + myPort + '/' + testProtocol));
+            assertTrue(b.waitForIncomingCall(10000));
+            
+			assertTrue(b.sendIncomingCallResponse(Response.RINGING, "RINGING", -1));
+            Thread.sleep(1000);
+
+            assertFalse(a.waitForAuthorisation(5000));
+            assertResponseReceived(Response.RINGING, a);
+
+            ub.dispose();
+        }
+        catch (Exception e)
+        {
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
 }
