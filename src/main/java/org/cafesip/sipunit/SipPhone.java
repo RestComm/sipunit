@@ -416,7 +416,8 @@ public class SipPhone extends SipSession implements SipActionObject,
      * This method performs the SIP unregistration process. It returns true if
      * unregistration was successful or no unregistration was needed, and false
      * otherwise. Any authorization headers required for the last registration
-     * are cleared out.
+     * are cleared out. If there was no previous registration, this method does
+     * not send any messages.
      * <p>
      * If the contact parameter is null, user@hostname is unregistered where
      * hostname is obtained by calling InetAddr.getLocalHost(). Otherwise, the
@@ -424,7 +425,7 @@ public class SipPhone extends SipSession implements SipActionObject,
      * server.
      * 
      * @param contact
-     *            The contact URI (ex: sip:bob@192.0.2.4) to unregister.
+     *            The contact URI (ex: sip:bob@192.0.2.4) to unregister or "*".
      * @param timeout
      *            The maximum amount of time to wait for a response, in
      *            milliseconds. Use a value of 0 to wait indefinitely.
@@ -463,14 +464,25 @@ public class SipPhone extends SipSession implements SipActionObject,
 
             if (contact != null)
             {
-                URI contact_uri = parent.getAddressFactory().createURI(contact);
-                Address contact_address = parent.getAddressFactory()
-                        .createAddress(contact_uri);
-                ContactHeader contact_hdr = parent.getHeaderFactory()
-                        .createContactHeader(contact_address);
+				ContactHeader contact_hdr;
 
-                msg.setHeader(contact_hdr);
-            }
+				if (!contact.equals("*")) 
+				{
+					URI contact_uri = parent.getAddressFactory().createURI(
+							contact);
+					Address contact_address = parent.getAddressFactory()
+							.createAddress(contact_uri);
+					contact_hdr = parent.getHeaderFactory()
+							.createContactHeader(contact_address);
+				}
+				else 
+				{
+					contact_hdr = parent.getHeaderFactory()
+							.createContactHeader();
+				}
+
+				msg.setHeader(contact_hdr);
+			}
 
             // send the REGISTRATION request and get the response
             Response response = sendRegistrationMessage(msg, null, null, 30000);
