@@ -34,7 +34,7 @@
 			</includes>
 		</fileSet>
 		<fileSet>
-			<directory>${project.reporting.outputDirectory}/apidocs</directory>
+			<directory>target/site/apidocs</directory>
 			<outputDirectory>docs/api</outputDirectory>
 			<includes>
 				<include>**</include>
