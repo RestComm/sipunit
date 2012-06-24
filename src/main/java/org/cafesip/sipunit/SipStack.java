@@ -59,7 +59,7 @@ import javax.sip.message.MessageFactory;
  * level message, address and header content, needed when dealing at the
  * SipSession level.
  * 
- * @author aab
+ * @author Amit Chatterjee, Becky McElroy
  */
 public class SipStack implements SipListener
 {

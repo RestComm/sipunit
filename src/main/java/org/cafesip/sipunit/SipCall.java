@@ -79,7 +79,7 @@ import javax.sip.message.Response;
  * human-readable string containing all of this error information.
  * 
  * @author <a href="mailto:gvagenas@gmail.com">George Vagenas</a>
- * @author aab
+ * @author Amit Chatterjee, Becky McElroy
  * 
  */
 public class SipCall implements SipActionObject, MessageListener

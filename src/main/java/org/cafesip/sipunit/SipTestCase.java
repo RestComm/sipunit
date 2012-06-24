@@ -179,7 +179,7 @@ import junit.framework.TestCase;
  * &lt;/code&gt;
  * </pre>
  * 
- * @author aab
+ * @author Amit Chatterjee, Becky McElroy
  * 
  */
 public class SipTestCase extends TestCase

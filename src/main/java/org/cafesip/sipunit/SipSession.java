@@ -81,7 +81,7 @@ import javax.sip.message.Response;
  * message. This class has a method, format(), which can be called to obtain a
  * human-readable string containing all of this error information.
  * 
- * @author aab
+ * @author Amit Chatterjee, Becky McElroy
  * 
  */
 public class SipSession implements SipListener, SipActionObject
