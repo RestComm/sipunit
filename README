@@ -10,20 +10,19 @@ For license information: Open the file
 For the SipUnit API class javadocs: open the file 
 	docs/api/index.html using a web browser.
 	
-For tutorial-type examples, see
-	http://www.cafesip.org/projects/sipunit/user_guide.html#An_Example_Test_Class
-	http://www.cafesip.org/projects/sipunit/user_guide.html#An_Example_of_Using_the_JAIN-SIP_API_
+For tutorial-type examples, see the SipUnit user guide at
+	http://www.cafesip.org/projects/sipunit/
 	
-For actual example test classes using SipUnit, see the java files in the
-	examples/java/org/cafesip/sipunit/test/* directories. You can run the noproxy/TestNoProxy
-	test right away as long as sipunit/examples/java and the jar files from 
-	sipunit/lib are in the classpath (more on running the test classes below). 
+For example real test classes that use SipUnit, see the SipUnit unit test java files in the binary 
+    distribution and in the source code project. You can run the noproxy/TestNoProxy
+	test right away, see next item. 
 	For running some of the other test classes, a proxy or stun server is required. For setup info,
-	see the header comments in each test java file and also visit 
-	http://www.cafesip.org/projects/sipunit/user_guide.html#Proxy_Considerations.
+	see the header comments in each test java file and also visit the section on proxy 
+	considerations in the user guide at
+	http://www.cafesip.org/projects/sipunit/
 	
-TO RUN AN EXAMPLE TEST: see how at
-	http://www.cafesip.org/projects/sipunit/user_guide.html#mozTocId89601
+TO RUN AN EXAMPLE TEST: see how in the installation test section of the SipUnit user guide at
+	http://www.cafesip.org/projects/sipunit/
 
 To debug what's happening during a SipUnit test, turn on the SipUnit trace by adding
     this line of code to your test class setUp() method after creating the SipStack:
