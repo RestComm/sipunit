@@ -1,0 +1,16 @@
+
+# /
+/sipunit-*.zip
+/*_debug.txt
+/*_log.txt
+/target
+
+# /docs/api/
+/docs/api/org
+/docs/api/resources
+/docs/api/*.html
+/docs/api/*.css
+/docs/api/package-list
+
+# /src/main/java/org/cafesip/sipunit/
+/src/main/java/org/cafesip/sipunit/presenceparser
