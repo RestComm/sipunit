@@ -8,10 +8,10 @@
 	<packaging>jar</packaging>
 
 	<name>SipUnit</name>
-	<url>http://www.cafesip.org/projects/sipunit/index.html</url>
+	<url>http://code.google.com/p/commtesting/</url>
 	<description>
         	SipUnit provides a test environment geared toward unit testing SIP applications
-    </description>
+    	</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,7 +25,7 @@
 			<organization>TeleStax, Inc</organization>
 			<organizationUrl>http://www.telestax.com/</organizationUrl>
 			<roles>
-				<role>SIP Testing Project Lead</role>
+				<role>CommTesting Projects Lead</role>
 			</roles>
 			<timezone>+1</timezone>
 		</developer>
@@ -54,10 +54,10 @@
 	</licenses>
 
 	<scm>
-		<connection>scm:svn:http://cafesip.svn.sourceforge.net/svnroot/cafesip/sipunit</connection>
-		<developerConnection>scm:svn:http://cafesip.svn.sourceforge.net/svnroot/cafesip/sipunit</developerConnection>
-		<url>http://cafesip.svn.sourceforge.net/svnroot/cafesip/sipunit</url>
-	</scm>
+                <connection>scm:git:https://code.google.com/p/commtesting/</connection>
+                <developerConnection>scm:git:https://code.google.com/p/commtesting/</developerConnection>
+                <url>https://code.google.com/p/commtesting/</url>
+        </scm>
 
 	<distributionManagement>
 		<repository>
