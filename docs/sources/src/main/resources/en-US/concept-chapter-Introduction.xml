@@ -1,0 +1,102 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "SipUnit_User_Guide.ent">
+%BOOK_ENTITIES;
+]>
+<chapter id="Introduction_to_the_RestComm">
+	<title>Introduction to &SHORT_PLATFORM_NAME;</title>
+	<para>&SHORT_PLATFORM_NAME; is an open source Java testing framework used to write and run automated tests for verifying SIP applications. 
+		It extends the <ulink url="http://www.junit.org/">JUnit test framework</ulink> and adds SIP-specific assertions along with a high-level API for performing the SIP operations needed to interact with or invoke a test target. &SHORT_PLATFORM_NAME; uses the <ulink url="http://code.google.com/p/jain-sip/">JAIN-SIP reference implementation</ulink> as its underlying SIP stack/engine.
+	</para>
+	<para>
+		A test program using the &SHORT_PLATFORM_NAME; API is written in Java and looks just like a JUnit test program - a class containing test methods that perform some actions and assert the expected results. Since the test target is a SIP entity running somewhere in the network, a &SHORT_PLATFORM_NAME; test acts as a network element that sends/receives SIP requests and responses to interact with the test target. The &SHORT_PLATFORM_NAME; API includes SIP User Agent Client (UAC), User Agent Server (UAS), and basic UAC/UAS Core functionality - the set of processing functions that resides above the SIP transaction and transport layers - for the purpose of interacting with the test target. 
+	</para>
+	<para>
+		A Java class using &SHORT_PLATFORM_NAME; API:
+		<orderedlist>
+          	<listitem>
+            	<para>
+				Extends SipTestCase or statically imports assert methods from the equivalent class SipAssert (for JUnit 4 and beyond)
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				Creates &SHORT_PLATFORM_NAME; API objects - SipStack, SipPhone, SipCall, etc. - to handle the SIP operations that will invoke the test target
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				Calls methods on the object(s) to set up and initiate action toward a SIP test target. For example: The method SipPhone.makeCall("sip:roger@nist.gov", SipResponse.OK, ....) makes a vanilla call to sip:roger@nist.gov and blocks until an OK is received or a timeout occurs. The test target could be any node up to and including the final destination of the INVITE request message.
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				Verifies the results of the action involving the test target using both the SIP-specific assert methods provided by &SHORT_PLATFORM_NAME; and the standard JUnit assert methods. For example:  assertHeaderContains(sipCall.getLastReceivedResponse(), "From", "sip:amit@nist.gov"), assertEquals("Unexpected response received", SipResponse.OK, sipCall.getReturnCode()).
+				</para>
+			</listitem>
+		</orderedlist>		
+	</para>
+	<section>
+		<title>&SHORT_PLATFORM_NAME; Goals</title>
+		<para>The goals of &SHORT_PLATFORM_NAME; are:</para>
+		<itemizedlist>
+          	<listitem>
+            	<para>
+				To provide a useful set of SIP-related assert methods
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				To provide a flexible API that abstracts the details of SIP messaging/call handling so that a test program can interact with a SIP test target at the level it needs to - but no more - and focus on the tests themselves
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				To facilitate free-flowing, sequential test code so that a test target can be exercised quickly and painlessly.
+				</para>
+			</listitem>			
+		</itemizedlist>			
+	</section>
+	<section>
+                <title>Pre Requisites</title>
+                <para>In order to use &SHORT_PLATFORM_NAME; effectively, you need to understand and be proficient with:</para>
+   				<itemizedlist>
+	    	      	<listitem>
+      	    		  	<para>             
+							Java Programming Language (Java 1.6 or higher)
+						</para>
+					</listitem>
+					<listitem>
+      	    		  	<para>             
+							<ulink url="http://www.junit.org/">JUnit</ulink>
+						</para>
+					</listitem>
+					<listitem>
+      	    		  	<para>             
+							SIP - Session Initiation Protocol (RFC-3261, RFC-3665, and also the <ulink url="https://mobicents.ci.cloudbees.com/job/JAIN-SIP/lastSuccessfulBuild/artifact/jain-sip/javadoc/index.html">JAIN-SIP API</ulink> Javadoc documentation is an excellent source for understanding SIP protocol concepts)
+						</para>
+					</listitem>
+			</itemizedlist>
+			<para>It will help if you know the following JAIN-SIP API classes for purposes of using the low-level methods of the &SHORT_PLATFORM_NAME; API and examining received requests and responses in detail, but if you need to you can learn them as you go along:</para>
+			<itemizedlist>
+	    	      	<listitem>
+      	    		  	<para>             
+							Request, Response
+						</para>
+					</listitem>
+					<listitem>
+      	    		  	<para>             
+							AddressFactory, HeaderFactory, MessageFactory.
+						</para>
+					</listitem>
+					<listitem>
+      	    		  	<para>             
+							SIP - Session Initiation Protocol (RFC-3261, RFC-3665, and also the JAIN-SIP API Javadoc documentation is an excellent source for understanding SIP protocol concepts)
+						</para>
+					</listitem>
+			</itemizedlist>
+			<para>
+				Click here to see an example of test code using the JAIN-SIP API classes.
+            </para>               
+        </section>
+</chapter>

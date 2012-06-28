@@ -1,0 +1,38 @@
+﻿<?xml version='1.0'?>
+<!DOCTYPE bookinfo PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "SipUnit_User_Guide.ent">
+%BOOK_ENTITIES;
+]><!-- chapter id nickname: sssug -->
+<bookinfo id="SipUnit_User_Guide">
+	<title>SipUnit User Guide</title>
+	<subtitle>The Guide to the SipUnit</subtitle>
+	<productname>Mobicents Platform</productname>
+	<productnumber>1.0.0</productnumber>
+	<edition>1.0</edition>
+	<pubsnumber>1</pubsnumber>
+	<abstract>
+		<para>
+			&SHORT_PLATFORM_NAME; is an open source Java testing framework used to write and run automated tests for verifying SIP applications. 
+			It extends the <ulink url="http://www.junit.org/">JUnit test framework</ulink> and adds SIP-specific assertions along with a high-level API for performing the SIP operations needed to interact with or invoke a test target. &PLATFORM_NAME; uses the <ulink url="http://code.google.com/p/jain-sip/">JAIN-SIP reference implementation</ulink> as its underlying SIP stack/engine.
+		</para>
+	</abstract>
+	<!-- corpauthor> <inlinemediaobject> <imageobject> <imagedata format="SVG" 
+		fileref="images/icon.svg" /> </imageobject> <textobject> <phrase>Logo</phrase> 
+		</textobject> </inlinemediaobject> </corpauthor -->
+	<copyright>
+		<year>&YEAR;
+		</year>
+		<holder>&HOLDER;
+		</holder>
+	</copyright>
+	<!--ORIGINAL: <xi:include href="Common_Content/Legal_Notice.xml" xmlns:xi="http://www.w3.org/2001/XInclude" 
+		/ -->
+	<!--FOR JDOCBOOK: -->
+	<!--<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="Common_Content/Legal_Notice.xml"> 
+		<xi:fallback xmlns:xi="http://www.w3.org/2001/XInclude"> <xi:include href="fallback_content/Legal_Notice.xml" 
+		xmlns:xi="http://www.w3.org/2001/XInclude"></xi:include> </xi:fallback> </xi:include -->
+	<xi:include href="Author_Group.xml" xmlns:xi="http://www.w3.org/2001/XInclude" />
+</bookinfo>
+
+
+

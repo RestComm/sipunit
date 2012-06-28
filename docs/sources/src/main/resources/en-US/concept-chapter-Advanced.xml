@@ -1,0 +1,124 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "SipUnit_User_Guide.ent">
+%BOOK_ENTITIES;
+]>
+<!-- chapter id nickname: ittsss -->
+<chapter id="Advanced_&SHORT_PLATFORM_NAME;">
+	<title>Advanced Usage of &SHORT_PLATFORM_NAME;</title>
+	<section>
+		<title>JAIN SIP Low Level Access</title>
+		<para>The way to get to the JAIN SIP objects depends on which &SHORT_PLATFORM_NAME; objects you're using and the message send/receive context:</para>
+		<table frame='all'>
+			<title>Configuration Sections</title>
+			<tgroup cols='5' align='left' colsep='1' rowsep='1'>
+				<colspec colname='c1' />
+				<colspec colname='c2' />
+				<thead>
+					<row>
+						<entry align="center"></entry>
+						<entry align="center">Sending a Request</entry>
+						<entry align="center">Receiving a Response</entry>
+						<entry align="center">Receiving a Request</entry>
+						<entry align="center">Sending a Response</entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry>Low level SipSession methods</entry>
+						<entry>Use the SipTransaction returned by sendRequestWithTransaction()</entry>
+						<entry>See left, or use the EventObject returned by waitResponse() when the response comes in</entry>
+						<entry>Use the RequestEvent returned by waitRequest(). For a dialog-creating request, some JAIN SIP info isn't available until a response is sent, see right.</entry>
+						<entry>See left, or use the SipTransaction returned by sendReply()</entry>
+					</row>
+					<row>
+						<entry>High level call processing objects (SipPhone, SipCall)</entry>
+						<entry>After calling a SipPhone or SipCall INVITE-sending non-blocking method, before a response is received you can call SipCall.getLastTransaction(). Once an initial response has been received, you can call SipCall.getDialog(). There's also a SipCall.getDialogId() if that's all you need.</entry>
+						<entry>Use SipCall.getLastReceivedResponse() or SipCall.getDialog(). There's also a SipCall.getDialogId() if that's all you need.</entry>
+						<entry>Use SipCall.getLastReceivedRequest() unless the dialog has already  been established in which case you can call SipCall.getDialog(). There's also a SipCall.getDialogId() if that's all you need.</entry>
+						<entry>See left. Once you've sent an initial response you can call SipCall.getDialog(). There's also a SipCall.getDialogId() if that's all you need.</entry>
+					</row>
+					<row>
+						<entry>High level subscription objects (PresnceSubscriber, ReferSubscriber)</entry>
+						<entry>After calling a SUBSCRIBE/REFER-sending method (ex: SipPhone.addBuddy()/refer()), call getLastReceivedResponse() or getDialog() on the returned subscription object. It also has a getDialogId() if that's all you need.</entry>
+						<entry>Call getLastReceivedResponse() or getDialog() on the subscription object. It also has a getDialogId() if that's all you need.</entry>
+						<entry>Use the RequestEvent returned by waitNotify() or call getLastReceivedRequest() or getDialog() on the subscription object. It also has a getDialogId() if that's all you need.</entry>
+						<entry>See left,</entry>
+					</row>
+				</tbody>
+			</tgroup>
+		</table>
+	</section>
+	<section>
+		<title>Example</title>
+		<para>When using the lower-level SipSession methods to send/receive SIP messages, you'll be using the JAIN SIP API message, address, header, request, and response classes to build/view the SIP messages. Here is an example of test class code operating at this level.</para>
+		<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.Request;
+
+SipPhone ua = sipStack.createSipPhone("sip:amit@nist.gov");
+
+// build the INVITE Request message
+AddressFactory addr_factory = ua.getParent().getAddressFactory();
+HeaderFactory hdr_factory = ua.getParent().getHeaderFactory();
+
+Request invite = ua.getParent().getMessageFactory().createRequest( 
+        "INVITE sip:becky@nist.gov SIP/2.0\n");
+
+invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
+invite.addHeader(hdr_factory.createCSeqHeader(1, Request.INVITE));
+invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua
+        .generateNewTag()));
+
+Address to_address = addr_factory.createAddress(addr_factory
+        .createURI("sip:becky@nist.gov"));
+invite.addHeader(hdr_factory.createToHeader(to_address, null));
+
+Address contact_address = addr_factory.createAddress("sip:amit@"
+        + thisHostAddr + ":5060");
+invite.addHeader(hdr_factory.createContactHeader(contact_address));
+
+invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
+ArrayList via_headers = ua.getViaHeaders();
+invite.addHeader((ViaHeader) via_headers.get(0));
+
+Address route_address = addr_factory.createAddress("sip:becky@"
+        + thisHostAddr + ":5060");
+invite.addHeader(hdr_factory.createRouteHeader(route_address));
+
+ // send the Request message
+SipTransaction trans = ua.sendRequestWithTransaction(invite, false,
+        null);
+assertNotNull(ua.format(), trans);
+// call sent
+Etc.
+			]]></programlisting> 
+	</section>
+	<section id="ProxyConsiderations">
+		<title>Proxy Considerations and Routing Policies</title>
+		<para>As far as routing policies go, a test class using &SHORT_PLATFORM_NAME; can:</para>
+		<itemizedlist>
+         	<listitem>
+	           	<para>
+				 define an outbound proxy on a per-SipStack basis (done via a Properties parameter to &SHORT_PLATFORM_NAME; SipStack constructor which is the same list of properties the JAIN-SIP SipStack class takes) to be used at the SIP stack level for outgoing initial requests.  This cannot be changed during the life of the SipStack.    
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				define an outbound proxy on a per-SipPhone(/SipSession) basis (done via host/port/protocol parms to the SipPhone constructor). At the SipSession (low-) level, this is applied by the caller on a per-request basis. If applied, the request URI of the given request is modified to reflect the proxy destination. If not applied, no modification of the request is done and no additional headers are added before sending the request out (caller must handle details such as adding a RouteHeader). At the SipCall/SipPhone (high-) level, this is applied for all registrations and outbound calls, but can be overridden on a per-outbound-call basis by specifying an alternate route to use instead of the SipPhone's proxy.   
+				</para>
+			</listitem>			
+			<listitem>
+	           	<para>
+				do neither of the above. This is only an option when using low-level API calls and handling all message/routing details yourself, or using high-level API calls (except SipPhone.un/registration()) and always specifying an outbound call alternate route.   
+				</para>
+			</listitem>
+		</itemizedlist>					
+		<para>For an example of a test class not using a proxy, see the TestNoProxy.java file in the &SHORT_PLATFORM_NAME; examples directory.</para>
+		<para>For an example of a test class using a proxy, see one of the other test files in the &SHORT_PLATFORM_NAME; examples directory. It's class header comment will indicate the required proxy settings for running that test.</para>
+	</section>
+</chapter>

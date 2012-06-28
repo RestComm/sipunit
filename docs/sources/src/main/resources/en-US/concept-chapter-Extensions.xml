@@ -1,0 +1,961 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "SipUnit_User_Guide.ent">
+%BOOK_ENTITIES;
+]>
+<!-- chapter id nickname: ittsss -->
+<chapter id="Extensions_RestComm">
+	<title>Supported Extensions</title>
+	<section>
+		<title>MESSAGE method Support</title>
+		<para>&SHORT_PLATFORM_NAME; now implements RFC3428 which provides the MESSAGE method. A SipCall can start listening for MESSAGE or send a MESSAGE. </para>
+		<para>Even though RFC3428 states that "But implementations SHOULD NOT create dialogs for the primary purpose of associating MESSAGE requests with one another.", &SHORT_PLATFORM_NAME; will check if there is an existing ongoing Dialog and will use it for MESSAGE request.</para>
+		<para>See the following example:</para>
+		<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
+ub.setLoopback(true);
+
+SipCall callA = ua.createSipCall();
+SipCall callB = ub.createSipCall();
+
+/*
+ * callA send MESSAGE to callB
+ */
+callB.listenForMessage();
+
+callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress()
+		+ ":" + port2 + ";lr/" + testProtocol, "Hello Becky");
+
+assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
+
+
+assertTrue(callB.waitForMessage(4000));
+List msgsFromA = callB.getAllReceivedMessagesContent();
+
+assertTrue(msgsFromA.size()>0);
+assertTrue(msgsFromA.get(0).equals("Hello Becky"));
+
+callB.sendMessageResponse(200, "OK", -1);
+
+assertTrue(callA.waitOutgoingMessageResponse(4000));
+assertEquals(Response.OK, callA.getLastReceivedResponse().getStatusCode());
+
+/*
+ * callB send MESSAGE to callB
+ */
+callA.listenForMessage();
+
+callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress()
+		+ ":" + port1 + ";lr/" + testProtocol, "Hello Amit");
+
+assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
+
+assertTrue(callA.waitForMessage(4000));
+List msgsFromB = callA.getAllReceivedMessagesContent();
+
+assertTrue(msgsFromB.size()>0);
+assertTrue(msgsFromB.get(0).equals("Hello Amit"));
+
+callA.sendMessageResponse(200, "OK", -1);
+
+assertTrue(callB.waitOutgoingMessageResponse(4000));
+assertEquals(Response.OK, callB.getLastReceivedResponse().getStatusCode());
+
+ub.dispose();
+		]]></programlisting> 
+	</section>
+	<section>
+		<title>Authentication Support</title>
+		<para>If your test environment involves authentication and you are using the high-level classes (SipPhone, SipCall, Subscription, etc.), you'll likely need to make use of the Credential class. For each secure realm that a test call will be sending requests to, create an instance of Credential and pass it to SipPhone's credentials list (via the SipPhone.addUpdateCredential() method). Do this before invoking the SIP operation that will result in sending a request. Add as many credential objects as there are distinct secure realms that your test call will be accessing. You can add/remove credentials as needed using the SipPhone credential methods. </para>
+		<para>When an authentication challenge is received during registration, call processing, subscribing, etc. the appropriate credential(s) from SipPhone's list will be automatically used to respond to the challenge. These authorization headers created by &SHORT_PLATFORM_NAME; in response to authentication challenges are stored by SipPhone on a per Call-ID, per realm, basis and are included in subsequent requests sent by &SHORT_PLATFORM_NAME; class methods for the same Call-ID. See design notes if you'd like more detail.</para>
+		<para>Alternatively, if all you need is to simply handle one authentication challenge for registration, you can just use the SipPhone.register() method that takes user name and password parameters. In this case you don't need to bother with using the Credential class.</para>
+		<para>&SHORT_PLATFORM_NAME; supports Digest Access Authentication.</para>
+	</section>
+	<section>
+		<title>Event Subscription and Notification</title>
+		<para>This section describes the event subscription/notification capabilities implemented in &SHORT_PLATFORM_NAME; and how you can use them in your test program.  </para>
+		<section>
+			<title>Supported Event Packages</title>
+			<para>&SHORT_PLATFORM_NAME; supports the following PRESENCE capabilities: </para>
+			<itemizedlist>
+	          	<listitem>
+	            	<para>
+	a buddy list per SipPhone that maintains presence information for active and expired subscriptions
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	buddy list operations - add/refresh/remove buddies from the buddy list
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	presence fetch
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	"application/pidf+xml" presence data format
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	multiple devices for a presentity (ie, multiple tuples in a NOTIFY message) along with other RFC3863 NOTIFY xml body elements (except for extensions)
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	validation per RFC of received SUBSCRIBE responses, NOTIFY requests
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	authentication challenge handling for sent SUBSCRIBEs (DIGEST method only)
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	user control over the event "id" and other information sent in a given SUBSCRIBE request or NOTIFY response.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>Limitations</title>
+			<para>Currently the following is NOT supported:</para>
+			<itemizedlist>
+	          	<listitem>
+	            	<para>
+the NOTIFY-sender side, officially (although there is an utility/simulator for both presence and refer, for test purposes)
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+multiple subscriptions in the same dialog	
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+automatic refresh/keep alive of subscriptions
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+sending authentication challenge for received NOTIFY messages
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+extensions and mustUnderstands in the presence NOTIFY body (currently ignored)
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+PUBLISH method at a high level (can be done using low-level SipSession methods to send a request)
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+presence URI format
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+S/MIME.			
+					</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>Presence</title>
+			<section>
+				<title>Implementation</title>
+				<para>A test program using the primary &SHORT_PLATFORM_NAME; presence capabilities (SipPhone buddy methods and PresenceSubscriber class methods) can act as a Type II (Distributed Agents*) presence client for the purpose of testing a presence server or server-side application. That is, it can send SUBSCRIBE messages to a presence server and receive/validate NOTIFY messages from the presence server. Your test program can control the contents of SUBSCRIBE requests and NOTIFY responses sent to the server. By default, the messages are correctly formed and the content is valid. Type II client "Subscriber" emulation for testing presence server and server-side applications is the primary focus of the &SHORT_PLATFORM_NAME; presence feature so far.</para>
+				<para>A test program using the primary &SHORT_PLATFORM_NAME; presence capabilities (SipPhone buddy methods, PresenceSubscriber class methods) does not communicate directly with other clients like a Type I (Co-located Agents*) client does - that is, it does not also receive SUBSCRIBE and send NOTIFY messages. It cannot be used to test a Type I client.
+				</para>
+				<para>A test program using the &SHORT_PLATFORM_NAME; PresenceNotifySender utility class can simulate the presence server side for the purpose of testing Type II clients. That is, it can receive SUBSCRIBE messages and send NOTIFY messages. Your test program tells it the values to send in SUBSCRIBE responses (status code, reason phrase) and NOTIFY requests (presence info, subscription state, etc.). However, the PresenceNotifySender doesn't validate messages it receives - your test program will have to do that if you use it. There are numerous presence tests in the examples directory that use it so look there if you need an example.</para>
+				<para>A test class method using both the primary &SHORT_PLATFORM_NAME; presence capabilities (SipPhone buddy methods and PresenceSubscriber class methods) for one side of a subscription (the "Subscriber") and the PresenceNotifySender utility class for the other side of the subscription (the "Notifier") can be used to test/generate SUBSCRIBE/NOTIFY traffic through network elements such as a proxy.</para>
+				<para>*Check out this <ulink url="http://www.enea.com/4185.epibrw">white paper</ulink> for a nice explanation of presence and the different types of server-side capabilities and clients.
+				</para>			
+			</section>
+			<section>
+				<title>Overview of Operation</title>
+				<para>Here's how it works (see accompanying diagram below):</para>
+				<orderedlist>
+		          	<listitem>
+		            	<para>
+						Just like a normal call processing test, your presence test class creates one or more SipPhone objects. SipPhone supports buddy list operations and single-shot fetches in addition to its call processing capabilities. If authentication will be required, give the necessary credentials to the SipPhone by calling addUpdateCredential().
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+						Next, call addBuddy() or fetchPresenceInfo() on the SipPhone. This causes a SUBSCRIBE message to be created and sent to the server/target, and your test program is blocked on the method call until a first response is received. Assuming a favorable response is received (as opposed to a fatal error response), the SipPhone method returns a PresenceSubscriber object that will represent this buddy/subscription for the life of the subscription.
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+						At this point, you'll now use methods of the returned PresenceSubscriber class to step through the remainder of this SUBSCRIBE/NOTIFY sequence. (Note, you may also be doing other things with the SipPhone or with other buddies as well, besides this particular sequence). You may check the status code of the initial response that was received before calling processResponse() which will complete the SUBSCRIBE transaction handling. This is another blocking method that processes the response just received and handles the remainder of the SUBSCRIBE operation, collecting and validating message(s) received from the Far End. When the SUBSCRIBE transaction is over, processResponse() returns a success/fail indication to your test program. Assuming success, you can proceed by checking resulting info as shown in the diagram below.
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+						Your next step, whenever your test program is ready, is to collect the NOTIFY message from the Far End by calling waitNotify(). This is a blocking method that waits for a NOTIFY message to come in if one hasn't come in already as a result of the SUBSCRIBE sequence or for any other reason. Once a NOTIFY is received, waitNotify() returns the received request to your program as a RequestEvent object. You may examine the NOTIFY request yourself if you want to use the <ulink url="https://mobicents.ci.cloudbees.com/job/JAIN-SIP/lastSuccessfulBuild/artifact/jain-sip/javadoc/index.html">JAIN SIP API</ulink> to do it, but you don't have to. Pass the NOTIFY object to processNotify() which will do several things:
+						</para>
+						<para>
+						     - validate the content of the received NOTIFY, body included
+						</para>
+						<para>
+     						 - update the PresenceSubscriber object with the received information (presence tuples, subscription state, etc)
+     					</para>
+     					<para>
+     						 - create the proper, correct NOTIFY response that should be sent back to the Far End (but don't sent it yet)
+     				 	</para>
+     				 	<para>
+						The composed response is returned to you by processNotify(). You may examine it yourself, or modify/corrupt it if you want to use the <ulink url="https://mobicents.ci.cloudbees.com/job/JAIN-SIP/lastSuccessfulBuild/artifact/jain-sip/javadoc/index.html">JAIN SIP API</ulink> to do it. Regardless, you can see the NOTIFY processing results by calling the getXyz() methods on the PresenceSubscriber object as shown in the diagram below.
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+						Finally, call replyToNotify(), passing it the response to send to the Far End. You get back an indication of whether or not the message was sent successfully.
+						</para>
+					</listitem>
+				</orderedlist>
+				<para>
+				That completes the handling of the SUBSCRIBE/NOTIFY sequence. It might seem like alot just to get through one sequence, but you'll see that your test program is straight-line and straigtforward. Also, these steps can be put in a single blocking convenience method if this sequence is not the focus of the test method. A refreshBuddy() and removeBuddy() call on the PresenceSubscriber object works just the same way, except a new PresenceSubscriber object isn't created (the existing one continues to be used).
+				</para>
+				<figure>
+			    <title>SIP Presence Diagram</title>
+			    <mediaobject
+			      id="figure-PresenceOverview">
+			      <imageobject>
+			        <imagedata
+			          width="440"
+			          align="center"
+			          fileref="images/PresenceOverview.png"
+			          format="PNG"/>
+			      </imageobject>
+			    </mediaobject>
+			  </figure>		
+			</section>
+			<section>
+				<title>Example</title>
+				<para>
+				This example shows a complete test method that establishes a subscription and then verifies subscription termination from the client side. Please read the Event Subscription (Presence) section of this document that explains the procedure in detail. The main methods your test uses to step through the SUBSCRIBE/NOTIFY sequence are highlighted in bold.
+				</para>			
+				<para>
+				NOTE: this test was written to validate the &SHORT_PLATFORM_NAME; API itself (subscriber client-side handling) - it uses a utility class, PresenceNotifySender, to simulate the presence server. Your test method wouldn't need that (simulator) side of it since your server/application under test will respond to the SUBSCRIBE messages sent out by this test and send NOTIFY messages to this test object. Also, this test contains numerous asserts to verify the &SHORT_PLATFORM_NAME; API handling which your test wouldn't need. But, your test will use the same principles you see below:			
+				</para>
+				<itemizedlist>
+	          	<listitem>
+	            	<para>
+						you'll use a SipPhone object ("ua" below) that will have a buddy list or can do a fetch (each buddy/fetch has a PresenceSubscriber object respresenting it); 
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	            		you'll call a method on the SipPhone (such as addBuddy()) which will initiate a SUBSCRIBE/NOTIFY sequence to your server/application; 
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	            	you'll use methods of the returned PresenceSubscriber object to step through the SUBSCRIBE/NOTIFY sequence and validate the messages and presence information sent by your server/application, like you see being done below.
+					</para>
+				</listitem>
+				</itemizedlist>
+				<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+private SipStack sipStack;
+private SipPhone ua;
+etc. 
+
+/*
+ * @see SipTestCase#setUp()
+ */
+public void setUp() throws Exception
+{
+    try
+    {
+        sipStack = new SipStack(testProtocol, myPort, properties);
+        SipStack.setTraceEnabled(properties.getProperty("sipunit.trace")
+                .equalsIgnoreCase("true")
+                || properties.getProperty("sipunit.trace")
+                        .equalsIgnoreCase("on"));
+    }
+    catch (Exception ex)
+    {
+        fail("Exception: " + ex.getClass().getName() + ": "
+                + ex.getMessage());
+        throw ex;
+    }
+
+    try
+    {
+        ua = sipStack.createSipPhone("sip:amit@nist.gov");
+    }
+    catch (Exception ex)
+    {
+        fail("Exception creating SipPhone: " + ex.getClass().getName()
+                + ": " + ex.getMessage());
+        throw ex;
+    }
+}
+
+ /*
+ * @see SipTestCase#tearDown()
+ */
+public void tearDown() throws Exception
+{
+    ua.dispose();
+    sipStack.dispose();
+}
+
+public void testEndSubscription()
+{
+    String buddy = "sip:becky@cafesip.org"; // I am amit
+
+    try
+    {
+        // create far end (presence server simulator, fictitious buddy)
+        PresenceNotifySender ub = new PresenceNotifySender(sipStack
+                .createSipPhone(host, testProtocol, myPort, buddy));
+
+        // prepare far end to receive SUBSCRIBE
+        assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
+        Thread.sleep(500);
+
+        // do the SUBSCRIBE sequence
+        PresenceSubscriber s = ua.addBuddy(buddy, 2000);
+        assertNotNull(s);
+        assertTrue(s.processResponse(1000));
+        assertTrue(s.isSubscriptionActive());
+
+        // do the NOTIFY sequence
+        String notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null,
+                notify_body, 2400, false));
+        RequestEvent reqevent = s.waitNotify(1000);
+        assertNotNull(reqevent);
+        assertNoSubscriptionErrors(s);
+        Response response = s.processNotify(reqevent);
+        assertNotNull(response);
+        assertTrue(s.isSubscriptionActive());
+
+        // check PRESENCE info
+        HashMap<String, PresenceDeviceInfo> devices = s
+                .getPresenceDevices();
+        assertEquals(1, devices.size());
+        PresenceDeviceInfo dev = devices.get("1");
+        assertNotNull(dev);
+        assertEquals("closed", dev.getBasicStatus());
+        assertEquals(0, s.getPresenceExtensions().size());
+        assertEquals(0, s.getPresenceNotes().size());
+
+        // reply to the NOTIFY
+        assertTrue(s.replyToNotify(reqevent, response));
+
+        // check buddy lists
+        assertEquals(1, ua.getBuddyList().size());
+        assertEquals(0, ua.getRetiredBuddies().size());
+        assertNoSubscriptionErrors(s);
+
+        // Now, end the subscription from our side
+
+        // prepare far end to receive SUBSCRIBE
+        assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Ended"));
+        Thread.sleep(500);
+
+        // remove buddy from contacts, do the SUBSCRIBE sequence
+        assertTrue(s.removeBuddy(300));
+        assertFalse(s.isRemovalComplete());
+
+        // check immediate impacts - buddy lists, subscription state
+        assertEquals(0, ua.getBuddyList().size());
+        assertEquals(1, ua.getRetiredBuddies().size());
+        assertNoSubscriptionErrors(s);
+        assertNotNull(ua.getBuddyInfo(buddy)); // can still be found
+        assertEquals(s.getTargetUri(), ua.getBuddyInfo(buddy)
+                .getTargetUri());
+        assertFalse(s.isSubscriptionActive());
+        assertFalse(s.isSubscriptionPending());
+        assertTrue(s.isSubscriptionTerminated());
+        String reason = s.getTerminationReason();
+        assertNotNull(reason);
+
+        // check the return info
+        assertEquals(SipResponse.OK, s.getReturnCode());
+        ResponseEvent resp_event = s.getCurrentResponse();
+        response = resp_event.getResponse();
+        assertEquals("OK Ended", response.getReasonPhrase());
+        assertEquals(0, response.getExpires().getExpires());
+        assertEquals(response.toString(), s.getLastReceivedResponse()
+                .getMessage().toString());
+        ArrayList<SipResponse> received_responses = s
+                .getAllReceivedResponses();
+        assertEquals(2, received_responses.size());
+        assertEquals(response.toString(), received_responses.get(1)
+                .toString());
+
+        // process the received response
+        assertTrue(s.processResponse(300));
+
+        // check the response processing results
+        assertFalse(s.isSubscriptionActive());
+        assertFalse(s.isSubscriptionPending());
+        assertTrue(s.isSubscriptionTerminated());
+        assertEquals(reason, s.getTerminationReason());
+        assertEquals(0, s.getTimeLeft());
+        assertEquals(0, ua.getBuddyList().size());
+        assertEquals(1, ua.getRetiredBuddies().size());
+        assertNoSubscriptionErrors(s);
+
+        // tell far end to send a NOTIFY
+        notify_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"> <tuple id=\"3\"> <status> <basic>open</basic> </status> </tuple> </presence>";
+        assertTrue(ub.sendNotify(SubscriptionStateHeader.TERMINATED,
+                "done", notify_body, 0, false));
+
+        // get the NOTIFY
+        reqevent = s.waitNotify(1000);
+        assertNotNull(reqevent);
+        assertNoSubscriptionErrors(s);
+
+        // process the NOTIFY
+        response = s.processNotify(reqevent);
+        assertNotNull(response);
+        assertEquals(0, ua.getBuddyList().size());
+        assertEquals(1, ua.getRetiredBuddies().size());
+        assertNoSubscriptionErrors(s);
+
+        // check the processing results
+        assertTrue(s.isSubscriptionTerminated());
+        assertNotNull(s.getTerminationReason());
+        assertFalse(reason.equals(s.getTerminationReason())); // updated
+        assertEquals(0, s.getTimeLeft());
+        assertEquals(SipResponse.OK, s.getReturnCode()); // response code
+
+        // check PRESENCE info - devices/tuples
+        // -----------------------------------------------
+        devices = s.getPresenceDevices();
+        assertEquals(1, devices.size());
+        dev = devices.get("3");
+        assertNotNull(dev);
+        assertEquals("open", dev.getBasicStatus());
+        assertEquals(-1.0, dev.getContactPriority(), 0.001);
+        assertNull(dev.getContactURI());
+        assertEquals(0, dev.getDeviceExtensions().size());
+        assertEquals(0, dev.getDeviceNotes().size());
+        assertEquals("3", dev.getId());
+        assertEquals(0, dev.getStatusExtensions().size());
+        assertNull(dev.getTimestamp());
+
+        // check PRESENCE info - top-level extensions
+        // -----------------------------------------------
+        assertEquals(0, s.getPresenceExtensions().size());
+
+        // check PRESENCE info - top-level notes
+        // -----------------------------------------------
+        assertEquals(0, s.getPresenceNotes().size());
+
+        // reply to the NOTIFY
+        assertTrue(s.replyToNotify(reqevent, response));
+
+    }
+    catch (Exception e)
+    {
+        e.printStackTrace();
+        fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+    }
+}
+		]]></programlisting> 
+			</section>
+		</section>
+	</section>
+	<section>
+		<title>REFER Support</title>
+		<para>This section describes the event subscription/notification capabilities implemented in &SHORT_PLATFORM_NAME; and how you can use them in your test program.  </para>
+		<section>
+			<title>Supported Event Packages</title>
+			<para>&SHORT_PLATFORM_NAME; supports the following REFER capabilities: </para>
+			<itemizedlist>
+	          	<listitem>
+	            	<para>
+outbound REFER handling, in-dialog or out-of-dialog
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+implicit subscription support including refresh, unsubscribe
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+"message/sipfrag" NOTIFY body format
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+validation per RFC of received REFER/SUBSCRIBE responses, NOTIFY requests
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+authentication challenge handling for sent REFERs and SUBSCRIBEs (DIGEST method only)
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+user control over the event "id" and other information sent in a given REFER/SUBSCRIBE request or NOTIFY response.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>Implementation</title>
+				<para>A test program using the primary &SHORT_PLATFORM_NAME; refer capabilities (SipPhone.refer() and ReferSubscriber class methods) can act as a "Subscriber" side User Agent. That is, it can send REFER and SUBSCRIBE messages and receive/validate NOTIFY messages. Your test program can control the contents of outgoing REFER/SUBSCRIBE requests and NOTIFY responses. By default, the messages are correctly formed and the content is valid.
+				</para>
+				<para>A test program using the primary &SHORT_PLATFORM_NAME; refer capabilities (SipPhone.refer() and ReferSubscriber class methods) does not receive REFER/SUBSCRIBE messages or send NOTIFY messages. It cannot be used to act as the "Notifier" side User Agent.
+				</para>
+				<para>A test program using the &SHORT_PLATFORM_NAME; ReferNotifySender utility class can simulate the refer-ee (Notifier-side) UA for the purpose of testing a referrer (Subscriber-side) UA. That is, it can receive REFER/SUBSCRIBE messages and send NOTIFY messages. Your test program tells it the values to send in REFER/SUBSCRIBE responses (status code, reason phrase) and NOTIFY requests (subscription state, etc.). However, the ReferNotifySender doesn't validate messages it receives - your test program will have to do that if you use it. There are numerous refer tests in the examples directory that use it so look there if you need an example.
+				</para>
+				<para>A test class method using both the primary &SHORT_PLATFORM_NAME; refer capabilities (SipPhone.refer() and ReferSubscriber class methods) for one side of a subscription (the referrer "Subscriber") and the ReferNotifySender utility class for the other side of the subscription (the refer-ee "Notifier") can be used to test/generate REFER/SUBSCRIBE/NOTIFY traffic through network elements such as a proxy.</para>
+			</section>
+			<section>
+				<title>Overview of Operation</title>
+				<para>Here's how it works (see accompanying diagram below):</para>
+				<orderedlist>
+		          	<listitem>
+		            	<para>
+Just like a normal call processing test, your refer test class creates one or more SipPhone objects. If authentication will be required, give the necessary credentials to the SipPhone by calling addUpdateCredential().
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+You can use the convenience method SipPhone.getUri() to prepare a 'referTo' SipURI based on method, join, replaces, etc.
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+Next, call refer() on the SipPhone. There are multiple versions of this method that support in-dialog or out-of-dialog REFER. This causes a REFER message to be created and sent to the Far End, and your test program is blocked on the method call until a first response is received. Assuming a favorable response is received (as opposed to a fatal error response), the SipPhone method returns a ReferSubscriber object that will represent the implicit subscription for the life of the subscription.
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+At this point, you'll now use methods of the returned ReferSubscriber class to step through the remainder of this REFER/NOTIFY sequence. (Note, you may also be doing other things with the SipPhone or with its buddy list as well, besides this particular sequence). You may check the status code of the initial response that was received before calling processResponse() which will complete the REFER transaction handling. This is another blocking method that processes the response just received and handles the remainder of the REFER operation, collecting and validating message(s) received from the Far End. When the REFER transaction is over, processResponse() returns a success/fail indication to your test program. Assuming success, you can proceed by checking resulting info as shown in the diagram below.
+						</para>
+					</listitem>					
+					<listitem>
+		            	<para>
+						Your next step, whenever your test program is ready, is to collect the NOTIFY message from the Far End by calling waitNotify(). This is a blocking method that waits for a NOTIFY message to come in if one hasn't come in already as a result of the REFER sequence or for any other reason. Once a NOTIFY is received, waitNotify() returns the received request to your program as a RequestEvent object. You may examine the NOTIFY request yourself if you want to use the <ulink url="https://mobicents.ci.cloudbees.com/job/JAIN-SIP/lastSuccessfulBuild/artifact/jain-sip/javadoc/index.html">JAIN SIP API</ulink>  to do it, but you don't have to. Pass the NOTIFY object to processNotify() which will do several things:
+						</para>
+						<para>
+						     - validate the content of the received NOTIFY, body included
+						</para>
+						<para>
+ 							- update the ReferSubscriber object with the received information (subscription state, etc)
+      					</para>
+     					<para>
+     						 - create the proper, correct NOTIFY response that should be sent back to the Far End (but don't sent it yet)
+     				 	</para>
+     				 	<para>
+						The composed response is returned to you by processNotify(). You may examine it yourself, or modify/corrupt it if you want to use the <ulink url="https://mobicents.ci.cloudbees.com/job/JAIN-SIP/lastSuccessfulBuild/artifact/jain-sip/javadoc/index.html">JAIN SIP API</ulink> to do it. Regardless, you can see the NOTIFY processing results by calling the getXyz() methods on the ReferSubscriber object as shown in the diagram below.
+						</para>
+					</listitem>
+					<listitem>
+		            	<para>
+						Finally, call replyToNotify(), passing it the response to send to the Far End. You get back an indication of whether or not the message was sent successfully.
+						</para>
+					</listitem>
+				</orderedlist>
+				<para>
+				That completes the handling of the REFER/NOTIFY sequence. It might seem like alot just to get through one sequence, but you'll see that your test program is straight-line and straigtforward. Also, these steps can be put in a single blocking convenience method if this sequence is not the focus of the test method. A refresh() and unsubscribe() call on the ReferSubscriber object works just the same way, except a SUBSCRIBE is sent instead of REFER, and a new ReferSubscriber object isn't created (the existing one continues to be used).
+				</para>
+				<figure>
+			    <title>SIP REFER Diagram</title>
+			    <mediaobject
+			      id="figure-ReferOverview">
+			      <imageobject>
+			        <imagedata
+			          width="440"
+			          align="center"
+			          fileref="images/ReferOverview.png"
+			          format="PNG"/>
+			      </imageobject>
+			    </mediaobject>
+			  </figure>		
+			</section>
+			<section>
+				<title>Example</title>
+				<para>
+				This example shows a complete test method that sends out an in-dialog REFER message (from the called side), establishing a subscription via the REFER/NOTIFY sequence and then refreshes the subscription via a SUBSCRIBE/NOTIFY sequence. Please read the Event Subscription (Refer) section of this document that explains the procedure in detail. The main methods your test uses to step through the REFER/NOTIFY and SUBSCRIBE/NOTIFY sequences are highlighted in bold.				
+				</para>			
+				<para>
+				NOTE: this test was written to validate the &SHORT_PLATFORM_NAME; API itself (referrer client-side handling, which in this example is the called party of an established session) - it uses a utility class, ReferNotifySender, at the calling side to simulate the refer-ee. Your test method wouldn't need that (simulator) side of it since your test target would act as the calling ("ua") side of this example. That is, in this scenario your test target would respond to the REFER/SUBSCRIBE messages sent out by this test, send NOTIFY messages to this test, and this test would just have the code for the called/referrer side ("ub" below). Also, this test contains extra asserts to verify the &SHORT_PLATFORM_NAME; API handling which your test wouldn't need. But, your test will use the same principles you see below:
+				</para>
+				<itemizedlist>
+	          	<listitem>
+	            	<para>
+						you'll use a SipPhone object ("ub" in the example below) as the referrer;  
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	            		you'll call a method on the SipPhone (refer()) which will initiate a REFER/NOTIFY sequence with your server/application;  
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	            	you'll use methods of the returned ReferSubscriber object to step through the REFER/NOTIFY sequence and validate the messages sent by your server/application.
+					</para>
+				</listitem>
+				<listitem>
+	            	<para>
+	            	you'll use the methods of the ReferSubscriber to initiate a refresh (as in the example below) or unsubscribe sequence - IE, send SUBSCRIBE, receive NOTIFY.
+					</para>
+				</listitem>
+				</itemizedlist>
+				<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+private SipStack sipStack;
+private SipPhone ua;
+etc.
+
+/*
+ * @see SipTestCase#setUp()
+ */
+public void setUp() throws Exception
+{
+    try
+    {
+        sipStack = new SipStack(testProtocol, myPort, properties);
+        SipStack.setTraceEnabled(properties.getProperty("sipunit.trace")
+                .equalsIgnoreCase("true")
+                || properties.getProperty("sipunit.trace")
+                        .equalsIgnoreCase("on"));
+    }
+    catch (Exception ex)
+    {
+        fail("Exception: " + ex.getClass().getName() + ": "
+                + ex.getMessage());
+        throw ex;
+    }
+
+    try
+    {
+        ua = sipStack.createSipPhone("sip:amit@nist.gov");
+    }
+    catch (Exception ex)
+    {
+        fail("Exception creating SipPhone: " + ex.getClass().getName()
+                + ": " + ex.getMessage());
+        throw ex;
+    }
+}
+
+/*
+ * @see SipTestCase#tearDown()
+ */
+public void tearDown() throws Exception
+{
+    ua.dispose();
+    sipStack.dispose();
+}
+
+public void testOutboundIndialogBrefersAwithRefresh() throws Exception
+{
+    // A calls B, call established
+    // B sends in-dialog REFER to A, gets 202 Accepted
+    // A sends state-active NOTIFY to B, gets OK in response
+    // B refreshes the subscription
+    // A sends subscription-terminating NOTIFY to B, gets OK in response
+
+    // create and set up the B party
+    SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
+    SipCall b = ub.createSipCall();
+    assertTrue(b.listenForIncomingCall());
+
+    // make the call from A
+    SipCall a = ua.makeCall("sip:becky@cafesip.org", properties
+            .getProperty("javax.sip.IP_ADDRESS")
+            + ':' + myPort + '/' + testProtocol);
+    assertLastOperationSuccess(ua.format(), ua);
+
+    // B side answer the call
+    assertTrue(b.waitForIncomingCall(1000));
+    assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+    Thread.sleep(20);
+    assertTrue(b.sendIncomingCallResponse(Response.OK,
+            "Answer - Hello world", 0));
+    Thread.sleep(200);
+
+    // A side finish call establishment
+    assertAnswered("Outgoing call leg not answered", a);
+    a.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    Thread.sleep(1000);
+
+    // B sends in-dialog REFER to A, gets 202 Accepted
+    // ****************************************************************
+    // A side - prepare to receive REFER
+    ReferNotifySender referHandler = new ReferNotifySender(ua);
+    referHandler.setDialog(a.getDialog());
+    assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED,
+            "Accepted"));
+
+    // B side - create referTo URI and send a REFER message
+    SipURI referTo = ub.getUri("sip:", "dave@denver.example.org", "udp",
+            "INVITE", null, null, null, null, null);
+
+    ReferSubscriber subscription = ub.refer(b.getDialog(), referTo,
+            "myeventid", 4000);
+    if (subscription == null)
+    {
+        fail(ub.getReturnCode() + ':' + ub.getErrorMessage());
+    }
+
+    // A side - verify received REFER contents
+    RequestEvent requestEvent = referHandler.getLastReceivedRequest()
+            .getRequestEvent();
+    assertNotNull(requestEvent);
+    Request req = requestEvent.getRequest();
+    assertEquals(SipRequest.REFER, req.getMethod());
+    assertEquals(a.getDialogId(), requestEvent.getDialog().getDialogId());
+    assertEquals("myeventid", ((EventHeader) req
+            .getHeader(EventHeader.NAME)).getEventId());
+
+    // B side - check the initial results
+    assertEquals(SipResponse.ACCEPTED, subscription.getReturnCode());
+    assertTrue(subscription.isSubscriptionPending());
+    assertEquals(1, ub.getRefererList().size());
+    assertEquals(subscription, ub.getRefererInfoByDialog(b.getDialogId())
+            .get(0));
+
+    // B side - process the received response
+    assertTrue(subscription.processResponse(1000));
+    assertNoSubscriptionErrors(subscription);
+
+    // B side - check the response processing results
+    assertTrue(subscription.isSubscriptionPending());
+    assertNull(subscription.getTerminationReason());
+    assertEquals(0, subscription.getTimeLeft());
+
+    // A sends state-active NOTIFY to B, gets OK in response
+    // **************************************************************
+    // A side - send a NOTIFY
+    Thread.sleep(20);
+    Request notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+    notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
+            null, SubscriptionStateHeader.ACTIVE, null,
+            "SIP/2.0 100 Trying\n", 60);
+    SipTransaction trans = referHandler.sendStatefulNotify(notifyRequest,
+            false);
+    assertNotNull(trans);
+
+    // B side - wait for the NOTIFY
+    RequestEvent reqevent = subscription.waitNotify(1000);
+    assertNotNull(reqevent);
+
+    // B side - examine the NOTIFY request object, verify subscription
+    // message getters
+    Request request = reqevent.getRequest();
+    assertEquals(60, ((SubscriptionStateHeader) request
+            .getHeader(SubscriptionStateHeader.NAME)).getExpires());
+    SipRequest sipreq = subscription.getLastReceivedRequest();
+    assertBodyContains(sipreq, "SIP/2.0 100 Trying");
+    assertHeaderContains(sipreq, EventHeader.NAME, "myeventid");
+
+    // B side - process the NOTIFY
+    resp = subscription.processNotify(reqevent);
+    assertNotNull(resp);
+    assertNoSubscriptionErrors(subscription);
+
+    // B side - check the NOTIFY processing results on subscription
+    assertTrue(subscription.isSubscriptionActive());
+    assertTrue(subscription.getTimeLeft() <= 60
+            && subscription.getTimeLeft() > 55);
+
+    // B side - check the NOTIFY response that was created
+    assertEquals(SipResponse.OK, resp.getStatusCode());
+    assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+    // B side - reply to the NOTIFY
+    assertTrue(subscription.replyToNotify(reqevent, resp));
+
+    // A side - verify the NOTIFY response got sent by B
+    Object obj = referHandler.waitResponse(trans, 10000);
+    assertNotNull(obj);
+    assertTrue(obj instanceof ResponseEvent);
+    assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse()
+            .getStatusCode());
+
+    // B refreshes the subscription
+    // **************************************************************
+    // prepare A to receive SUBSCRIBE
+    assertTrue(referHandler.processSubscribe(2000, SipResponse.OK, "OK"));
+    // refresh
+    assertTrue(subscription.refresh(10, "eventid-x", 500));
+    assertEquals(SipResponse.OK, subscription.getReturnCode());
+   assertEquals("eventid-x", ((EventHeader) subscription
+            .getLastSentRequest().getHeader(EventHeader.NAME)).getEventId());
+    assertTrue(subscription.processResponse(200));
+    assertTrue(subscription.isSubscriptionActive());
+    assertTrue(subscription.getTimeLeft() <= 10
+            && subscription.getTimeLeft() > 5);
+
+    // A sends subscription-terminating NOTIFY to B, gets OK in response
+    // **************************************************************
+    // A side - send a NOTIFY
+    Thread.sleep(20);
+    notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+    notifyRequest = referHandler.addNotifyHeaders(notifyRequest, null,
+            null, SubscriptionStateHeader.TERMINATED, "noresource",
+            "SIP/2.0 100 Trying\n", 0);
+    trans = referHandler.sendStatefulNotify(notifyRequest, false);
+    assertNotNull(trans);
+
+    // B side - wait for the NOTIFY
+    reqevent = subscription.waitNotify(1000);
+    assertNotNull(reqevent);
+
+    // B side - examine the NOTIFY request object, verify subscription
+    // message getters
+    request = reqevent.getRequest();
+    assertTrue(((SubscriptionStateHeader) request
+            .getHeader(SubscriptionStateHeader.NAME)).getExpires() < 1);
+    sipreq = subscription.getLastReceivedRequest();
+    assertTrue(sipreq.isNotify());
+    assertBodyContains(sipreq, "SIP/2.0 100 Trying");
+
+    // B side - process the NOTIFY
+    resp = subscription.processNotify(reqevent);
+    assertNotNull(resp);
+    assertNoSubscriptionErrors(subscription);
+
+    // B side - check the NOTIFY processing results on subscription
+    assertTrue(subscription.isSubscriptionTerminated());
+    assertEquals("noresource", subscription.getTerminationReason());
+
+    // B side - check the NOTIFY response that was created
+    assertEquals(SipResponse.OK, resp.getStatusCode());
+    assertTrue(resp.getReasonPhrase().equals("OK"));
+    assertEquals(SipResponse.OK, subscription.getReturnCode());
+
+    // B side - reply to the NOTIFY
+    assertTrue(subscription.replyToNotify(reqevent, resp));
+
+    // A side - verify the NOTIFY response got sent by B
+    obj = referHandler.waitResponse(trans, 10000);
+    assertNotNull(obj);
+    assertTrue(obj instanceof ResponseEvent);
+    assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse()
+            .getStatusCode());
+
+}
+
+		]]></programlisting> 
+		</section>
+	</section>
+	<section>
+		<title>STUN Support</title>
+		<para>If you want to run your &SHORT_PLATFORM_NAME; test from behind a NAT and register with a proxy on the public internet, you need to do a couple of extra things in your test program. 
+		</para>
+		<para>First, at the beginning your test and before creating your SIP Stack and any SipPhones/SipSessions, determine the public IP address/port for your &SHORT_PLATFORM_NAME; test program to use. For this, you can use the stun4j API (the jar is in the &SHORT_PLATFORM_NAME; lib) to access a STUN server on the internet and send messages to it, and from that, you'll be able to find out your public address/port. Use the example code below - the getPublicAddress() method will do all of this job for you. If the STUN server used in the example code (stun.fwdnet.net) doesn't work, there are some public ones freely available for this purpose - google for it or visit http://www.voip-info.org/wiki-STUN which lists some STUN servers and also has other useful information. 
+		</para>
+		<para>Second, once you've determined your public address as described above and then created your &SHORT_PLATFORM_NAME; SipStack and SipPhone/SipSession (as usual, using your private address), you can then call the method setPublicAddress(publichostaddress, publicport) on your SipPhone/SipSession. This method replaces the private host/port values in this Sip agent's contact address, via, and listening point 'sentby' components with the public host and port parameters you pass in (ie, the publicly accessible address). Then whenever your SipPhone/SipSession communicates with the public SIP server on the internet, the SIP server will be able to communicate back to your test program via its public address. See the TestWithStun.java file in the &SHORT_PLATFORM_NAME; test/examples directory for a full example of how to do it (snippets below). You can try out that test file by following the instructions in the file header comments.
+		</para>
+		<para>At any point in your test program, if you need to find out the public address you're using, call the SipPhone or SipSession method getStackAddress().</para>
+		<section>
+			<title>Example</title>
+			<para>Here are snippets from the TestWithStun.java test file in the &SHORT_PLATFORM_NAME; test/examples directory. The setUp() method calls getPublicAddress() which uses a public STUN server to determine the publicly accessible IP address and port to use. Then the setUp() method creates the SipStack and SipPhone, calling setPublicAddress() on the SipPhone so that it will be able to receive messages from the SIp server on the internet. See TestWithStun.java test file in the &SHORT_PLATFORM_NAME; test/examples directory for complete details. 
+			</para>
+<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+public void setUp() throws Exception
+{
+    // use the stun server to find out my public address
+    assertTrue(getPublicAddress());
+
+    try
+    {
+        sipStack = new SipStack(testProtocol, myPort, properties);
+        SipStack.setTraceEnabled(true);
+    }
+    catch (Exception ex)
+    {
+        fail("Exception: " + ex.getClass().getName() + ": "
+                + ex.getMessage());
+        throw ex;
+    }
+
+    SipStack.trace("My public IP address = " + publicIP + ", port = "
+            + publicPort);
+
+    try
+    {
+        ua = sipStack.createSipPhone(properties
+                .getProperty("sipunit.proxy.host"), testProtocol,
+                proxyPort, myUrl);
+
+        ua.setPublicAddress(publicIP, publicPort);
+    }
+    catch (Exception ex)
+    {
+        fail("Exception creating SipPhone: " + ex.getClass().getName()
+                + ": " + ex.getMessage());
+        throw ex;
+    }
+}
+
+public boolean getPublicAddress()
+{
+    StunAddress localAddr = null;
+    StunAddress serverAddr = null;
+
+    try
+    {
+        localAddr = new StunAddress(InetAddress.getLocalHost()
+                .getHostAddress(), myPort);
+    }
+    catch (UnknownHostException e)
+    {
+        e.printStackTrace();
+        return false;
+    }
+
+    serverAddr = new StunAddress("stun.fwdnet.net", 3478);
+    NetworkConfigurationDiscoveryProcess addressDiscovery = new NetworkConfigurationDiscoveryProcess(
+            localAddr, serverAddr);
+
+    try
+    {
+        addressDiscovery.start();
+    }
+    catch (StunException e)
+    {
+        e.printStackTrace();
+        return false;
+    }
+
+    StunDiscoveryReport stunReport = null;
+    try
+    {
+        stunReport = addressDiscovery.determineAddress();
+    }
+    catch (StunException e)
+    {
+        e.printStackTrace();
+        return false;
+    }
+
+    StunAddress stunAddress = stunReport.getPublicAddress();
+
+    publicIP = stunAddress.getSocketAddress().getAddress().getHostAddress();
+    publicPort = stunAddress.getSocketAddress().getPort();
+
+    // must shutdown stun process, otherwise, stun4j is holding on the same
+    // udp port
+
+    addressDiscovery.shutDown();
+
+    return true;
+}
+     
+		]]></programlisting> 
+		</section>
+	</section>
+</chapter>

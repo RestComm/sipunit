@@ -1,0 +1,281 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "SipUnit_User_Guide.ent">
+%BOOK_ENTITIES;
+]>
+<!-- chapter id nickname: ittsss -->
+<chapter id="WalkThrough_SipUnit">
+	<title>Putting It All Together - How To Write Your Test Class</title>
+	<para>Writing a Java test class that uses the &SHORT_PLATFORM_NAME; API is alot like writing a JUnit test class.</para>
+	<section>
+		<title>JUnit 3 style test class that uses &SHORT_PLATFORM_NAME;</title>
+		<orderedlist>
+	         	<listitem>
+	           	<para>
+				implement a subclass of SipTestCase 
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				define instance attributes that store information needed by each test in the class, such as for &SHORT_PLATFORM_NAME; SipStack, SipPhone objects 
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				initialize the setup for each test by overriding method setUp() 
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				clean-up after each test by overriding tearDown() 
+				</para>				
+			</listitem>
+			<listitem>
+	           	<para>
+				write one or more tests, each of which is a method beginning with the letters "test", that use &SHORT_PLATFORM_NAME; objects* and SipTestCase assertions. 
+				</para>				
+			</listitem>			
+		</orderedlist>
+	</section>
+	<section>
+		<title>JUnit 4 style test class that uses &SHORT_PLATFORM_NAME;</title>
+		<orderedlist>
+	         	<listitem>
+	           	<para>
+				write a pojo with JUnit 4 annotations (see release notes for JUnit 4.X releases at junit.org for details)  
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				define instance attributes that store information needed by each test in the class, such as for &SHORT_PLATFORM_NAME; SipStack, SipPhone objects  
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				initialize/cleanup tests using methods annotated with @Before, @After per JUnit 4 annotations  
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				 use static imports for the SipAssert methods that your tests need 
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				write one or more test methods that use &SHORT_PLATFORM_NAME; objects* and SipAssert assertions. 
+				</para>				
+			</listitem>			
+		</orderedlist>
+		<para>*The code in your test methods will: </para>
+		<itemizedlist>
+	         	<listitem>
+	           	<para>
+				create <ulink url="https://mobicents.ci.cloudbees.com/job/SipUnit/lastSuccessfulBuild/artifact/sipunit/target/apidocs/index.html">&SHORT_PLATFORM_NAME; API</ulink> objects (ie, SipPhone, SipCall, etc.)  
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				call method(s) on the objects to set up and take some kind of action against the test target  
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				check the results using assert methods found in the SipTestCase or SipAssert class along with any additional assertions you need from the JUnit framework.  
+				</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+	<section>
+		<title>Examples</title>
+		<para>Here are some example test class snippets that use the &SHORT_PLATFORM_NAME; API. You may want to look at the<ulink url="https://mobicents.ci.cloudbees.com/job/SipUnit/lastSuccessfulBuild/artifact/sipunit/target/apidocs/index.html">&SHORT_PLATFORM_NAME; javadoc</ulink> while looking at this so you can see what some of the methods do. This test uses a proxy - not important for purposes of this example, but you can see <link linkend='ProxyConsiderations'>Proxy Considerations</link> for details on testing with and without a proxy.</para>
+		<section>
+			<title>Just Like JUnit</title>
+			<para>Like with JUnit, a test class (JUnit 3-based) using &SHORT_PLATFORM_NAME; extends JUnit TestCase - by way of SipTestCase - and contains setUp(), tearDown(), and one or more testXxx() methods.</para>
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+import org.cafesip.sipunit.SipCall;
+import org.cafesip.sipunit.SipPhone;
+import org.cafesip.sipunit.SipResponse;
+import org.cafesip.sipunit.SipStack;
+import org.cafesip.sipunit.SipTestCase;
+import org.cafesip.sipunit.SipTransaction;
+
+public class TestWithProxyNoAuthentication extends SipTestCase
+{
+    private SipStack sipStack;
+    private SipPhone ua;
+    ....
+
+    public void setUp() throws Exception
+    {
+        sipStack = new SipStack(null, -1);
+        ua = sipStack.createSipPhone(..., "sip:amit@nist.gov"); // create user a
+    }
+
+    public void tearDown() throws Exception
+    {
+        ua.dispose();
+        sipStack.dispose();
+    }
+
+    /**
+     * This test illustrates usage of SipTestCase. In it, user a calls user b, user b sends RINGING and OK, 
+     *  the test verifies these are received by user a, then  the call proceeds through disconnect (BYE).
+     */
+    public void testBothSidesCallerDisc()
+    {
+        ua.register(null, 1800);
+        assertLastOperationSuccess("Caller registration failed - "
+                + ua.format(), ua); 
+
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone(..., "sip:becky@nist.gov");  // create user b
+
+            ub.register(null, 600); 
+            assertLastOperationSuccess(ub);  // standard JUnit fail output
+
+            SipCall a = ua.createSipCall();
+            SipCall b = ub.createSipCall();
+
+            b.listenForIncomingCall();
+            Thread.sleep(10);
+
+             a.initiateOutgoingCall("sip:becky@nist.gov", null);
+
+             .... <etc., like Call Flow Example above>
+			]]></programlisting> 
+		</section>
+		<section>
+			<title>A Little Can Do A lot</title>
+			<para>A short test method can exercise a lot of functionality.</para>
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+	public void testBothSidesAsynchMakeCall() // a calls b via proxy, testing the proxy
+    {
+        assertTrue(ua.register("amit", "a1b2c3d4", null, 0, 10000));
+
+        try
+        {
+            SipPhone ub = sipStack.createSipPhone(..., "sip:becky@nist.gov");
+            assertTrue(ub.register("becky", "a1b2c3d4", null, 600, 5000));
+            SipCall b = ub.createSipCall();
+
+             // prepare the called side
+            b.listenForIncomingCall();
+            Thread.sleep(50);
+
+             // make the call - a calls b
+            SipCall a = ua.makeCall("sip:becky@nist.gov", null); 
+            assertLastOperationSuccess(ua.format(), ua);
+
+            assertTrue(b.waitForIncomingCall(0)); // blocks until b receives INVITE
+
+             // b sends RINGING
+            assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+            Thread.sleep(500);
+
+             // b sends answer
+            assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+            Thread.sleep(500);
+
+             // verify RINGING was received by a
+            assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a)
+;
+             // verify OK was received by a
+            assertAnswered("Outgoing call leg not answered", a);
+           
+             // finish off the call
+            assertTrue(a.sendInviteOkAck());
+            assertTrue(a.listenForDisconnect());
+            Thread.sleep(100);
+
+            assertTrue(b.disconnect());
+
+            assertTrue(a.waitForDisconnect(5));
+            assertTrue(a.respondToDisconnect());
+
+            ub.dispose();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
+    }
+			]]></programlisting> 
+		</section>
+		<section>
+			<title>There are Many Ways to Skin a Cat</title>
+			<para>Your test code can verify expected results in different ways - they all have their pros and cons.</para>
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+a.initiateOutgoingCall("sip:becky@nist.gov", null);
+assertLastOperationSuccess("a initiate call - " + a.format(), a);
+			]]></programlisting> 
+			<para>Outputs operation error details if the test fails, but requires two lines of code.</para>
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+boolean status_ok = a.initiateOutgoingCall("sip:becky@nist.gov", null);
+assertTrue("Initiate outgoing call failed - " + a.format(),  status_ok);
+			]]></programlisting> 
+			<para>Same as above - except now the SIP action (initiateOutgoingCall) is hidden in the middle of a line and harder to see.</para>
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+assertTrue("Initiate outgoing call failed",  a.initiateOutgoingCall("sip:becky@nist.gov", null));
+			]]></programlisting> 
+			<para>Nice and compact, but...</para>
+			<itemizedlist>
+	         	<listitem>
+	           	<para>
+				 no operation error details if the test fails - a.format() as a first parameter won't work (won't have the results yet to format)   
+				</para>
+			</listitem>
+			<listitem>
+	           	<para>
+				the SIP action is hidden in the middle and harder to see.  
+				</para>
+			</listitem>			
+		</itemizedlist>			
+		</section>
+	</section>
+	<section>
+			<title>Running Your Test</title>
+			<para>Execute your &SHORT_PLATFORM_NAME; test class the same way you would execute any JUnit test class.  Your CLASSPATH must have in it:</para>
+			<itemizedlist>
+	         	<listitem>
+		           	<para>
+					 sipunit.jar along with the other jar files in the sipunit lib directory (jain-sip-api.jar, junit.jar, etc.)   
+					</para>
+				</listitem>
+				<listitem>
+		           	<para>
+					your &SHORT_PLATFORM_NAME; test classes, and any other class files you might be using along with the libraries they need.  
+					</para>
+				</listitem>			
+			</itemizedlist>		
+			<para>It is very common to run JUnit/&SHORT_PLATFORM_NAME; test classes using an IDE or Ant, which comes with a <ulink url="http://ant.apache.org/manual/OptionalTasks/junit.html">JUnit Task</ulink> for running tests. For a command line example, see the instructions in this document on <link linkend='Testing_Installation'>testing the installation</link>. If you'd like to see lots of details and options on running JUnit tests, the JUnit site has a comprehensive faq on <ulink url="http://junit.sourceforge.net/doc/faq/faq.htm#running">Running Tests</ulink>. If you refer to any of these materials, keep in mind that wherever junit.jar is referred to, the same applies to the sipunit lib jar files.</para>
+			<para>If your test class is using a proxy, have that available and running with the appropriate settings. See <link linkend='ProxyConsiderations'>Proxy Considerations</link> for more detail on this subject.</para>
+	</section>
+	<section id="Debugging">
+			<title>Debugging Your Test</title>
+			<para>To debug what's happening during a &SHORT_PLATFORM_NAME; test, turn on the &SHORT_PLATFORM_NAME; trace by adding this line of code to your test class setUp() method after you've created the SipStack object:</para>
+			<para><screen> SipStack.setTraceEnabled(true);</screen></para>
+			<para>You'll get some console output to help you see what is happening. The trace output also gets written to a log file which you can look at using an editor. You can see the test classes in the project for examples of turning on tracing.
+			</para>
+			<para>By default, the trace level is 16 which shows the messages and their contents. If you need more detailed tracing, pass in the properties parameter when creating the SipStack with the trace level set to 32 (ie, properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32")).
+			</para>
+			<para>A really nice way to see what's going on during a test run is to use the trace viewer tool from the JAIN-SIP project. The tool shows a graphical trace of SIP messages sent and received by your test class. You run the tool against the trace file generated by turning on tracing as described above. You can get the tool here: http://java.net/projects/jsip/sources/svn/show/tags/JAIN-SIP-1-2-165/src/tools/tracesviewer
+			</para>
+			<para>Here's an example of the trace viewer tool output for default (level 16) trace. Note in the call flow that the "OK-Answer - Hello world" message has been selected (it's in red) and its contents are detailed in the lower left part of the screen. You can see the contents of any message by selecting it in the call flow diagram.			
+			</para>
+			<figure>
+			    <title>SIP REFER Diagram</title>
+			    <mediaobject
+			      id="figure-TraceDebugging">
+			      <imageobject>
+			        <imagedata
+			          width="440"
+			          align="center"
+			          fileref="images/TraceScreenshot.jpg"
+			          format="PNG"/>
+			      </imageobject>
+			    </mediaobject>
+			  </figure>		
+	</section>
+</chapter>

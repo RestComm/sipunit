@@ -1,0 +1,245 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "SipUnit_User_Guide.ent">
+%BOOK_ENTITIES;
+]>
+<!-- chapter id nickname: ittsss -->
+<chapter>
+	<title>Getting started with &SHORT_PLATFORM_NAME;</title>
+	<para>In this chapter we will go over the steps necessary to install and use &SHORT_PLATFORM_NAME; to test SIP based Applications.</para>
+	<section>
+		<title>Installing &SHORT_PLATFORM_NAME;</title>
+		<para>Before installing &SHORT_PLATFORM_NAME;: Java (J2SE) 1.6 or higher is required - if you don't already have it, get and install J2SE.</para>
+		<para>To install the binary distribution of &SHORT_PLATFORM_NAME;, unzip the &SHORT_PLATFORM_NAME;-&VERSION;.zip file from.</para>
+
+		<para>Add the jars located in the &SHORT_PLATFORM_NAME;/lib directory to your CLASSPATH before executing any of the examples or your own &SHORT_PLATFORM_NAME; test class. </para>
+		
+		<para>Starting from version 2.0.0, the project has been "mavenized" which means that you can use &SHORT_PLATFORM_NAME; in your maven project. To do so, use the following dependency:</para>
+		
+		<programlisting linenumbering="unnumbered" role="XML"><![CDATA[
+		<dependency>
+		    <groupId>org.cafesip.sipunit</groupId>
+		    <artifactId>sipunit</artifactId>
+		    <version>2.0.0</version>
+		</dependency>
+		]]></programlisting>
+		
+		<para>
+		And also set the following repository:
+		</para>
+		
+		<programlisting linenumbering="unnumbered" role="XML"><![CDATA[
+		<repository>
+			<id>mobicents-public-repository-group</id>
+			<name>Mobicens Public Maven Repository Group</name>
+			<url>https://oss.sonatype.org/content/groups/public</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+			</snapshots>
+		</repository>
+		]]></programlisting>
+				
+	</section>
+	<section id="Testing_Installation">
+		<title>Testing the Binary Installation - Running an Example Test</title>
+		<para>You can check &SHORT_PLATFORM_NAME; out right away by running the TestNoProxy class in the &SHORT_PLATFORM_NAME;/examples directory (instructions below). Those tests should pass OK. For running some of the other example tests, a proxy or stun server is required. See the section on <link linkend='ProxyConsiderations'>Proxy Considerations</link> for details on testing with a proxy, and also look at the header comments in each test java file for the setup specific to a particular test class.</para> 
+
+		<para>TO RUN THE EXAMPLE TESTS: Since any test programs using &SHORT_PLATFORM_NAME; are an extension of the JUnit framework, they need to be run like a JUnit test program, using a JUnit test runner.  The command line way of doing this is shown in the example below. IDEs are pretty handy for running JUnit tests. More detail on running JUnit tests... Make sure the &SHORT_PLATFORM_NAME;/examples/java directory and the jars in &SHORT_PLATFORM_NAME;/lib are in the classpath, either by setting the CLASSPATH environmental variable beforehand to include them or by including them in the run command using the -cp option as below. Also when specifying the example test class to run, include the package prefix (ie, org.cafesip.&SHORT_PLATFORM_NAME;.test.classname).</para> 
+    
+		<para>EXAMPLE: to run the TestNoProxy test class, execute the following java command (for Windows, in this example, and this assumes the java installation 'bin' directory is on the PATH) from the &SHORT_PLATFORM_NAME;-&VERSION; top-level directory: 
+ 
+     	<screen>java -cp examples\java;lib\*  org.junit.runner.JUnitCore  org.cafesip.sipunit.test.noproxy.TestNoProxy</screen></para>
+    
+		<para>You should see the &SHORT_PLATFORM_NAME; trace output, the time it took to run and "OK (n tests)" when it finishes.</para>
+
+		<para>If you get a 'class not found' error running the above command, it is probably because you are using a version of java earlier than 1.6 (type "java -version" to see), in which case you'll need to specify the jars in the lib directory individually instead of using the lib\* wildcard.</para>
+	</section>
+	<section>
+		<title>&SHORT_PLATFORM_NAME; Architecture - Where Your Test Fits In</title>
+		<para>The diagram below shows the overall architecture. Your test class uses the <ulink url="https://mobicents.ci.cloudbees.com/job/SipUnit/lastSuccessfulBuild/artifact/sipunit/target/apidocs/index.html">&SHORT_PLATFORM_NAME; API,</ulink> and the &SHORT_PLATFORM_NAME; API uses the JUnit and the <ulink url="https://mobicents.ci.cloudbees.com/job/JAIN-SIP/lastSuccessfulBuild/artifact/jain-sip/javadoc/index.html">JAIN SIP</ulink> APIs.  The JUnit framework provides the test execution environment and some generic assert methods. The JAIN-SIP engine provides the capability to interact with the test target.</para>
+		<para>Classes in blue are used to invoke and interact with the test target out on the network. Which &SHORT_PLATFORM_NAME; classes and methods you use depends on the level of abstraction your test can get away with. The higher, the better - the easier and quicker it will be to write/maintain tests. More on this next.</para>
+		<para>Classes in green are used to verify the test target's behavior and provide the test execution environment.</para>
+		<para>Classes in green are used to verify the test target's behavior and provide the test execution environment.</para>
+		<para>If you want to see a more detailed illustration, check out the class diagram.</para>
+		<figure>
+		    <title>The SIP Viewer Trace</title>
+		    <mediaobject
+		      id="figure-TraceScreenshot">
+		      <imageobject>
+		        <imagedata
+		          width="440"
+		          align="center"
+		          fileref="images/TraceScreenshot.jpg"
+		          format="PNG"/>
+		      </imageobject>
+		    </mediaobject>
+		  </figure>
+	</section>
+	<section>
+		<title>The Key &SHORT_PLATFORM_NAME; API Classes - How to Interact With Your Test Target</title>
+		<para>A major &SHORT_PLATFORM_NAME; goal is to have a flexible API that abstracts the details of SIP messaging/call handling so that a test program can interact with a SIP test target at the level it needs to - but no more.</para>
+
+		<para>This means that if you need an established (answered) SIP call before your first test can be executed, you should be able to establish the call (and assert that it was successful) in one step, as part of the setUp() method. This would be the highest level of abstraction - ie, SipPhone.makeCall(). You tell that method what response you are expecting (in this case, OK) and it takes care of performing the call from sending the INVITE to receiving responses up to and including the one you are looking for (OK).</para> 
+		
+		<para>On the other hand, if your test is focused on the call establishment process itself, then you may want to break the call establishment down at least to the next level so that you can see intermediate responses as they come in, insert your test logic at the appropriate place and validate the result. For example, suppose you want to verify that your test target responds to an INVITE with a provisional response followed by OK. You could use SipCall.initiateOutgoingCall() to send the INVITE to the test target and then call SipCall.waitOutgoingCallResponse() repeatedly to see each response sent by the test target as it comes in. If your test program doesn't need to alter the call/test sequence based on what happens during setup, you can let SipPhone.makeCall() handle the entire call establishment and then call getAllReceivedResponses() to see the messages that came in during setup.</para>
+		
+		<para>At a lower level still, you may need to handle the SIP messages yourself (for example, to control the call messaging/handling in a certain, non-standard way). The SipSession class allows you to do this. However, note that if you just need to insert extra or invalid message content in message headers and/or body, or replace valid message content with invalid content of your own, most of the high level &SHORT_PLATFORM_NAME; methods provide options for you to specify additional headers, replacement headers, and message body contents so that you can control the message contents to be sent out.</para>
+		
+		<para>Providing these various levels of abstraction are the primary &SHORT_PLATFORM_NAME; classes used for interacting with test targets:
+		<itemizedlist>
+          	<listitem>
+            	<para>
+				SipPhone - high level - notable SIP operations include register(), unregister(), makeCall(), refer(), addBuddy(), fetchPresenceInfo(), credentials management.
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				SipCall - high level - provides outbound call handling methods, inbound call handling methods, and various miscellaneous functions such as cancel and reinvite. To provide a flexible API that abstracts the details of SIP messaging/call handling so that a test program can interact with a SIP test target at the level it needs to - but no more - and focus on the tests themselves
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				PresenceSubscriber - high level - provides step by step control of presence/buddy SUBSCRIBE/NOTIFY sequences and maintains presence information.
+				</para>
+			</listitem>
+			<listitem>
+            	<para>
+				ReferSubscriber - high level - provides step by step control of REFER subscription sequences including refresh and unsubscribe.
+				</para>
+			</listitem>	
+			<listitem>
+            	<para>
+				SipSession  - low level - provides send-request/receive-response and receive-request/send-response methods which are used by the above classes and which are available to user test programs to use. SipSession methods require use of the JAIN-SIP API Request and Response related classes including the SipStack.getXxxFactory() objects for dealing with message, address and header content.
+				</para>
+			</listitem>				
+		</itemizedlist>				
+		</para> 					
+	</section>
+	<section>
+		<title>How Do You Decide Which &SHORT_PLATFORM_NAME; Classes/Methods to Use for a Particular Test Task?</title>		
+		<section>
+			<title>Call Processing Tasks</title>
+			<para>First check out the available SipCall/SipPhone methods. If those are sufficient for the task, then interact with the test target at that level - those will keep your test program simple. You'll notice that many of the SipCall/SipPhone methods have multiple method signatures accepting additional headers, replacement headers and message body - the purpose of that is so that you can specify optional header/body content and/or override default message content for test purposes when you need to while still using the highest level API.</para>
+			<para>If your test needs to be more reactive than is allowed at the above level, then you'll need to use the SipSession methods. For example: suppose your test is expecting an incoming call. You can use the SipCall.waitForIncomingCall() method which will block until an INVITE message comes in. Note from the SipCall javadoc for this method that any non-INVITE requests received prior to the INVITE are collected, and you can look at them if you need to once the INVITE has been received (since this is a blocking method). If you don't care about them, then SipCall.waitForIncomingCall() is fine to use here. But if you need to react to a received pre-INVITE request that arrives while waiting for the INVITE, at the time it comes in, then you'll need to use the SipSession.waitRequest() method instead which you can call repeatedly to see and process each received request message including the INVITE you were waiting for.</para>
+			<para>Another reason to use SipSession is if you need to have nonstandard signaling sequences in your test. Why bother with &SHORT_PLATFORM_NAME; at this point? Because still, it is handling all of the details of using the SipStack/engine and providing conveniences such as blocking while waiting for a response.</para>			
+		</section>
+		<section>
+			<title>Presence Tasks</title>
+			<para>This category of tasks is more straight-forward. You'll use SipPhone methods to initiate a subscription (addBuddy()) and also whenever you want to initiate a single-shot fetch. After that, for a given subscription (a persistent buddy or a fetch), you'll use the returned PresenceSubscriber object methods to step through the SUBSCRIBE/NOTIFY sequence(s) and to view the presence status and information which is maintained by the PresenceSubscriber object.</para>
+			<para>As far as customizing the content of presence-related messages sent by the test program side: you may vary the default (correct) content of SUBSCRIBE requests and NOTIFY responses sent out or provide your own incorrect/malformed message (with the exception of the very first SUBSCRIBE message) to send out anywhere along the sequence in order to see what the test target does. The reason for the exception is because a correct initial SUBSCRIBE request is needed to initialize the subscription properly. If you want to send out a bad initial SUBSCRIBE message to see what your test target does, use SipSession to send the request and get the resulting response..</para>
+		</section>
+		<section>
+			<title>Refer Tasks</title>
+			<para>This category of tasks is also straight-forward. You'll use SipPhone.refer() to send an in-dialog or out-of-dialog REFER message and initiate a subscription. After that, you'll use the returned ReferSubscriber object methods to step through the REFER/NOTIFY and subsequent SUBSCRIBE/NOTIFY sequence(s) and to view the subscription status information which is maintained by the ReferSubscriber object. </para>
+			<para>As far as customizing the content of refer subscription messages sent by the test program side: you may vary the default (correct) content of outgoing SUBSCRIBE requests and NOTIFY responses or provide your own incorrect/malformed message (with the exception of the very first REFER message) to send out anywhere along the sequence in order to see what the test target does. The reason for the exception is because a correct initial REFER request is needed to initialize the subscription properly. If you want to send out a bad initial REFER message to see what your test target does, use SipSession to send the request and get the resulting response.</para>
+		</section>
+	</section>
+	<section>
+		<title>Blocking vs. Non-Blocking Operations</title>
+		<para>Many of the methods on the SIP operation objects (SipPhone, SipCall, etc.)  block until the invoked operation is completed. The reason for this is so that the code in the user test class can flow logically and sequentially, in a step-by-step fashion, without worrying about handling asynchronous callbacks, timeouts, etc.</para>
+
+		<para>However, some methods are intentionally non-blocking so that the test code can mark a point in the test execution where the API should start doing something, the test can continue with some other task(s), then when it is ready, the test can block on the API action previously initiated.  This is especially needed so that a test method can handle both endpoints of a call.</para> 
+		
+		<para>For Example:</para>
+		
+		<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+SipCall a = ua.createSipCall();  // calling side
+SipCall b = ub.createSipCall();  // callee side
+
+b.listenForIncomingCall();   // non-blocking - start looking for a received INVITE request and save it
+
+a.initiateOutgoingCall("sip:becky@nist.gov", null);  // this is where the INVITE will get sent to b
+assertLastOperationSuccess("a initiate call - " + a.format(), a);
+
+b.waitForIncomingCall(10000);  // blocking - retrieve the INVITE received by now, or wait for it to come in
+assertLastOperationSuccess("b wait incoming call - " + b.format(),
+        b);
+
+b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
+assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+etc.
+		]]></programlisting> 
+		
+		<para>This is an example of a test acting out both sides of a call ('a' calls 'b'). The non-blocking version of waitForIncomingCall() - listenForIncomingCall() - is needed so that the test program can tell the API to start collecting message(s) coming in (with the 'listen') but the test can continue executing and doing what it needs to do until it is at a point where it is ready to be blocked waiting for the message(s) coming in. This is also shown in the following example.</para>
+	</section>
+	<section>
+		<title>Call Flow Example</title>
+		<para>This example shows sample &SHORT_PLATFORM_NAME; API calls (on the left) that would appear in a test program interacting with a test target and the resulting SIP call flow. The blocking &SHORT_PLATFORM_NAME; methods are shown in italics. See the <link linkend='WalkThrough_SipUnit'>test class code</link> that was used to generate this trace. The trace graphic was generated by the <link linkend='Debugging'>trace viewer tool</link>.</para>
+
+		<para>Here, user a calls user b (both on the same box - 192.168.1.101 - but with a proxy - 127.0.0.1 - inbetween), user b sends RINGING and OK, the test verifies these are received by user a, then the call proceeds forward.</para> 
+		
+		<para>Execution flow in a test class method using &SHORT_PLATFORM_NAME;:</para>
+		
+		<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+b.listenForIncomingCall()
+
+SEND INVITE:
+a.initiateOutgoingCall("sip:becky@nist.gov", null)
+
+WAIT FOR INVITE:
+b.waitForIncomingCall(5000)
+
+
+
+SEND RESPONSE:
+b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0)
+
+WAIT FOR RESPONSE:
+a.waitOutgoingCallResponse(10000)
+
+
+(waitOutgoingCallResponse() returns and 'a' processes ringing)
+
+SEND ANOTHER RESPONSE:
+b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0)
+
+WAIT FOR RESPONSE:
+a.waitOutgoingCallResponse(10000)
+
+(waitOutgoingCallResponse() returns and 'a' processes OK)
+
+
+
+a.sendInviteOkAck();
+
+etc.
+		]]></programlisting> 
+		
+		<figure>
+		    <title>The SIP Viewer Trace</title>
+		    <mediaobject
+		      id="figure-CallFlow">
+		      <imageobject>
+		        <imagedata
+		          width="440"
+		          align="center"
+		          fileref="images/CallFlow.jpg"
+		          format="PNG"/>
+		      </imageobject>
+		    </mediaobject>
+		  </figure>
+	</section>
+	<section>
+		<title>The SipTestCase and SipAssert Classes</title>
+		<para>The SipTestCase class is a simple class that extends the JUnit TestCase class and provides access to SIP-specific assertXyz() methods. It serves as the base class for a JUnit 3-based SIP test class. </para>
+		
+		<para>The SipAssert class implements the SIP-specific assertXyz() methods available through SipTestCase. SipAssert methods are static and can be used directly by JUnit 4-based SIP test classes or whenever your test class must extend something other than SipTestCase. </para>		
+		<para>The SipTestCase/SipAssert methods focus on SIP-specific items of interest such as checking if a certain header is present in a SIP message, or if the SIP message body contains a specific string, etc. Also there are methods to check if the last SIP operation was successful or not, given the &SHORT_PLATFORM_NAME; API object that performed the operation (ie, SipCall, SipPhone, or SipSession). These API objects support an interface that allows all error/status details to be output if an assertion fails.
+		</para>
+		<para>While other &SHORT_PLATFORM_NAME; API objects like SipCall and SipSession interact with a test target, SipTestCase/SipAssert methods only play a role in the validation of results. These SIP-related assert methods along with other JUnit API methods are used by a test class to check the results of each test action it performs.		
+		</para>
+	</section>
+	<section>
+		<title>Failure Output</title>
+		<para>Like JUnit, messages are output only if a test fails. The SIP application test class controls what message text output, if any, should be generated if an assertion fails. Additionally, when a test fails, you'll see a stack trace dump just like with JUnit. 
+		</para>		
+		<para>Unlike JUnit, your test class line of code won't be the first entry in the stack trace output, in the current release - there's a TODO to adjust the stack so that entries at the SipTestCase level are discarded. In the meantime, you'll have to skip over the first couple or few lines when looking at the stack trace to find the line of code in your test class where the test failed.
+		</para>
+	</section>
+</chapter>
