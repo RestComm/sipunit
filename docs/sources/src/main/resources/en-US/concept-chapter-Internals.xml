@@ -1,0 +1,47 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "SipUnit_User_Guide.ent">
+%BOOK_ENTITIES;
+]>
+<!-- chapter id nickname: ittsss -->
+<chapter id="Internal_SipUnit">
+	<title>&SHORT_PLATFORM_NAME; Internals</title>
+	<para>
+	This section contains some information on the &SHORT_PLATFORM_NAME; design - class diagram, design notes, etc. Also you can read the <ulink url="https://mobicents.ci.cloudbees.com/job/SipUnit/lastSuccessfulBuild/artifact/sipunit/target/apidocs/index.html">javadocs</ulink>. However, your best bet is to read the source code. An IDE with good navigation will make you an expert in no time.
+	</para>
+	<para>
+		The architecture diagram below shows the concepts but it's not accurate as a class diagram and skips some detail. Here is the class diagram for &SHORT_PLATFORM_NAME;. An important philosophy to keep in mind is that test programs that are using SipTestCase/SipAssert and the high level API classes (specifically SipPhone, SipCall, Credential, SipRequest, SipResponse, etc.) may but should not have to use the <ulink url="https://mobicents.ci.cloudbees.com/job/JAIN-SIP/lastSuccessfulBuild/artifact/jain-sip/javadoc/index.html">JAIN SIP API</ulink>.
+	</para>
+	<figure>
+		    <title>Architecture Diagram</title>
+		    <mediaobject
+		      id="figure-SipUnitClassDiagram">
+		      <imageobject>
+		        <imagedata
+		          width="440"
+		          align="center"
+		          fileref="images/SipUnitClassDiagram.png"
+		          format="PNG"/>
+		      </imageobject>
+		    </mediaobject>
+		  </figure>
+	<section>
+		<title>Authentication and Authorization Design Notes</title>
+		<para>The idea is that one can supply SipPhone with needed credentials ahead of time, which will be automatically used during registrations, presence messaging, and call processing when an authentication challenge is received. A credential is: realm + user + password.  SipPhone keeps a list of credentials given to it. It also keeps a list (per Call-ID) of authorization headers automatically created using the credentials when authentication challenge(s) are received, to be used on subsequent requests.
+		</para>
+		<figure>
+		    <title>Authentication Diagram</title>
+		    <mediaobject
+		      id="figure-AuthenticationDiagram">
+		      <imageobject>
+		        <imagedata
+		          width="440"
+		          align="center"
+		          fileref="images/Authentication.jpg"
+		          format="JPG"/>
+		      </imageobject>
+		    </mediaobject>
+		  </figure>
+	</section>
+	
+</chapter>

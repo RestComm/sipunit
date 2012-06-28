@@ -11,4 +11,5 @@
 	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="concept-chapter-WalkThrough.xml" />
 	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="concept-chapter-Extensions.xml" />
 	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="concept-chapter-Advanced.xml" />
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="concept-chapter-Internals.xml" />
 </book>
