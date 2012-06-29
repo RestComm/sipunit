@@ -10,7 +10,7 @@
 	<section>
 		<title>Installing &SHORT_PLATFORM_NAME;</title>
 		<para>Before installing &SHORT_PLATFORM_NAME;: Java (J2SE) 1.6 or higher is required - if you don't already have it, get and install J2SE.</para>
-		<para>To install the binary distribution of &SHORT_PLATFORM_NAME;, unzip the &SHORT_PLATFORM_NAME;-&VERSION;.zip file from.</para>
+		<para>To install the binary distribution of &SHORT_PLATFORM_NAME;, unzip the latest version of the zip file &SHORT_PLATFORM_NAME;.zip file from.</para>
 
 		<para>Add the jars located in the &SHORT_PLATFORM_NAME;/lib directory to your CLASSPATH before executing any of the examples or your own &SHORT_PLATFORM_NAME; test class. </para>
 		
@@ -52,7 +52,7 @@
 
 		<para>TO RUN THE EXAMPLE TESTS: Since any test programs using &SHORT_PLATFORM_NAME; are an extension of the JUnit framework, they need to be run like a JUnit test program, using a JUnit test runner.  The command line way of doing this is shown in the example below. IDEs are pretty handy for running JUnit tests. More detail on running JUnit tests... Make sure the &SHORT_PLATFORM_NAME;/examples/java directory and the jars in &SHORT_PLATFORM_NAME;/lib are in the classpath, either by setting the CLASSPATH environmental variable beforehand to include them or by including them in the run command using the -cp option as below. Also when specifying the example test class to run, include the package prefix (ie, org.cafesip.&SHORT_PLATFORM_NAME;.test.classname).</para> 
     
-		<para>EXAMPLE: to run the TestNoProxy test class, execute the following java command (for Windows, in this example, and this assumes the java installation 'bin' directory is on the PATH) from the &SHORT_PLATFORM_NAME;-&VERSION; top-level directory: 
+		<para>EXAMPLE: to run the TestNoProxy test class, execute the following java command (for Windows, in this example, and this assumes the java installation 'bin' directory is on the PATH) from the &SHORT_PLATFORM_NAME; top-level directory: 
  
      	<screen>java -cp examples\java;lib\*  org.junit.runner.JUnitCore  org.cafesip.sipunit.test.noproxy.TestNoProxy</screen></para>
     
