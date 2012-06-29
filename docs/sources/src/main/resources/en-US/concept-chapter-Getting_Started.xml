@@ -68,14 +68,14 @@
 		<para>Classes in green are used to verify the test target's behavior and provide the test execution environment.</para>
 		<para>If you want to see a more detailed illustration, check out the class diagram.</para>
 		<figure>
-		    <title>The SIP Viewer Trace</title>
+		    <title>&SHORT_PLATFORM_NAME; Architecture</title>
 		    <mediaobject
 		      id="figure-TraceScreenshot">
 		      <imageobject>
 		        <imagedata
 		          width="440"
 		          align="center"
-		          fileref="images/TraceScreenshot.jpg"
+		          fileref="images/SipUnitArch.png"
 		          format="PNG"/>
 		      </imageobject>
 		    </mediaobject>
