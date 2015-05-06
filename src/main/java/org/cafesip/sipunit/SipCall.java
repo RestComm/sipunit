@@ -907,7 +907,7 @@ public class SipCall implements SipActionObject, MessageListener {
       return false;
     }
 
-    if (response_event instanceof TimeoutEvent == true) {
+    if (response_event instanceof TimeoutEvent) {
       setReturnCode(SipPhone.TIMEOUT_OCCURRED);
       setErrorMessage("A Timeout Event was received");
       return false;
@@ -2141,7 +2141,7 @@ public class SipCall implements SipActionObject, MessageListener {
       return false;
     }
 
-    if (response_event instanceof TimeoutEvent == true) {
+    if (response_event instanceof TimeoutEvent) {
       setReturnCode(SipPhone.TIMEOUT_OCCURRED);
       setErrorMessage("A Timeout Event was received");
       return false;
@@ -2217,7 +2217,7 @@ public class SipCall implements SipActionObject, MessageListener {
       return false;
     }
 
-    if (response_event instanceof TimeoutEvent == true) {
+    if (response_event instanceof TimeoutEvent) {
       setReturnCode(SipPhone.TIMEOUT_OCCURRED);
       setErrorMessage("A Timeout Event was received");
       return false;
@@ -3334,7 +3334,7 @@ public class SipCall implements SipActionObject, MessageListener {
       return false;
     }
 
-    if (response_event instanceof TimeoutEvent == true) {
+    if (response_event instanceof TimeoutEvent) {
       setReturnCode(SipPhone.TIMEOUT_OCCURRED);
       setErrorMessage("A Timeout Event was received");
       return false;

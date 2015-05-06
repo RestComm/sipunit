@@ -433,7 +433,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
       return null;
     }
 
-    if (response_event instanceof TimeoutEvent == true) {
+    if (response_event instanceof TimeoutEvent) {
       setReturnCode(TIMEOUT_OCCURRED);
       setErrorMessage("A Timeout Event was received");
       return null;
@@ -451,7 +451,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
           return null;
         }
 
-        if (response_event instanceof TimeoutEvent == true) {
+        if (response_event instanceof TimeoutEvent) {
           setReturnCode(TIMEOUT_OCCURRED);
           setErrorMessage("A Timeout Event was received");
           return null;
@@ -493,7 +493,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
           return null;
         }
 
-        if (response_event instanceof TimeoutEvent == true) {
+        if (response_event instanceof TimeoutEvent) {
           setReturnCode(TIMEOUT_OCCURRED);
           setErrorMessage("A TimeoutEvent was received");
           return null;
