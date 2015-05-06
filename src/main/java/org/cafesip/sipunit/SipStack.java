@@ -1,25 +1,22 @@
 /*
  * Created on Feb 19, 2005
  * 
- * Copyright 2005 CafeSip.org 
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *	http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
+ * Copyright 2005 CafeSip.org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package org.cafesip.sipunit;
 
 import gov.nist.javax.sip.ResponseEventExt;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.ParseException;
@@ -29,7 +26,6 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Properties;
 import java.util.Random;
-
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.InvalidArgumentException;
@@ -48,562 +44,454 @@ import javax.sip.header.RouteHeader;
 import javax.sip.message.MessageFactory;
 
 /**
- * This class is the starting point for a SipUnit test. Before establishing any
- * SIP sessions, the test program must instantiate this class. Each SipStack
- * object establishes the SIP protocol binding on the specified TCP/UDP port.
- * This port is used to communicate with external SIP agents (a SIP proxy
- * server, for example). A SipStack object may contain one or more SipPhone
- * objects and each SipPhone object may contain one (or more, in future) SipCall
- * objects and a buddy list. The getXxxFactory() methods of this class are used
- * in conjunction with JAIN-SIP Request/Response classes for dealing with low
- * level message, address and header content, needed when dealing at the
- * SipSession level.
+ * This class is the starting point for a SipUnit test. Before establishing any SIP sessions, the
+ * test program must instantiate this class. Each SipStack object establishes the SIP protocol
+ * binding on the specified TCP/UDP port. This port is used to communicate with external SIP agents
+ * (a SIP proxy server, for example). A SipStack object may contain one or more SipPhone objects and
+ * each SipPhone object may contain one (or more, in future) SipCall objects and a buddy list. The
+ * getXxxFactory() methods of this class are used in conjunction with JAIN-SIP Request/Response
+ * classes for dealing with low level message, address and header content, needed when dealing at
+ * the SipSession level.
  * 
  * @author Amit Chatterjee, Becky McElroy
  */
-public class SipStack implements SipListener
-{
-    private static boolean traceEnabled = false;
+public class SipStack implements SipListener {
 
-    private static SipFactory sipFactory = null;
+  private static boolean traceEnabled = false;
 
-    private javax.sip.SipStack sipStack;
+  private static SipFactory sipFactory = null;
 
-    private AddressFactory addressFactory;
+  private javax.sip.SipStack sipStack;
 
-    private MessageFactory messageFactory;
+  private AddressFactory addressFactory;
 
-    private HeaderFactory headerFactory;
+  private MessageFactory messageFactory;
 
-    private SipProvider sipProvider;
+  private HeaderFactory headerFactory;
 
-    private LinkedList<SipListener> listeners = new LinkedList<SipListener>();
+  private SipProvider sipProvider;
 
-    private Random random = new Random((new Date()).getTime());
+  private LinkedList<SipListener> listeners = new LinkedList<SipListener>();
 
-	private int retransmissions;
+  private Random random = new Random((new Date()).getTime());
 
-    private static final Properties defaultProperties = new Properties();
-    static
-    {
-        String host = null;
-        try
-        {
-            host = InetAddress.getLocalHost().getHostAddress();
-        }
-        catch (UnknownHostException e)
-        {
-            host = "localhost";
-        }
+  private int retransmissions;
 
-        defaultProperties.setProperty("javax.sip.IP_ADDRESS", host);
+  private static final Properties defaultProperties = new Properties();
 
-        defaultProperties.setProperty("javax.sip.STACK_NAME", "testAgent");
-
-        // You need 16 for logging traces. 32 for debug + traces.
-        // Your code will limp at 32 but it is best for debugging.
-        defaultProperties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
-
-        defaultProperties.setProperty("gov.nist.javax.sip.DEBUG_LOG",
-                "testAgent_debug.txt");
-
-        defaultProperties.setProperty("gov.nist.javax.sip.SERVER_LOG",
-                "testAgent_log.txt");
-
-        // Guard against starvation.
-        defaultProperties
-                .setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
-
-        // properties.setProperty("gov.nist.javax.sip.MAX_MESSAGE_SIZE",
-        // "4096");
-
-        defaultProperties.setProperty(
-                "gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
+  static {
+    String host = null;
+    try {
+      host = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      host = "localhost";
     }
 
-    /**
-     * <code>PROTOCOL_TCP</code> Specifies TCP/IP transport.
-     */
-    public static final String PROTOCOL_TCP = "tcp";
+    defaultProperties.setProperty("javax.sip.IP_ADDRESS", host);
 
-    /**
-     * <code>PROTOCOL_UDP</code> Specifies UDP/IP transport.
-     */
-    public static final String PROTOCOL_UDP = "udp";
+    defaultProperties.setProperty("javax.sip.STACK_NAME", "testAgent");
 
-    public static final int DEFAULT_PORT = 5060;
+    // You need 16 for logging traces. 32 for debug + traces.
+    // Your code will limp at 32 but it is best for debugging.
+    defaultProperties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
 
-    public static final String DEFAULT_PROTOCOL = PROTOCOL_UDP;
+    defaultProperties.setProperty("gov.nist.javax.sip.DEBUG_LOG", "testAgent_debug.txt");
 
-    /**
-     * A constructor for this class. Before establishing any SIP sessions,
-     * instantiate this class. You may provide the parameters for SIP protocol
-     * binding on a specific TCP/UDP port, which will be used to communicate
-     * with external SIP agents (a SIP proxy server, for example). (TODO -
-     * update to take advantage of JAIN-SIP 1.2 architecture, multiple listening
-     * points per provider - multiple protocols.)
-     * 
-     * A test program may contain one or more SipStack objects, each of which
-     * may have one or more SipPhones.
-     * 
-     * @param proto
-     *            SIP transport protocol, "tcp" or "udp" (default is "udp").
-     * @param port
-     *            port on which this stack listens for messages (default is
-     *            5060).
-     * @param props
-     *            properties of the SIP stack. These properties are the same as
-     *            that defined for JAIN-SIP SipStack. If this parameter has a
-     *            null value, we pick default values for you.
-     * @throws Exception
-     */
-    public SipStack(String proto, int port, Properties props) throws Exception
-    {
-        if (sipFactory == null)
-        {
-            sipFactory = SipFactory.getInstance();
-            sipFactory.setPathName("gov.nist");
-        }
+    defaultProperties.setProperty("gov.nist.javax.sip.SERVER_LOG", "testAgent_log.txt");
 
-        if (props == null)
-        {
-            props = defaultProperties;
-        }
+    // Guard against starvation.
+    defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
 
-        if (props.getProperty("javax.sip.STACK_NAME") == null)
-        {
-            props.setProperty("javax.sip.STACK_NAME", "SipUnitTestAgent");
-        }
+    // properties.setProperty("gov.nist.javax.sip.MAX_MESSAGE_SIZE",
+    // "4096");
 
-        /*
-         * The user can specify an IP address for the stack but we use it as an
-         * IP address for the listener and remove it from the property set so
-         * you can run multiple stacks.
-         */
-        String listenAddr = props.getProperty("javax.sip.IP_ADDRESS");
+    defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
+  }
 
-        if (props.getProperty("javax.sip.IP_ADDRESS") != null)
-        {
-            props.remove("javax.sip.IP_ADDRESS");
-        }
+  /**
+   * <code>PROTOCOL_TCP</code> Specifies TCP/IP transport.
+   */
+  public static final String PROTOCOL_TCP = "tcp";
 
-        sipStack = sipFactory.createSipStack(props);
+  /**
+   * <code>PROTOCOL_UDP</code> Specifies UDP/IP transport.
+   */
+  public static final String PROTOCOL_UDP = "udp";
 
-        headerFactory = sipFactory.createHeaderFactory();
-        addressFactory = sipFactory.createAddressFactory();
-        messageFactory = sipFactory.createMessageFactory();
+  public static final int DEFAULT_PORT = 5060;
 
-        if (proto == null)
-        {
-            proto = DEFAULT_PROTOCOL;
-        }
+  public static final String DEFAULT_PROTOCOL = PROTOCOL_UDP;
 
-        if (port < 0)
-        {
-            port = DEFAULT_PORT;
-        }
-
-        if (listenAddr == null)
-        {
-            listenAddr = InetAddress.getLocalHost().getHostAddress();
-        }
-        /*
-         * The above makes use of the fact that with JAIN-SIP 1.2, if you don't
-         * provide IP_ADDRESS in the properties when you create a stack, it goes
-         * by STACK_NAME only and you can create as many stacks as you want as
-         * long as the name is different (and IP_ADDRESS property is null).
-         * Thanks to Venkita S. for contributing the changes to SipSession and
-         * SipStack needed to make this work.
-         */
-
-        ListeningPoint lp = sipStack.createListeningPoint(listenAddr, port,
-                proto);
-
-        sipProvider = sipStack.createSipProvider(lp);
-        sipProvider.addSipListener(this);
-
-        sipStack.start();
+  /**
+   * A constructor for this class. Before establishing any SIP sessions, instantiate this class. You
+   * may provide the parameters for SIP protocol binding on a specific TCP/UDP port, which will be
+   * used to communicate with external SIP agents (a SIP proxy server, for example). (TODO - update
+   * to take advantage of JAIN-SIP 1.2 architecture, multiple listening points per provider -
+   * multiple protocols.)
+   * 
+   * A test program may contain one or more SipStack objects, each of which may have one or more
+   * SipPhones.
+   * 
+   * @param proto SIP transport protocol, "tcp" or "udp" (default is "udp").
+   * @param port port on which this stack listens for messages (default is 5060).
+   * @param props properties of the SIP stack. These properties are the same as that defined for
+   *        JAIN-SIP SipStack. If this parameter has a null value, we pick default values for you.
+   * @throws Exception
+   */
+  public SipStack(String proto, int port, Properties props) throws Exception {
+    if (sipFactory == null) {
+      sipFactory = SipFactory.getInstance();
+      sipFactory.setPathName("gov.nist");
     }
 
-    /**
-     * 
-     * Equivalent to the other constructor without any properties specified.
-     * 
-     * @param proto
-     *            SIP transport protocol (default is UDP).
-     * @param port
-     *            port on which this stack listens for messages (default is
-     *            5060).
-     * @throws Exception
+    if (props == null) {
+      props = defaultProperties;
+    }
+
+    if (props.getProperty("javax.sip.STACK_NAME") == null) {
+      props.setProperty("javax.sip.STACK_NAME", "SipUnitTestAgent");
+    }
+
+    /*
+     * The user can specify an IP address for the stack but we use it as an IP address for the
+     * listener and remove it from the property set so you can run multiple stacks.
      */
-    public SipStack(String proto, int port) throws Exception
-    {
-        this(proto, port, null);
+    String listenAddr = props.getProperty("javax.sip.IP_ADDRESS");
+
+    if (props.getProperty("javax.sip.IP_ADDRESS") != null) {
+      props.remove("javax.sip.IP_ADDRESS");
     }
 
-    /**
-     * This method is used to create a SipPhone object. The SipPhone class
-     * simulates a SIP User Agent. The SipPhone object is used to communicate
-     * with other SIP agents. Using a SipPhone object, the test program can make
-     * one (or more, in future) outgoing calls or (and, in future) receive one
-     * (or more, in future) incoming calls.
-     * 
-     * @param proxyHost
-     *            host name or address of the SIP proxy to use. The proxy is
-     *            used for registering and outbound calling on a per-call basis.
-     *            If this parameter is a null value, any registration requests
-     *            will be sent to the "host" part of the "me" parameter (see
-     *            below) and any attempt to make an outbound call via proxy will
-     *            fail. If a host name is given here, it must resolve to a
-     *            valid, reachable DNS address.
-     * 
-     * @param proxyProto
-     *            used to specify the protocol for communicating with the proxy
-     *            server - "udp" or "tcp".
-     * @param proxyPort
-     *            port number into with the proxy server listens to for SIP
-     *            messages and connections.
-     * @param me
-     *            "Address of Record" URI of the phone user. Each SipPhone is
-     *            associated with one user. This parameter is used in the "from"
-     *            header field.
-     * 
-     * @return A new SipPhone object.
-     * @throws InvalidArgumentException
-     * @throws ParseException
+    sipStack = sipFactory.createSipStack(props);
+
+    headerFactory = sipFactory.createHeaderFactory();
+    addressFactory = sipFactory.createAddressFactory();
+    messageFactory = sipFactory.createMessageFactory();
+
+    if (proto == null) {
+      proto = DEFAULT_PROTOCOL;
+    }
+
+    if (port < 0) {
+      port = DEFAULT_PORT;
+    }
+
+    if (listenAddr == null) {
+      listenAddr = InetAddress.getLocalHost().getHostAddress();
+    }
+    /*
+     * The above makes use of the fact that with JAIN-SIP 1.2, if you don't provide IP_ADDRESS in
+     * the properties when you create a stack, it goes by STACK_NAME only and you can create as many
+     * stacks as you want as long as the name is different (and IP_ADDRESS property is null). Thanks
+     * to Venkita S. for contributing the changes to SipSession and SipStack needed to make this
+     * work.
      */
-    public SipPhone createSipPhone(String proxyHost, String proxyProto,
-            int proxyPort, String me) throws InvalidArgumentException,
-            ParseException
-    {
-        return new SipPhone(this, proxyHost, proxyProto, proxyPort, me);
-    }
 
-    /**
-     * This method is the equivalent to the other createSipPhone() methods but
-     * without a proxy server.
-     * 
-     * @param me
-     *            "Address of Record" URI of the phone user. Each SipPhone is
-     *            associated with one user. This parameter is used in the "from"
-     *            header field.
-     * 
-     * @return A new SipPhone object.
-     * @throws InvalidArgumentException
-     * @throws ParseException
-     */
-    public SipPhone createSipPhone(String me) throws InvalidArgumentException,
-            ParseException
-    {
-        return createSipPhone(null, null, -1, me);
-    }
+    ListeningPoint lp = sipStack.createListeningPoint(listenAddr, port, proto);
 
-    /**
-     * This method is the equivalent to the other createSipPhone() method, but
-     * using the default transport (UDP/IP) and the default SIP port number
-     * (5060).
-     * 
-     * @param host
-     *            host name or address of the SIP proxy to use. The proxy is
-     *            used for registering and outbound calling on a per-call basis.
-     *            If this parameter is a null value, any registration requests
-     *            will be sent to the "host" part of the "me" parameter (see
-     *            below) and any attempt to make an outbound call via proxy will
-     *            fail. If a host name is given here, it must resolve to a
-     *            valid, reachable DNS address.
-     * @param me
-     *            "Address of Record" URI of the phone user. Each SipPhone is
-     *            associated with one user. This parameter is used in the "from"
-     *            header field.
-     * 
-     * @return A new SipPhone object.
-     * @throws InvalidArgumentException
-     * @throws ParseException
-     */
-    public SipPhone createSipPhone(String host, String me)
-            throws InvalidArgumentException, ParseException
-    {
-        return createSipPhone(host, PROTOCOL_UDP, DEFAULT_PORT, me);
-    }
+    sipProvider = sipStack.createSipProvider(lp);
+    sipProvider.addSipListener(this);
 
-    /**
-     * This method is used to tear down the SipStack object. All resources are
-     * freed up. Before calling this method, you should call the dispose()
-     * nethod on any SipPhones you've created using this sip stack.
-     */
-    public void dispose()
-    {
-        try
-        {
-            sipStack.deleteListeningPoint(sipProvider.getListeningPoints()[0]);
-            sipProvider.removeSipListener(this);
-            sipStack.deleteSipProvider(sipProvider);
-            sipFactory.resetFactory();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
+    sipStack.start();
+  }
 
-    /**
-     * Indicates if the SipUnit stack trace has been enabled.
-     * 
-     * @return true if the stack trace is enabled.
-     */
-    public static boolean isTraceEnabled()
-    {
-        return traceEnabled;
-    }
+  /**
+   * 
+   * Equivalent to the other constructor without any properties specified.
+   * 
+   * @param proto SIP transport protocol (default is UDP).
+   * @param port port on which this stack listens for messages (default is 5060).
+   * @throws Exception
+   */
+  public SipStack(String proto, int port) throws Exception {
+    this(proto, port, null);
+  }
 
-    /**
-     * Turn on or off the SipUnit stack tracing. After calling this method with
-     * a value of true, call SipStack.trace() to output trace messages.
-     * 
-     * @param traceEnabled
-     *            true to turn on the tracing, false to turn it off.
-     */
-    public static void setTraceEnabled(boolean traceEnabled)
-    {
-        SipStack.traceEnabled = traceEnabled;
-    }
+  /**
+   * This method is used to create a SipPhone object. The SipPhone class simulates a SIP User Agent.
+   * The SipPhone object is used to communicate with other SIP agents. Using a SipPhone object, the
+   * test program can make one (or more, in future) outgoing calls or (and, in future) receive one
+   * (or more, in future) incoming calls.
+   * 
+   * @param proxyHost host name or address of the SIP proxy to use. The proxy is used for
+   *        registering and outbound calling on a per-call basis. If this parameter is a null value,
+   *        any registration requests will be sent to the "host" part of the "me" parameter (see
+   *        below) and any attempt to make an outbound call via proxy will fail. If a host name is
+   *        given here, it must resolve to a valid, reachable DNS address.
+   * 
+   * @param proxyProto used to specify the protocol for communicating with the proxy server - "udp"
+   *        or "tcp".
+   * @param proxyPort port number into with the proxy server listens to for SIP messages and
+   *        connections.
+   * @param me "Address of Record" URI of the phone user. Each SipPhone is associated with one user.
+   *        This parameter is used in the "from" header field.
+   * 
+   * @return A new SipPhone object.
+   * @throws InvalidArgumentException
+   * @throws ParseException
+   */
+  public SipPhone createSipPhone(String proxyHost, String proxyProto, int proxyPort, String me)
+      throws InvalidArgumentException, ParseException {
+    return new SipPhone(this, proxyHost, proxyProto, proxyPort, me);
+  }
 
-    /**
-     * FOR INTERNAL USE ONLY. Not to be used by a test program.
-     */
-    public void processRequest(RequestEvent arg0)
-    {
-        SipStack.trace("SipStack: request received !");
-        synchronized (listeners)
-        {
-            Iterator<SipListener> iter = listeners.iterator();
-            while (iter.hasNext() == true)
-            {
-                SipListener listener = iter.next();
-                SipStack.trace("SipStack: calling listener");
-                listener.processRequest(arg0);
-            }
-        }
-    }
+  /**
+   * This method is the equivalent to the other createSipPhone() methods but without a proxy server.
+   * 
+   * @param me "Address of Record" URI of the phone user. Each SipPhone is associated with one user.
+   *        This parameter is used in the "from" header field.
+   * 
+   * @return A new SipPhone object.
+   * @throws InvalidArgumentException
+   * @throws ParseException
+   */
+  public SipPhone createSipPhone(String me) throws InvalidArgumentException, ParseException {
+    return createSipPhone(null, null, -1, me);
+  }
 
-    /**
-     * FOR INTERNAL USE ONLY. Not to be used by a test program.
-     */
-    public void processResponse(ResponseEvent arg0)
-    {
-        synchronized (listeners)
-        {
-        	if (((ResponseEventExt)arg0).isRetransmission())
-        		retransmissions++;
-            Iterator iter = listeners.iterator();
-            while (iter.hasNext() == true)
-            {
-                SipListener listener = (SipListener) iter.next();
-                listener.processResponse(arg0);
-            }
-        }
-    }
+  /**
+   * This method is the equivalent to the other createSipPhone() method, but using the default
+   * transport (UDP/IP) and the default SIP port number (5060).
+   * 
+   * @param host host name or address of the SIP proxy to use. The proxy is used for registering and
+   *        outbound calling on a per-call basis. If this parameter is a null value, any
+   *        registration requests will be sent to the "host" part of the "me" parameter (see below)
+   *        and any attempt to make an outbound call via proxy will fail. If a host name is given
+   *        here, it must resolve to a valid, reachable DNS address.
+   * @param me "Address of Record" URI of the phone user. Each SipPhone is associated with one user.
+   *        This parameter is used in the "from" header field.
+   * 
+   * @return A new SipPhone object.
+   * @throws InvalidArgumentException
+   * @throws ParseException
+   */
+  public SipPhone createSipPhone(String host, String me) throws InvalidArgumentException,
+      ParseException {
+    return createSipPhone(host, PROTOCOL_UDP, DEFAULT_PORT, me);
+  }
 
-    /**
-     * FOR INTERNAL USE ONLY. Not to be used by a test program.
-     */
-    public void processTimeout(TimeoutEvent arg0)
-    {
-        synchronized (listeners)
-        {
-            Iterator<SipListener> iter = listeners.iterator();
-            while (iter.hasNext() == true)
-            {
-                SipListener listener = (SipListener) iter.next();
-                listener.processTimeout(arg0);
-            }
-        }
+  /**
+   * This method is used to tear down the SipStack object. All resources are freed up. Before
+   * calling this method, you should call the dispose() nethod on any SipPhones you've created using
+   * this sip stack.
+   */
+  public void dispose() {
+    try {
+      sipStack.deleteListeningPoint(sipProvider.getListeningPoints()[0]);
+      sipProvider.removeSipListener(this);
+      sipStack.deleteSipProvider(sipProvider);
+      sipFactory.resetFactory();
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+  }
 
-    protected void registerListener(SipListener listener)
-    {
-        synchronized (listeners)
-        {
-            listeners.addLast(listener);
-        }
+  /**
+   * Indicates if the SipUnit stack trace has been enabled.
+   * 
+   * @return true if the stack trace is enabled.
+   */
+  public static boolean isTraceEnabled() {
+    return traceEnabled;
+  }
+
+  /**
+   * Turn on or off the SipUnit stack tracing. After calling this method with a value of true, call
+   * SipStack.trace() to output trace messages.
+   * 
+   * @param traceEnabled true to turn on the tracing, false to turn it off.
+   */
+  public static void setTraceEnabled(boolean traceEnabled) {
+    SipStack.traceEnabled = traceEnabled;
+  }
+
+  /**
+   * FOR INTERNAL USE ONLY. Not to be used by a test program.
+   */
+  public void processRequest(RequestEvent arg0) {
+    SipStack.trace("SipStack: request received !");
+    synchronized (listeners) {
+      Iterator<SipListener> iter = listeners.iterator();
+      while (iter.hasNext() == true) {
+        SipListener listener = iter.next();
+        SipStack.trace("SipStack: calling listener");
+        listener.processRequest(arg0);
+      }
     }
+  }
 
-    protected void unregisterListener(SipListener listener)
-    {
-        synchronized (listeners)
-        {
-            listeners.remove(listener);
-        }
+  /**
+   * FOR INTERNAL USE ONLY. Not to be used by a test program.
+   */
+  public void processResponse(ResponseEvent arg0) {
+    synchronized (listeners) {
+      if (((ResponseEventExt) arg0).isRetransmission())
+        retransmissions++;
+      Iterator iter = listeners.iterator();
+      while (iter.hasNext() == true) {
+        SipListener listener = (SipListener) iter.next();
+        listener.processResponse(arg0);
+      }
     }
+  }
 
-    /**
-     * @return Returns the sipFactory.
-     */
-    protected static SipFactory getSipFactory()
-    {
-        return sipFactory;
+  /**
+   * FOR INTERNAL USE ONLY. Not to be used by a test program.
+   */
+  public void processTimeout(TimeoutEvent arg0) {
+    synchronized (listeners) {
+      Iterator<SipListener> iter = listeners.iterator();
+      while (iter.hasNext() == true) {
+        SipListener listener = (SipListener) iter.next();
+        listener.processTimeout(arg0);
+      }
     }
+  }
 
-    /**
-     * This method returns the JAIN-SIP AddressFactory associated with the
-     * SipStack.
-     * 
-     * @return the address factory.
-     */
-    public AddressFactory getAddressFactory()
-    {
-        return addressFactory;
+  protected void registerListener(SipListener listener) {
+    synchronized (listeners) {
+      listeners.addLast(listener);
     }
+  }
 
-    /**
-     * This method returns the JAIN-SIP HeaderFactory associated with the
-     * SipStack.
-     * 
-     * @return the header factory.
-     */
-    public HeaderFactory getHeaderFactory()
-    {
-        return headerFactory;
+  protected void unregisterListener(SipListener listener) {
+    synchronized (listeners) {
+      listeners.remove(listener);
     }
+  }
 
-    /**
-     * This method returns the JAIN-SIP MessageFactory associated with the
-     * SipStack.
-     * 
-     * @return the message factory.
-     */
-    public MessageFactory getMessageFactory()
-    {
-        return messageFactory;
-    }
+  /**
+   * @return Returns the sipFactory.
+   */
+  protected static SipFactory getSipFactory() {
+    return sipFactory;
+  }
 
-    /**
-     * This method returns the JAIN-SIP SipProvider associated with the
-     * SipStack.
-     * 
-     * @return the sip provider.
-     */
-    public SipProvider getSipProvider()
-    {
-        return sipProvider;
-    }
+  /**
+   * This method returns the JAIN-SIP AddressFactory associated with the SipStack.
+   * 
+   * @return the address factory.
+   */
+  public AddressFactory getAddressFactory() {
+    return addressFactory;
+  }
 
-    /**
-     * This method returns the JAIN-SIP SipStack associated with this JUnit
-     * SipStack.
-     * 
-     * @return the JAIN-SIP SipStack.
-     */
-    public javax.sip.SipStack getSipStack()
-    {
-        return sipStack;
-    }
+  /**
+   * This method returns the JAIN-SIP HeaderFactory associated with the SipStack.
+   * 
+   * @return the header factory.
+   */
+  public HeaderFactory getHeaderFactory() {
+    return headerFactory;
+  }
 
-    /**
-     * @return Returns the random.
-     */
-    protected Random getRandom()
-    {
-        return random;
-    }
+  /**
+   * This method returns the JAIN-SIP MessageFactory associated with the SipStack.
+   * 
+   * @return the message factory.
+   */
+  public MessageFactory getMessageFactory() {
+    return messageFactory;
+  }
 
-    /**
-     * @param random
-     *            The random to set.
-     */
-    protected void setRandom(Random random)
-    {
-        this.random = random;
-    }
+  /**
+   * This method returns the JAIN-SIP SipProvider associated with the SipStack.
+   * 
+   * @return the sip provider.
+   */
+  public SipProvider getSipProvider() {
+    return sipProvider;
+  }
 
-    /**
-     * Outputs the given string to console, if SipStack.setTraceEnabled(true)
-     * has been called.
-     * 
-     * @param msg
-     *            String to output to console.
-     */
-    public synchronized static void trace(String msg) // grossly simplified
+  /**
+   * This method returns the JAIN-SIP SipStack associated with this JUnit SipStack.
+   * 
+   * @return the JAIN-SIP SipStack.
+   */
+  public javax.sip.SipStack getSipStack() {
+    return sipStack;
+  }
+
+  /**
+   * @return Returns the random.
+   */
+  protected Random getRandom() {
+    return random;
+  }
+
+  /**
+   * @param random The random to set.
+   */
+  protected void setRandom(Random random) {
+    this.random = random;
+  }
+
+  /**
+   * Outputs the given string to console, if SipStack.setTraceEnabled(true) has been called.
+   * 
+   * @param msg String to output to console.
+   */
+  public synchronized static void trace(String msg) {
+    // grossly simplified
     // for now, not
     // implemented
-    {
-        if (traceEnabled)
-        {
-            System.out.println("SIPUNIT TRACE:  " + System.currentTimeMillis()
-                    + "  " + msg);
+    if (traceEnabled) {
+      System.out.println("SIPUNIT TRACE:  " + System.currentTimeMillis() + "  " + msg);
+    }
+  }
+
+  /**
+   * Outputs to console the provided header string followed by the message.
+   * 
+   * @param informationalHeader
+   * @param msg
+   */
+  public static void dumpMessage(String informationalHeader, javax.sip.message.Message msg) {
+    SipStack.trace(informationalHeader + "..........");
+    SipStack.trace(msg.toString());
+
+    ListIterator rhdrs = msg.getHeaders(RouteHeader.NAME);
+    while (rhdrs.hasNext()) {
+      RouteHeader rhdr = (RouteHeader) rhdrs.next();
+
+      if (rhdr != null) {
+        SipStack.trace("RouteHeader address: " + rhdr.getAddress().toString());
+        Iterator i = rhdr.getParameterNames();
+        while (i.hasNext()) {
+          String parm = (String) i.next();
+          SipStack.trace("RouteHeader parameter " + parm + ": " + rhdr.getParameter(parm));
         }
+      }
     }
 
-    /**
-     * Outputs to console the provided header string followed by the message.
-     * 
-     * @param informationalHeader
-     * @param msg
-     */
-    public static void dumpMessage(String informationalHeader,
-            javax.sip.message.Message msg)
-    {
-        SipStack.trace(informationalHeader + "..........");
-        SipStack.trace(msg.toString());
+    ListIterator rrhdrs = msg.getHeaders(RecordRouteHeader.NAME);
+    while (rrhdrs.hasNext()) {
+      RecordRouteHeader rrhdr = (RecordRouteHeader) rrhdrs.next();
 
-        ListIterator rhdrs = msg.getHeaders(RouteHeader.NAME);
-        while (rhdrs.hasNext())
-        {
-            RouteHeader rhdr = (RouteHeader) rhdrs.next();
-
-            if (rhdr != null)
-            {
-                SipStack.trace("RouteHeader address: "
-                        + rhdr.getAddress().toString());
-                Iterator i = rhdr.getParameterNames();
-                while (i.hasNext())
-                {
-                    String parm = (String) i.next();
-                    SipStack.trace("RouteHeader parameter " + parm + ": "
-                            + rhdr.getParameter(parm));
-                }
-            }
+      if (rrhdr != null) {
+        SipStack.trace("RecordRouteHeader address: " + rrhdr.getAddress().toString());
+        Iterator i = rrhdr.getParameterNames();
+        while (i.hasNext()) {
+          String parm = (String) i.next();
+          SipStack.trace("RecordRouteHeader parameter " + parm + ": " + rrhdr.getParameter(parm));
         }
-
-        ListIterator rrhdrs = msg.getHeaders(RecordRouteHeader.NAME);
-        while (rrhdrs.hasNext())
-        {
-            RecordRouteHeader rrhdr = (RecordRouteHeader) rrhdrs.next();
-
-            if (rrhdr != null)
-            {
-                SipStack.trace("RecordRouteHeader address: "
-                        + rrhdr.getAddress().toString());
-                Iterator i = rrhdr.getParameterNames();
-                while (i.hasNext())
-                {
-                    String parm = (String) i.next();
-                    SipStack.trace("RecordRouteHeader parameter " + parm + ": "
-                            + rrhdr.getParameter(parm));
-                }
-            }
-        }
+      }
     }
+  }
 
-    public void processIOException(IOExceptionEvent arg0)
-    {
-        // TODO Auto-generated method stub
+  public void processIOException(IOExceptionEvent arg0) {
+    // TODO Auto-generated method stub
+  }
 
-    }
+  public void processTransactionTerminated(TransactionTerminatedEvent arg0) {
+    // TODO Auto-generated method stub
+  }
 
-    public void processTransactionTerminated(TransactionTerminatedEvent arg0)
-    {
-        // TODO Auto-generated method stub
+  public void processDialogTerminated(DialogTerminatedEvent arg0) {
+    // TODO Auto-generated method stub
+  }
 
-    }
-
-    public void processDialogTerminated(DialogTerminatedEvent arg0)
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-	public int getRetransmissions() {
-		return retransmissions;
-	}
+  public int getRetransmissions() {
+    return retransmissions;
+  }
 }
