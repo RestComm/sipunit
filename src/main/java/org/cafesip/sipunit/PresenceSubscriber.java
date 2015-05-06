@@ -65,17 +65,17 @@ public class PresenceSubscriber extends EventSubscriber {
    * List of zero or more PresenceDeviceInfo objects (active devices) for this Subscription
    * buddy/watchee, indexed by the IDs received in the NOTIFY tuples
    */
-  private HashMap<String, PresenceDeviceInfo> devices = new HashMap<String, PresenceDeviceInfo>();
+  private HashMap<String, PresenceDeviceInfo> devices = new HashMap<>();
 
   /*
    * List of zero or more PresenceNote objects received in the NOTIFY body
    */
-  private ArrayList<PresenceNote> presenceNotes = new ArrayList<PresenceNote>();
+  private ArrayList<PresenceNote> presenceNotes = new ArrayList<>();
 
   /*
    * List of zero or more Object received in a NOTIFY message
    */
-  private ArrayList<Object> presenceExtensions = new ArrayList<Object>();
+  private ArrayList<Object> presenceExtensions = new ArrayList<>();
 
   /**
    * A constructor for this class. Used internally by SipUnit. Test programs should call the
@@ -188,7 +188,7 @@ public class PresenceSubscriber extends EventSubscriber {
           dev.setStatusExtensions(t.getStatus().getAny());
           dev.setTimestamp(t.getTimestamp());
 
-          ArrayList<PresenceNote> notes = new ArrayList<PresenceNote>();
+          ArrayList<PresenceNote> notes = new ArrayList<>();
           if (t.getNote() != null) {
             Iterator<?> j = t.getNote().iterator();
             while (j.hasNext()) {
@@ -237,7 +237,7 @@ public class PresenceSubscriber extends EventSubscriber {
    *         unique IDs received for each in the NOTIFY messages (tuple elements).
    */
   public HashMap<String, PresenceDeviceInfo> getPresenceDevices() {
-    return new HashMap<String, PresenceDeviceInfo>(devices);
+    return new HashMap<>(devices);
   }
 
   /**
@@ -247,7 +247,7 @@ public class PresenceSubscriber extends EventSubscriber {
    * @return An ArrayList containing zero or more PresenceNote objects.
    */
   public ArrayList<PresenceNote> getPresenceNotes() {
-    return new ArrayList<PresenceNote>(presenceNotes);
+    return new ArrayList<>(presenceNotes);
   }
 
   /**
@@ -257,7 +257,7 @@ public class PresenceSubscriber extends EventSubscriber {
    * @return An ArrayList containing zero or more Object.
    */
   public ArrayList<Object> getPresenceExtensions() {
-    return new ArrayList<Object>(presenceExtensions);
+    return new ArrayList<>(presenceExtensions);
   }
 
   /**

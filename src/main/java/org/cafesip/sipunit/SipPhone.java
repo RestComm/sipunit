@@ -88,15 +88,14 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
   private Request lastRegistrationRequest;
 
-  private Hashtable<String, Credential> credentials = new Hashtable<String, Credential>();
+  private Hashtable<String, Credential> credentials = new Hashtable<>();
 
   private Hashtable<String, LinkedHashMap<String, AuthorizationHeader>> authorizations =
-      new Hashtable<String, LinkedHashMap<String, AuthorizationHeader>>();
+      new Hashtable<>();
 
-  private ArrayList<SipCall> callList = new ArrayList<SipCall>();
+  private ArrayList<SipCall> callList = new ArrayList<>();
 
-  private Hashtable<String, PresenceSubscriber> buddyList =
-      new Hashtable<String, PresenceSubscriber>();
+  private Hashtable<String, PresenceSubscriber> buddyList = new Hashtable<>();
 
   // These are the buddies that have been added to the buddy list by the test
   // program.
@@ -105,8 +104,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   // the list only by the test program. Buddies in the list may have their
   // subscriptions kept alive (re-subscribed) automatically - TODO.
 
-  private Hashtable<String, PresenceSubscriber> buddyTerminatedList =
-      new Hashtable<String, PresenceSubscriber>();
+  private Hashtable<String, PresenceSubscriber> buddyTerminatedList = new Hashtable<>();
 
   // This list contains Subscriptions that are not in the buddy list - they
   // get here
@@ -118,7 +116,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   // removed
   // buddy situation.
 
-  private List<ReferSubscriber> refererList = new ArrayList<ReferSubscriber>();
+  private List<ReferSubscriber> refererList = new ArrayList<>();
 
   protected SipPhone(SipStack stack, String host, String proto, int port, String me)
       throws ParseException, InvalidArgumentException {
@@ -284,7 +282,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
           getAuthorizations().get(myRegistrationId);
       if (auth_list != null) {
         ArrayList<AuthorizationHeader> auth_headers =
-            new ArrayList<AuthorizationHeader>(auth_list.values());
+            new ArrayList<>(auth_list.values());
         Iterator<AuthorizationHeader> i = auth_headers.iterator();
         while (i.hasNext()) {
           AuthorizationHeader auth = i.next();
@@ -1146,7 +1144,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
     LinkedHashMap<String, AuthorizationHeader> auth_list = getAuthorizations().get(call_id);
     if (auth_list != null) {
       ArrayList<AuthorizationHeader> auth_headers =
-          new ArrayList<AuthorizationHeader>(auth_list.values());
+          new ArrayList<>(auth_list.values());
       Iterator<AuthorizationHeader> i = auth_headers.iterator();
       while (i.hasNext()) {
         AuthorizationHeader auth = i.next();
@@ -1286,7 +1284,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   {
     ArrayList<EventSubscriber> subscriptions =
         new ArrayList<EventSubscriber>(getBuddyList().values());
-    subscriptions.addAll(new ArrayList<EventSubscriber>(getRetiredBuddies().values()));
+    subscriptions.addAll(new ArrayList<>(getRetiredBuddies().values()));
     subscriptions.addAll(getRefererList());
 
     for (EventSubscriber s : subscriptions) {
@@ -1587,7 +1585,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    *         PresenceSubscriber object.
    */
   public Hashtable<String, PresenceSubscriber> getBuddyList() {
-    return new Hashtable<String, PresenceSubscriber>(buddyList);
+    return new Hashtable<>(buddyList);
   }
 
   /**
@@ -1603,7 +1601,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    *         PresenceSubscriber object.
    */
   public Hashtable<String, PresenceSubscriber> getRetiredBuddies() {
-    return new Hashtable<String, PresenceSubscriber>(buddyTerminatedList);
+    return new Hashtable<>(buddyTerminatedList);
   }
 
   protected PresenceSubscriber retireBuddy(String uri) {
@@ -1641,7 +1639,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * 
    */
   public List<ReferSubscriber> getRefererInfo(SipURI referToUri) {
-    List<ReferSubscriber> list = new ArrayList<ReferSubscriber>();
+    List<ReferSubscriber> list = new ArrayList<>();
 
     synchronized (refererList) {
       for (ReferSubscriber s : refererList) {
@@ -1665,7 +1663,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * 
    */
   public List<ReferSubscriber> getRefererInfoByDialog(String dialogId) {
-    List<ReferSubscriber> list = new ArrayList<ReferSubscriber>();
+    List<ReferSubscriber> list = new ArrayList<>();
 
     synchronized (refererList) {
       for (ReferSubscriber s : refererList) {
@@ -1690,7 +1688,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * @return a list of ReferSubscriber objects or an empty list if there are none.
    */
   public List<ReferSubscriber> getRefererList() {
-    return new ArrayList<ReferSubscriber>(refererList);
+    return new ArrayList<>(refererList);
   }
 
   /**
@@ -1738,7 +1736,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
     // handle URI parameters
     if (otherUriParameters == null) {
-      otherUriParameters = new HashMap<String, String>();
+      otherUriParameters = new HashMap<>();
     }
     if (transportUriParameter != null) {
       otherUriParameters.put("transport", transportUriParameter);
@@ -1752,7 +1750,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
     // handle URI headers
     if (otherUriHeaders == null) {
-      otherUriHeaders = new HashMap<String, String>();
+      otherUriHeaders = new HashMap<>();
     }
     if (joinUriHeader != null) {
       otherUriHeaders.put("Join", joinUriHeader);

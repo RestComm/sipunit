@@ -288,8 +288,8 @@ public class TestNoProxyTLS {
           Dialog bDialog = b.getLastTransaction().getServerTransaction().getDialog();
 
           Header allow = ub.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
-          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0, new ArrayList<Header>(
-              Arrays.asList(allow)), null, null);
+          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0,
+              new ArrayList<>(Arrays.asList(allow)), null, null);
           assertLastOperationSuccess("b send OK - " + b.format(), b);
 
           // wait for INFO request
@@ -352,8 +352,7 @@ public class TestNoProxyTLS {
       Header allow = ua.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
 
       a.initiateOutgoingCall("sips:amit@nist.gov", "sips:becky@nist.gov", ua.getStackAddress()
-          + ':' + myPort + '/' + testProtocol, new ArrayList<Header>(Arrays.asList(allow)), null,
-          null);
+          + ':' + myPort + '/' + testProtocol, new ArrayList<>(Arrays.asList(allow)), null, null);
       assertLastOperationSuccess("a initiate call - " + a.format(), a);
       Dialog aDialog = a.getLastTransaction().getClientTransaction().getDialog();
 
@@ -423,8 +422,8 @@ public class TestNoProxyTLS {
           Dialog bDialog = b.getLastTransaction().getServerTransaction().getDialog();
 
           Header allow = ub.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
-          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0, new ArrayList<Header>(
-              Arrays.asList(allow)), null, null);
+          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0,
+              new ArrayList<>(Arrays.asList(allow)), null, null);
           assertLastOperationSuccess("b send OK - " + b.format(), b);
 
           // wait for INFO request
@@ -487,7 +486,7 @@ public class TestNoProxyTLS {
       Header allow = ua.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
 
       a.initiateOutgoingCall("sips:amit@nist.gov", "sips:becky@nist.gov", ua.getStackAddress()
-          + ':' + myPort + '/' + testProtocol, new ArrayList<Header>(Arrays.asList(allow)), null,
+          + ':' + myPort + '/' + testProtocol, new ArrayList<>(Arrays.asList(allow)), null,
           null);
       assertLastOperationSuccess("a initiate call - " + a.format(), a);
       Dialog aDialog = a.getLastTransaction().getClientTransaction().getDialog();
@@ -1042,12 +1041,12 @@ public class TestNoProxyTLS {
 
       // set up outbound INVITE contents
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
       addnl_hdrs.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdrs = new ArrayList<>();
       URI bogus_contact =
           ua.getParent().getAddressFactory()
               .createURI("sips:doodah@" + ua.getStackAddress() + ':' + myPort);
@@ -1128,10 +1127,10 @@ public class TestNoProxyTLS {
 
       // set up outbound INVITE contents
 
-      ArrayList<String> addnl_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_hdrs = new ArrayList<>();
       replace_hdrs.add(new String("Contact: <sips:doodah@" + ua.getStackAddress() + ':' + myPort
           + '>'));
       replace_hdrs.add(new String("Max-Forwards: 62"));
@@ -1173,12 +1172,12 @@ public class TestNoProxyTLS {
 
       // set up outbound INVITE contents
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
       addnl_hdrs.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdrs = new ArrayList<>();
       URI bogus_contact =
           ua.getParent().getAddressFactory()
               .createURI("sips:doodah@" + ua.getStackAddress() + ':' + myPort);
@@ -1262,10 +1261,10 @@ public class TestNoProxyTLS {
 
       // set up outbound INVITE contents
 
-      ArrayList<String> addnl_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_hdrs = new ArrayList<>();
       replace_hdrs.add(new String("Contact: <sips:doodah@" + ua.getStackAddress() + ':' + myPort
           + '>'));
       replace_hdrs.add(new String("Max-Forwards: 62"));
@@ -1619,14 +1618,14 @@ public class TestNoProxyTLS {
 
       // send ACK
       // with JSIP additional, replacement headers, and body
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>(2);
+      ArrayList<Header> addnl_hdrs = new ArrayList<>(2);
       ReasonHeader reason_hdr =
           ub.getParent().getHeaderFactory().createReasonHeader("SIP", 44, "dummy");
       addnl_hdrs.add(reason_hdr);
       ct_hdr = ub.getParent().getHeaderFactory().createContentTypeHeader("mytype", "mysubtype");
       addnl_hdrs.add(ct_hdr);
 
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>(2);
+      ArrayList<Header> replace_hdrs = new ArrayList<>(2);
       MaxForwardsHeader hdr = ub.getParent().getHeaderFactory().createMaxForwardsHeader(29);
       replace_hdrs.add(hdr);
       PriorityHeader pri_hdr =
@@ -1649,13 +1648,13 @@ public class TestNoProxyTLS {
 
       a.listenForReinvite();
 
-      addnl_hdrs = new ArrayList<Header>(2);
+      addnl_hdrs = new ArrayList<>(2);
       pri_hdr = ub.getParent().getHeaderFactory().createPriorityHeader(PriorityHeader.URGENT);
       reason_hdr = ub.getParent().getHeaderFactory().createReasonHeader("SIP", 41, "I made it up");
       addnl_hdrs.add(pri_hdr);
       addnl_hdrs.add(reason_hdr);
 
-      replace_hdrs = new ArrayList<Header>(1);
+      replace_hdrs = new ArrayList<>(1);
       hdr = ub.getParent().getHeaderFactory().createMaxForwardsHeader(21);
       replace_hdrs.add(hdr);
 
@@ -1685,8 +1684,8 @@ public class TestNoProxyTLS {
       // test everything
       // _____________________________________________
 
-      ArrayList<String> addnl_str_hdrs = new ArrayList<String>();
-      ArrayList<String> replace_str_hdrs = new ArrayList<String>();;
+      ArrayList<String> addnl_str_hdrs = new ArrayList<>();
+      ArrayList<String> replace_str_hdrs = new ArrayList<>();
       addnl_str_hdrs.add("Priority: Normal");
       addnl_str_hdrs.add("Reason: SIP; cause=42; text=\"I made it up\"");
 
@@ -1795,7 +1794,7 @@ public class TestNoProxyTLS {
               .createURI("sips:becky@" + ub.getStackAddress() + ':' + myPort);
       Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
       String to_tag = ub.generateNewTag();
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12));
       addnl_hdrs.add(ub.getParent().getHeaderFactory().createContentTypeHeader("app", "subtype"));
       // no body - should receive msg with body length 0 and with content
@@ -1858,7 +1857,7 @@ public class TestNoProxyTLS {
 
       // (d) send reply with replace JSIP Header (test replacement),
       // ignored body
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdrs = new ArrayList<>();
       URI bogus_contact =
           ub.getParent().getAddressFactory()
               .createURI("sips:doodah@" + ub.getStackAddress() + ':' + myPort);
@@ -1938,7 +1937,7 @@ public class TestNoProxyTLS {
       // (a') send reply with additional String Headers & content type
       // info but no body
 
-      ArrayList<String> addnl_str_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_str_hdrs = new ArrayList<>();
       addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12).toString());
       // no body - should receive msg with body length 0 and with content
       // type header
@@ -2002,7 +2001,7 @@ public class TestNoProxyTLS {
 
       // (d') send reply with replace String Header (test replacement),
       // ignored body
-      ArrayList<String> replace_str_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_str_hdrs = new ArrayList<>();
       replace_str_hdrs.add("Contact: <sips:doodah@192.168.1.101:5061>");
       ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, "my body", null, null,
           null, replace_str_hdrs);
@@ -2206,7 +2205,7 @@ public class TestNoProxyTLS {
               .createURI("sips:becky@" + ub.getStackAddress() + ':' + myPort);
       Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
       String to_tag = ub.generateNewTag();
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12));
       addnl_hdrs.add(ub.getParent().getHeaderFactory().createContentTypeHeader("app", "subtype"));
       // no body - should receive msg with body length 0 and with content
@@ -2307,7 +2306,7 @@ public class TestNoProxyTLS {
       assertNotNull(ub.format(), inc_req);
       // call received
 
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdrs = new ArrayList<>();
       URI bogus_contact =
           ub.getParent().getAddressFactory()
               .createURI("sips:doodah@" + ub.getStackAddress() + ':' + myPort);
@@ -2422,7 +2421,7 @@ public class TestNoProxyTLS {
       assertNotNull(ub.format(), inc_req);
       // call received
 
-      ArrayList<String> addnl_str_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_str_hdrs = new ArrayList<>();
       addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12).toString());
       // no body - should receive msg with body length 0 and with content
       // type header
@@ -2522,7 +2521,7 @@ public class TestNoProxyTLS {
       assertNotNull(ub.format(), inc_req);
       // call received
 
-      ArrayList<String> replace_str_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_str_hdrs = new ArrayList<>();
       replace_str_hdrs.add("Contact: <sips:doodah@192.168.1.101:5061>");
       ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, "my body", null, null,
           null, replace_str_hdrs);
@@ -3019,12 +3018,12 @@ public class TestNoProxyTLS {
       b.listenForCancel();
       Thread.sleep(200);
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
       addnl_hdrs.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdrs = new ArrayList<>();
       URI bogus_contact =
           ua.getParent().getAddressFactory()
               .createURI("sips:doodah@" + ua.getStackAddress() + ':' + myPort);
@@ -3111,10 +3110,10 @@ public class TestNoProxyTLS {
       b.listenForCancel();
       Thread.sleep(200);
 
-      ArrayList<String> addnl_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_hdrs = new ArrayList<>();
       replace_hdrs.add(new String("Contact: <sips:doodah@" + ua.getStackAddress() + ':' + myPort
           + '>'));
       replace_hdrs.add(new String("Max-Forwards: 62"));

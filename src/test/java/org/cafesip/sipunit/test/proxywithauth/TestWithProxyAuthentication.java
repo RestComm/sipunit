@@ -675,12 +675,12 @@ public class TestWithProxyAuthentication {
 
       // set up outbound INVITE contents
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
       addnl_hdrs.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdrs = new ArrayList<>();
       URI bogus_contact =
           ua.getParent()
               .getAddressFactory()
@@ -808,10 +808,10 @@ public class TestWithProxyAuthentication {
 
       // set up outbound INVITE contents
 
-      ArrayList<String> addnl_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_hdrs = new ArrayList<>();
       replace_hdrs.add(new String("Contact: <sip:doodah@"
           + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
       replace_hdrs.add(new String("Max-Forwards: 62"));
@@ -897,12 +897,12 @@ public class TestWithProxyAuthentication {
 
       // set up outbound INVITE contents
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
       addnl_hdrs.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdrs = new ArrayList<>();
       URI bogus_contact =
           ua.getParent()
               .getAddressFactory()
@@ -1007,10 +1007,10 @@ public class TestWithProxyAuthentication {
 
       // set up outbound INVITE contents
 
-      ArrayList<String> addnl_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_hdrs = new ArrayList<>();
       replace_hdrs.add(new String("Contact: <sip:doodah@"
           + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
       replace_hdrs.add(new String("Max-Forwards: 62"));
@@ -1113,10 +1113,10 @@ public class TestWithProxyAuthentication {
 
       // create extra parameters for sendIncomingCallResponse()
 
-      ArrayList<String> addnl_hdrs = new ArrayList<String>();
+      ArrayList<String> addnl_hdrs = new ArrayList<>();
       addnl_hdrs.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<String>();
+      ArrayList<String> replace_hdrs = new ArrayList<>();
       replace_hdrs.add(new String("Contact: <sip:doodah@"
           + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
       replace_hdrs.add(new String("Max-Forwards: 62"));
@@ -1514,11 +1514,11 @@ public class TestWithProxyAuthentication {
 
       b.listenForReinvite();
 
-      ArrayList<String> addnl_hdrs = new ArrayList<String>(2);
+      ArrayList<String> addnl_hdrs = new ArrayList<>(2);
       addnl_hdrs.add("Priority: Urgent");
       addnl_hdrs.add("Reason: SIP; cause=41; text=\"I made it up\"");
 
-      ArrayList<String> replace_hdrs = new ArrayList<String>(1);
+      ArrayList<String> replace_hdrs = new ArrayList<>(1);
       MaxForwardsHeader hdr = ua.getParent().getHeaderFactory().createMaxForwardsHeader(22);
       replace_hdrs.add(hdr.toString());
 
@@ -1550,7 +1550,7 @@ public class TestWithProxyAuthentication {
       // test everything
       // _____________________________________________
 
-      ArrayList<Header> addnl_hdr_hdrs = new ArrayList<Header>();
+      ArrayList<Header> addnl_hdr_hdrs = new ArrayList<>();
       PriorityHeader pri_hdr =
           ub.getParent().getHeaderFactory().createPriorityHeader(PriorityHeader.NORMAL);
       ReasonHeader reason_hdr =
@@ -1560,7 +1560,7 @@ public class TestWithProxyAuthentication {
       addnl_hdr_hdrs.add(reason_hdr);
       addnl_hdr_hdrs.add(ct_hdr);
 
-      ArrayList<Header> replace_hdr_hdrs = new ArrayList<Header>();
+      ArrayList<Header> replace_hdr_hdrs = new ArrayList<>();
       replace_hdr_hdrs.add(ub.getParent().getHeaderFactory()
           .createContentTypeHeader("mycontenttype", "mycontentsubtype"));
 
@@ -1600,10 +1600,10 @@ public class TestWithProxyAuthentication {
 
       // send ACK
       // with additional, replacement String headers, and body
-      addnl_hdrs = new ArrayList<String>(1);
+      addnl_hdrs = new ArrayList<>(1);
       addnl_hdrs.add("Event: presence");
 
-      replace_hdrs = new ArrayList<String>(3);
+      replace_hdrs = new ArrayList<>(3);
       replace_hdrs.add("Max-Forwards: 29");
       replace_hdrs.add("Priority: Urgent");
       replace_hdrs.add("Reason: SIP; cause=44; text=\"dummy\"");

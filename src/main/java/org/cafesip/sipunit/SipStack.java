@@ -71,7 +71,7 @@ public class SipStack implements SipListener {
 
   private SipProvider sipProvider;
 
-  private LinkedList<SipListener> listeners = new LinkedList<SipListener>();
+  private LinkedList<SipListener> listeners = new LinkedList<>();
 
   private Random random = new Random((new Date()).getTime());
 

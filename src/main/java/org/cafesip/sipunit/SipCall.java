@@ -678,7 +678,8 @@ public class SipCall implements SipActionObject, MessageListener {
       } catch (ParseException e) {
       }
       if (additionalHeaders == null)
-        additionalHeaders = new ArrayList<Header>();
+        additionalHeaders = new ArrayList<>();
+
       additionalHeaders.add(contentTypeHeader);
     }
 
@@ -1247,9 +1248,9 @@ public class SipCall implements SipActionObject, MessageListener {
         contact_hdr = parent.updateContactInfo(newContact, displayName);
       }
 
-      if (additionalHeaders == null) {
-        additionalHeaders = new ArrayList<Header>();
-      }
+      if (additionalHeaders == null)
+        additionalHeaders = new ArrayList<>();
+
       additionalHeaders.add(contact_hdr);
 
       if (parent.sendReply(siptrans, statusCode, reasonPhrase, null, null, expires,
@@ -2520,7 +2521,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * @return ArrayList of zero or more SipResponse objects.
    */
   public ArrayList<SipResponse> getAllReceivedResponses() {
-    return new ArrayList<SipResponse>(receivedResponses);
+    return new ArrayList<>(receivedResponses);
   }
 
   /**
@@ -2531,7 +2532,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * @return ArrayList of zero or more SipRequest objects.
    */
   public ArrayList<SipRequest> getAllReceivedRequests() {
-    return new ArrayList<SipRequest>(receivedRequests);
+    return new ArrayList<>(receivedRequests);
   }
 
   /**

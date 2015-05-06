@@ -45,7 +45,7 @@ public class SipTransaction {
 
   private MessageListener clientListener;
 
-  private LinkedList<EventObject> events = new LinkedList<EventObject>();
+  private LinkedList<EventObject> events = new LinkedList<>();
 
   private ServerTransaction serverTransaction;
 
