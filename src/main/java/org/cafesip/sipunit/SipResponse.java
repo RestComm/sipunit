@@ -157,7 +157,7 @@ public class SipResponse extends SipMessage {
    * Comment for <code>statusCodeDescription</code> This map yields a reason phrase, given a SIP
    * network response message status code.
    */
-  public static HashMap<Integer, String> statusCodeDescription = new HashMap<Integer, String>();
+  public static HashMap<Integer, String> statusCodeDescription = new HashMap<>();
 
   static {
     // PROVISIONAL (1xx)

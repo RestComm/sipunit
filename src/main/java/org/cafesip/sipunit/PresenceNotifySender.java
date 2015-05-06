@@ -711,11 +711,11 @@ public class PresenceNotifySender implements MessageListener {
   }
 
   public ArrayList<SipResponse> getAllReceivedResponses() {
-    return new ArrayList<SipResponse>(receivedResponses);
+    return new ArrayList<>(receivedResponses);
   }
 
   public ArrayList<SipRequest> getAllReceivedRequests() {
-    return new ArrayList<SipRequest>(receivedRequests);
+    return new ArrayList<>(receivedRequests);
   }
 
   public SipRequest getLastReceivedRequest() {

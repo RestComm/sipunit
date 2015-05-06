@@ -116,7 +116,7 @@ public class SipSession implements SipListener, SipActionObject {
    * Comment for <code>statusCodeDescription</code> This map yields a descriptive string, given an
    * internal sipunit return code.
    */
-  public static HashMap<Integer, String> statusCodeDescription = new HashMap<Integer, String>();
+  public static HashMap<Integer, String> statusCodeDescription = new HashMap<>();
 
   static {
     statusCodeDescription.put(new Integer(NONE_YET), "Not yet determined");
@@ -168,10 +168,9 @@ public class SipSession implements SipListener, SipActionObject {
 
   private ArrayList<ViaHeader> viaHeaders;
 
-  private HashMap<ClientTransaction, SipTransaction> respTransactions =
-      new HashMap<ClientTransaction, SipTransaction>();
+  private HashMap<ClientTransaction, SipTransaction> respTransactions = new HashMap<>();
 
-  private LinkedList<RequestEvent> reqEvents = new LinkedList<RequestEvent>();
+  private LinkedList<RequestEvent> reqEvents = new LinkedList<>();
 
   private boolean rcvRequests = false;
 
@@ -179,8 +178,7 @@ public class SipSession implements SipListener, SipActionObject {
 
   private BlockObject respBlock = new BlockObject();
 
-  private HashMap<String, ArrayList<RequestListener>> requestListeners =
-      new HashMap<String, ArrayList<RequestListener>>();
+  private HashMap<String, ArrayList<RequestListener>> requestListeners = new HashMap<>();
 
   // key = String request method, value = ArrayList of RequestListener
 
@@ -235,7 +233,7 @@ public class SipSession implements SipListener, SipActionObject {
         parent.getSipProvider().getListeningPoints()[0].getPort(),
         parent.getSipProvider().getListeningPoints()[0].getTransport(), "somebranchvalue");
 
-    viaHeaders = new ArrayList<ViaHeader>(1);
+    viaHeaders = new ArrayList<>(1);
     viaHeaders.add(via_header);
 
     // finally, register with the sip stack
@@ -1401,7 +1399,7 @@ public class SipSession implements SipListener, SipActionObject {
       return null;
     }
 
-    ArrayList<Header> headers = new ArrayList<Header>();
+    ArrayList<Header> headers = new ArrayList<>();
 
     Iterator<String> i = strings.iterator();
     while (i.hasNext()) {
@@ -1432,7 +1430,7 @@ public class SipSession implements SipListener, SipActionObject {
     }
 
     if (headers == null) {
-      headers = new ArrayList<Header>();
+      headers = new ArrayList<>();
     }
 
     ContentTypeHeader ct_type =
@@ -1732,7 +1730,7 @@ public class SipSession implements SipListener, SipActionObject {
    *         effect for this user agent.
    */
   public ArrayList<ViaHeader> getViaHeaders() {
-    return new ArrayList<ViaHeader>(viaHeaders);
+    return new ArrayList<>(viaHeaders);
   }
 
   /**
@@ -1836,7 +1834,7 @@ public class SipSession implements SipListener, SipActionObject {
     synchronized (requestListeners) {
       ArrayList<RequestListener> listeners = requestListeners.get(requestMethod);
       if (listeners == null) {
-        listeners = new ArrayList<RequestListener>();
+        listeners = new ArrayList<>();
         requestListeners.put(requestMethod, listeners);
       }
 

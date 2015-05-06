@@ -19,7 +19,9 @@
 package org.cafesip.sipunit;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ListIterator;
+
 import javax.sip.header.Header;
 import javax.sip.message.Message;
 
@@ -52,7 +54,7 @@ public class SipMessage {
    */
   protected ListIterator<Header> getHeaders(String header) {
     if (message == null) {
-      return new ArrayList<Header>().listIterator();
+      return Collections.<Header>emptyList().listIterator();
     }
 
     return message.getHeaders(header);

@@ -189,7 +189,7 @@ public class TestReferNoProxy {
     }
 
     // test transportUriParameter, methodUriParameter, otherUriParameters
-    Map<String, String> paramMap = new HashMap<String, String>();
+    Map<String, String> paramMap = new HashMap<>();
     paramMap.put("maddr", "abc");
     uri =
         ua.getUri("sip:", "sipmaster@192.168.1.11:5060", "udp", "SUBSCRIBE", paramMap, null, null,
@@ -204,7 +204,7 @@ public class TestReferNoProxy {
     assertTrue("sip:sipmaster@192.168.1.11:5060;transport=udp;method=SUBSCRIBE;maddr=abc"
         .equalsIgnoreCase(uri.toString()));
     // test joinUriHeader, Map<String, String> otherUriHeaders
-    Map<String, String> headerMap = new HashMap<String, String>();
+    Map<String, String> headerMap = new HashMap<>();
     headerMap.put("Contact", "sip:abc@192.168.1.12");
     paramMap.clear();
     paramMap.put("maddr", "abc");
@@ -2007,12 +2007,12 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", null, null, null,
             "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994", null, null);
 
-    ArrayList<Header> additionalHeaders = new ArrayList<Header>();
+    ArrayList<Header> additionalHeaders = new ArrayList<>();
     additionalHeaders.add(ua.getParent().getHeaderFactory().createOrganizationHeader("cafesip"));
     additionalHeaders.add(ua.getParent().getHeaderFactory()
         .createContentTypeHeader("applicationn", "texxt"));
 
-    ArrayList<Header> replaceHeaders = new ArrayList<Header>();
+    ArrayList<Header> replaceHeaders = new ArrayList<>();
     Address addr = ua.getParent().getAddressFactory().createAddress("sip:joe@shmoe.net");
     ContactHeader hdr = ua.getParent().getHeaderFactory().createContactHeader(addr);
     replaceHeaders.add(hdr);
@@ -2070,11 +2070,11 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", null, null, null,
             "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994", null, null);
 
-    ArrayList<String> additionalHeaders = new ArrayList<String>();
+    ArrayList<String> additionalHeaders = new ArrayList<>();
     additionalHeaders.add(ua.getParent().getHeaderFactory().createOrganizationHeader("cafesip")
         .toString());
 
-    ArrayList<String> replaceHeaders = new ArrayList<String>();
+    ArrayList<String> replaceHeaders = new ArrayList<>();
     Address addr = ua.getParent().getAddressFactory().createAddress("sip:joe@shmoe.net");
     ContactHeader hdr = ua.getParent().getHeaderFactory().createContactHeader(addr);
     replaceHeaders.add(hdr.toString());
@@ -2115,12 +2115,12 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", null, null, null,
             "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994", null, null);
 
-    ArrayList<Header> additionalHeaders = new ArrayList<Header>();
+    ArrayList<Header> additionalHeaders = new ArrayList<>();
     additionalHeaders.add(ua.getParent().getHeaderFactory().createOrganizationHeader("cafesip"));
     additionalHeaders.add(ua.getParent().getHeaderFactory()
         .createContentTypeHeader("applicationn", "texxt"));
 
-    ArrayList<Header> replaceHeaders = new ArrayList<Header>();
+    ArrayList<Header> replaceHeaders = new ArrayList<>();
     Address addr = ua.getParent().getAddressFactory().createAddress("sip:joe@shmoe.net");
     ContactHeader hdr = ua.getParent().getHeaderFactory().createContactHeader(addr);
     replaceHeaders.add(hdr);
@@ -2160,13 +2160,13 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", null, null, null,
             "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994", null, null);
 
-    ArrayList<String> additionalHeaders = new ArrayList<String>();
+    ArrayList<String> additionalHeaders = new ArrayList<>();
     additionalHeaders.add(ua.getParent().getHeaderFactory().createOrganizationHeader("cafesip")
         .toString());
     additionalHeaders.add(ua.getParent().getHeaderFactory()
         .createContentTypeHeader("applicationn", "texxt").toString());
 
-    ArrayList<String> replaceHeaders = new ArrayList<String>();
+    ArrayList<String> replaceHeaders = new ArrayList<>();
     Address addr = ua.getParent().getAddressFactory().createAddress("sip:joe@shmoe.net");
     ContactHeader hdr = ua.getParent().getHeaderFactory().createContactHeader(addr);
     replaceHeaders.add(hdr.toString());

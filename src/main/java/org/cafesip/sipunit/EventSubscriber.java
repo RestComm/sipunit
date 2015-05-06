@@ -107,17 +107,17 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   /*
    * list of SipResponse
    */
-  protected LinkedList<SipResponse> receivedResponses = new LinkedList<SipResponse>();
+  protected LinkedList<SipResponse> receivedResponses = new LinkedList<>();
 
   /*
    * list of SipRequest
    */
-  protected LinkedList<SipRequest> receivedRequests = new LinkedList<SipRequest>();
+  protected LinkedList<SipRequest> receivedRequests = new LinkedList<>();
 
   /*
    * for wait operations
    */
-  private LinkedList<RequestEvent> reqEvents = new LinkedList<RequestEvent>();
+  private LinkedList<RequestEvent> reqEvents = new LinkedList<>();
 
   private BlockObject responseBlock = new BlockObject();
 
@@ -138,7 +138,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
   private boolean removalComplete = false;
 
-  protected LinkedList<String> eventErrors = new LinkedList<String>();
+  protected LinkedList<String> eventErrors = new LinkedList<>();
 
   protected EventSubscriber(String uri, SipPhone parent) throws ParseException {
     this(uri, parent, null);
@@ -1225,7 +1225,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    */
   public ArrayList<SipResponse> getAllReceivedResponses() {
     synchronized (responseBlock) {
-      return new ArrayList<SipResponse>(receivedResponses);
+      return new ArrayList<>(receivedResponses);
     }
   }
 
@@ -1239,7 +1239,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    */
   public ArrayList<SipRequest> getAllReceivedRequests() {
     synchronized (this) {
-      return new ArrayList<SipRequest>(receivedRequests);
+      return new ArrayList<>(receivedRequests);
     }
   }
 
@@ -1343,7 +1343,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    */
   public LinkedList<String> getEventErrors() {
     synchronized (eventErrors) {
-      return new LinkedList<String>(eventErrors);
+      return new LinkedList<>(eventErrors);
     }
   }
 
@@ -1363,7 +1363,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     if (status == SipResponse.UNSUPPORTED_MEDIA_TYPE) {
       try {
         AcceptHeader ahdr = getUnsupportedMediaAcceptHeader();
-        additionalHeaders = new ArrayList<Header>();
+        additionalHeaders = new ArrayList<>();
         additionalHeaders.add(ahdr);
       } catch (Exception e) {
         setReturnCode(SipSession.EXCEPTION_ENCOUNTERED);
