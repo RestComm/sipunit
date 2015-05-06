@@ -49,3 +49,8 @@ PutObjectStoreDirHere
 docs/sources-mobicents/src/
 docs/sources-telscale/src/
 
+/.classpath
+/.project
+
+
+/bin/
