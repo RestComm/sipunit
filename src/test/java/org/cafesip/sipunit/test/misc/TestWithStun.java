@@ -225,45 +225,45 @@ public class TestWithStun extends SipTestCase {
     assertLastOperationSuccess(
         "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-    SipCall b = ub.createSipCall();
-    b.listenForIncomingCall();
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
     Thread.sleep(50);
 
-    SipCall a =
+    SipCall callA =
         ua.makeCall(
             "sip:your-publicserver-account2@" + properties.getProperty("sipunit.test.domain"), null);
 
     assertLastOperationSuccess(ua.format(), ua);
 
-    assertTrue(b.waitForIncomingCall(5000));
+    assertTrue(callB.waitForIncomingCall(5000));
 
-    b.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+    callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
     Thread.sleep(1000);
 
-    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a);
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
 
-    b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
+    callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
     Thread.sleep(1000);
 
-    assertResponseReceived(SipResponse.OK, a);
+    assertResponseReceived(SipResponse.OK, callA);
 
-    assertTrue(a.sendInviteOkAck());
-    assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    assertTrue(callA.sendInviteOkAck());
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
-    assertTrue(b.waitForAck(1000));
+    assertTrue(callB.waitForAck(1000));
 
-    a.listenForDisconnect();
+    callA.listenForDisconnect();
     Thread.sleep(100);
 
-    assertTrue(b.disconnect());
-    assertLastOperationSuccess("b disc - " + b.format(), b);
+    assertTrue(callB.disconnect());
+    assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
     // verify extra parameters were received in the message
 
-    a.waitForDisconnect(1000);
-    assertLastOperationSuccess("a wait disc - " + a.format(), a);
+    callA.waitForDisconnect(1000);
+    assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-    assertTrue(a.respondToDisconnect());
+    assertTrue(callA.respondToDisconnect());
 
     ub.dispose();
   }
