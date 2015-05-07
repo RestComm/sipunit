@@ -126,60 +126,60 @@ public class TestSipStacksWithProxyNoAuth {
           sipStack2.createSipPhone(PROXY_HOST, PROXY_PROTO, PROXY_PORT, "sip:becky@cafesip.org");
       assertTrue(ub.register("becky", "a1b2c3d4", null, 600, 5000));
 
-      SipCall a = ua.createSipCall();
-      SipCall b = ub.createSipCall();
+      SipCall callA = ua.createSipCall();
+      SipCall callB = ub.createSipCall();
 
-      b.listenForIncomingCall();
+      callB.listenForIncomingCall();
       Thread.sleep(100);
 
-      a.initiateOutgoingCall("sip:becky@cafesip.org", null); // "127.0.0.1:4000/UDP"
-      assertLastOperationSuccess("a initiate call - " + a.format(), a);
+      callA.initiateOutgoingCall("sip:becky@cafesip.org", null); // "127.0.0.1:4000/UDP"
+      assertLastOperationSuccess("a initiate call - " + callA.format(), callA);
 
-      b.waitForIncomingCall(3000);
-      assertLastOperationSuccess("b wait incoming call - " + b.format(), b);
+      callB.waitForIncomingCall(3000);
+      assertLastOperationSuccess("b wait incoming call - " + callB.format(), callB);
 
-      b.sendIncomingCallResponse(Response.RINGING, null, -1);
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+      callB.sendIncomingCallResponse(Response.RINGING, null, -1);
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
 
       Thread.sleep(1000);
 
-      b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
-      assertLastOperationSuccess("b send OK - " + b.format(), b);
+      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+      assertLastOperationSuccess("b send OK - " + callB.format(), callB);
 
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait 1st response - " + a.format(), a);
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait 1st response - " + callA.format(), callA);
       assertTrue("Unexpected 1st response received",
-          (a.getReturnCode() == Response.RINGING || a.getReturnCode() == Response.TRYING));
-      if (a.getLastReceivedResponse().getStatusCode() == Response.RINGING) {
-        assertNotNull("Default response reason not sent", a.getLastReceivedResponse()
+          (callA.getReturnCode() == Response.RINGING || callA.getReturnCode() == Response.TRYING));
+      if (callA.getLastReceivedResponse().getStatusCode() == Response.RINGING) {
+        assertNotNull("Default response reason not sent", callA.getLastReceivedResponse()
             .getReasonPhrase());
-        assertEquals("Unexpected default reason", "Ringing", a.getLastReceivedResponse()
+        assertEquals("Unexpected default reason", "Ringing", callA.getLastReceivedResponse()
             .getReasonPhrase());
       }
 
-      a.waitOutgoingCallResponse(5000);
-      assertLastOperationSuccess("a wait 2nd response - " + a.format(), a);
-      a.waitOutgoingCallResponse(2000);
+      callA.waitOutgoingCallResponse(5000);
+      assertLastOperationSuccess("a wait 2nd response - " + callA.format(), callA);
+      callA.waitOutgoingCallResponse(2000);
 
-      assertEquals("Unexpected final response received", Response.OK, a.getLastReceivedResponse()
+      assertEquals("Unexpected final response received", Response.OK, callA.getLastReceivedResponse()
           .getStatusCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
       Thread.sleep(1000);
 
-      a.listenForDisconnect();
-      assertLastOperationSuccess("a listen disc - " + a.format(), a);
+      callA.listenForDisconnect();
+      assertLastOperationSuccess("a listen disc - " + callA.format(), callA);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(5000);
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(5000);
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-      a.respondToDisconnect();
-      assertLastOperationSuccess("a respond to disc - " + a.format(), a);
+      callA.respondToDisconnect();
+      assertLastOperationSuccess("a respond to disc - " + callA.format(), callA);
 
       Thread.sleep(1000);
       ub.dispose();
