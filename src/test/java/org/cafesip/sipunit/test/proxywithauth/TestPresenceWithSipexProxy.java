@@ -136,31 +136,21 @@ public class TestPresenceWithSipexProxy {
    */
   @Before
   public void setUp() throws Exception {
-    try {
-      sipStack = new SipStack(testProtocol, myPort, properties);
-      SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-          || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-      SipStack.trace("Properties: " + properties.toString());
-    } catch (Exception ex) {
-      fail("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    sipStack = new SipStack(testProtocol, myPort, properties);
+    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
+        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
+    SipStack.trace("Properties: " + properties.toString());
 
-    try {
-      ua =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, myUrl);
+    ua =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, myUrl);
 
-      // register with the server
-      ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
-          "a1b2c3d4"));
-      ua.register(null, 3600);
-      assertLastOperationSuccess(
-          "Caller registration using pre-set credentials failed - " + ua.format(), ua);
-    } catch (Exception ex) {
-      fail("Exception creating SipPhone: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    // register with the server
+    ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
+        "a1b2c3d4"));
+    ua.register(null, 3600);
+    assertLastOperationSuccess(
+        "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
     ub = null;
   }
@@ -181,369 +171,363 @@ public class TestPresenceWithSipexProxy {
   }
 
   @Test
-  public void testBasicPresence() {
+  public void testBasicPresence() throws Exception {
     String buddy = "sip:becky@" + properties.getProperty("sipunit.test.domain"); // I am amit
 
-    try {
-      assertEquals(0, ua.getBuddyList().size()); // my list empty
+    assertEquals(0, ua.getBuddyList().size()); // my list empty
 
-      // ********** I. Add the buddy to the buddy list - start
-      // subscription
+    // ********** I. Add the buddy to the buddy list - start
+    // subscription
 
-      PresenceSubscriber sub = ua.addBuddy(buddy, 1000);
+    PresenceSubscriber sub = ua.addBuddy(buddy, 1000);
 
-      // check the return info
-      assertNotNull(sub);
-      assertEquals(1, ua.getBuddyList().size());
-      assertEquals(0, ua.getRetiredBuddies().size());
-      assertEquals(buddy, sub.getTargetUri());
-      assertNotNull(ua.getBuddyInfo(buddy)); // call anytime to get
-      // Subscription
-      assertEquals(sub.getTargetUri(), ua.getBuddyInfo(buddy).getTargetUri());
-      // assertFalse(s.isSubscriptionPending());
-      // assertTrue(s.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionTerminated()); // call anytime
-      assertEquals(SipResponse.PROXY_AUTHENTICATION_REQUIRED, sub.getReturnCode());
-      ResponseEvent respEvent = sub.getCurrentResponse();
-      Response response = respEvent.getResponse();
-      assertEquals(response.toString(), sub.getLastReceivedResponse() // call
-          // anytime
-          .getMessage().toString());
-      ArrayList<SipResponse> receivedResponses = sub.getAllReceivedResponses(); // call
-      // anytime
-      assertEquals(1, receivedResponses.size());
-      assertEquals(response.toString(), receivedResponses.get(0).toString());
+    // check the return info
+    assertNotNull(sub);
+    assertEquals(1, ua.getBuddyList().size());
+    assertEquals(0, ua.getRetiredBuddies().size());
+    assertEquals(buddy, sub.getTargetUri());
+    assertNotNull(ua.getBuddyInfo(buddy)); // call anytime to get
+    // Subscription
+    assertEquals(sub.getTargetUri(), ua.getBuddyInfo(buddy).getTargetUri());
+    // assertFalse(s.isSubscriptionPending());
+    // assertTrue(s.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionTerminated()); // call anytime
+    assertEquals(SipResponse.PROXY_AUTHENTICATION_REQUIRED, sub.getReturnCode());
+    ResponseEvent respEvent = sub.getCurrentResponse();
+    Response response = respEvent.getResponse();
+    assertEquals(response.toString(), sub.getLastReceivedResponse() // call
+        // anytime
+        .getMessage().toString());
+    ArrayList<SipResponse> receivedResponses = sub.getAllReceivedResponses(); // call
+    // anytime
+    assertEquals(1, receivedResponses.size());
+    assertEquals(response.toString(), receivedResponses.get(0).toString());
 
-      // process the received response
-      boolean status = sub.processResponse(1000);
-      assertTrue(sub.format(), status);
+    // process the received response
+    boolean status = sub.processResponse(1000);
+    assertTrue(sub.format(), status);
 
-      // check the response processing results
-      assertTrue(sub.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionPending());
-      assertFalse(sub.isSubscriptionTerminated());
-      assertNull(sub.getTerminationReason());
-      assertTrue(sub.getTimeLeft() <= 3600);
-      response = (Response) sub.getLastReceivedResponse().getMessage();
-      assertEquals(3600, response.getExpires().getExpires());
+    // check the response processing results
+    assertTrue(sub.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionPending());
+    assertFalse(sub.isSubscriptionTerminated());
+    assertNull(sub.getTerminationReason());
+    assertTrue(sub.getTimeLeft() <= 3600);
+    response = (Response) sub.getLastReceivedResponse().getMessage();
+    assertEquals(3600, response.getExpires().getExpires());
 
-      // wait for a NOTIFY
-      RequestEvent reqevent = sub.waitNotify(10000);
-      assertNotNull(reqevent);
-      assertNoSubscriptionErrors(sub);
+    // wait for a NOTIFY
+    RequestEvent reqevent = sub.waitNotify(10000);
+    assertNotNull(reqevent);
+    assertNoSubscriptionErrors(sub);
 
-      // examine the request object
-      Request request = reqevent.getRequest();
-      assertEquals(Request.NOTIFY, request.getMethod());
-      assertTrue(((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
-          .getExpires() <= 3600
-          && ((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
-              .getExpires() >= 3595);
-      ArrayList<SipRequest> receivedRequests = sub.getAllReceivedRequests();
-      assertEquals(1, receivedRequests.size());
-      SipRequest req = sub.getLastReceivedRequest();
-      assertNotNull(req);
-      assertTrue(req.isNotify());
-      assertFalse(req.isSubscribe());
-      assertEquals((receivedRequests.get(0)).getMessage().toString(), request.toString());
-      assertEquals(receivedRequests.get(0).toString(), req.toString());
+    // examine the request object
+    Request request = reqevent.getRequest();
+    assertEquals(Request.NOTIFY, request.getMethod());
+    assertTrue(((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
+        .getExpires() <= 3600
+        && ((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
+            .getExpires() >= 3595);
+    ArrayList<SipRequest> receivedRequests = sub.getAllReceivedRequests();
+    assertEquals(1, receivedRequests.size());
+    SipRequest req = sub.getLastReceivedRequest();
+    assertNotNull(req);
+    assertTrue(req.isNotify());
+    assertFalse(req.isSubscribe());
+    assertEquals((receivedRequests.get(0)).getMessage().toString(), request.toString());
+    assertEquals(receivedRequests.get(0).toString(), req.toString());
 
-      // process the NOTIFY
-      response = sub.processNotify(reqevent);
-      assertNotNull(response);
+    // process the NOTIFY
+    response = sub.processNotify(reqevent);
+    assertNotNull(response);
 
-      // check the processing results
-      assertTrue(sub.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionPending());
-      assertFalse(sub.isSubscriptionTerminated());
-      assertNull(sub.getTerminationReason());
-      assertTrue(sub.getTimeLeft() <= 3600);
-      assertEquals(SipResponse.OK, sub.getReturnCode());
+    // check the processing results
+    assertTrue(sub.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionPending());
+    assertFalse(sub.isSubscriptionTerminated());
+    assertNull(sub.getTerminationReason());
+    assertTrue(sub.getTimeLeft() <= 3600);
+    assertEquals(SipResponse.OK, sub.getReturnCode());
 
-      // check the response that was created
-      assertEquals(SipResponse.OK, response.getStatusCode());
-      assertTrue(response.getReasonPhrase().equals("OK"));
+    // check the response that was created
+    assertEquals(SipResponse.OK, response.getStatusCode());
+    assertTrue(response.getReasonPhrase().equals("OK"));
 
-      // check PRESENCE info - devices/tuples
-      HashMap<String, PresenceDeviceInfo> devices = sub.getPresenceDevices();
-      assertEquals(1, devices.size());
-      PresenceDeviceInfo dev = devices.get("1");
-      assertNotNull(dev);
-      assertEquals("closed", dev.getBasicStatus());
-      assertEquals(-1.0, dev.getContactPriority(), 0.001);
-      assertNull(dev.getContactURI());
-      assertEquals(0, dev.getDeviceExtensions().size());
-      assertEquals(0, dev.getDeviceNotes().size());
-      assertEquals("1", dev.getId());
-      assertEquals(0, dev.getStatusExtensions().size());
-      assertNull(dev.getTimestamp());
+    // check PRESENCE info - devices/tuples
+    HashMap<String, PresenceDeviceInfo> devices = sub.getPresenceDevices();
+    assertEquals(1, devices.size());
+    PresenceDeviceInfo dev = devices.get("1");
+    assertNotNull(dev);
+    assertEquals("closed", dev.getBasicStatus());
+    assertEquals(-1.0, dev.getContactPriority(), 0.001);
+    assertNull(dev.getContactURI());
+    assertEquals(0, dev.getDeviceExtensions().size());
+    assertEquals(0, dev.getDeviceNotes().size());
+    assertEquals("1", dev.getId());
+    assertEquals(0, dev.getStatusExtensions().size());
+    assertNull(dev.getTimestamp());
 
-      // check PRESENCE info - top-level extensions
-      assertEquals(0, sub.getPresenceExtensions().size());
+    // check PRESENCE info - top-level extensions
+    assertEquals(0, sub.getPresenceExtensions().size());
 
-      // check PRESENCE info - top-level notes
-      assertEquals(0, sub.getPresenceNotes().size());
+    // check PRESENCE info - top-level notes
+    assertEquals(0, sub.getPresenceNotes().size());
 
-      // reply to the NOTIFY
-      assertTrue(sub.replyToNotify(reqevent, response));
-      Thread.sleep(200);
+    // reply to the NOTIFY
+    assertTrue(sub.replyToNotify(reqevent, response));
+    Thread.sleep(200);
 
-      // ******* II. Log the buddy in, check status change
+    // ******* II. Log the buddy in, check status change
 
-      ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, buddy);
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.register(null, 3600);
-      assertLastOperationSuccess(
-          "Caller registration using pre-set credentials failed - " + ub.format(), ub);
+    ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, buddy);
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.register(null, 3600);
+    assertLastOperationSuccess(
+        "Caller registration using pre-set credentials failed - " + ub.format(), ub);
 
-      // get the NOTIFY
-      reqevent = sub.waitNotify(10000);
-      assertNotNull(sub.format(), reqevent);
-      assertNoSubscriptionErrors(sub);
+    // get the NOTIFY
+    reqevent = sub.waitNotify(10000);
+    assertNotNull(sub.format(), reqevent);
+    assertNoSubscriptionErrors(sub);
 
-      // examine the request object
-      request = reqevent.getRequest();
-      assertEquals(Request.NOTIFY, request.getMethod());
-      assertTrue(((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
-          .getExpires() > 0);
-      receivedRequests = sub.getAllReceivedRequests();
-      assertEquals(2, receivedRequests.size());
-      req = sub.getLastReceivedRequest();
-      assertNotNull(req);
-      assertTrue(req.isNotify());
-      assertFalse(req.isSubscribe());
+    // examine the request object
+    request = reqevent.getRequest();
+    assertEquals(Request.NOTIFY, request.getMethod());
+    assertTrue(((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
+        .getExpires() > 0);
+    receivedRequests = sub.getAllReceivedRequests();
+    assertEquals(2, receivedRequests.size());
+    req = sub.getLastReceivedRequest();
+    assertNotNull(req);
+    assertTrue(req.isNotify());
+    assertFalse(req.isSubscribe());
 
-      // process the NOTIFY
-      response = sub.processNotify(reqevent);
-      assertNotNull(response);
+    // process the NOTIFY
+    response = sub.processNotify(reqevent);
+    assertNotNull(response);
 
-      // check the processing results
-      assertTrue(sub.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionPending());
-      assertFalse(sub.isSubscriptionTerminated());
-      assertNull(sub.getTerminationReason());
+    // check the processing results
+    assertTrue(sub.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionPending());
+    assertFalse(sub.isSubscriptionTerminated());
+    assertNull(sub.getTerminationReason());
 
-      // check the response that was created
-      assertEquals(SipResponse.OK, response.getStatusCode());
-      assertTrue(response.getReasonPhrase().equals("OK"));
+    // check the response that was created
+    assertEquals(SipResponse.OK, response.getStatusCode());
+    assertTrue(response.getReasonPhrase().equals("OK"));
 
-      // check PRESENCE info - devices/tuples
-      devices = sub.getPresenceDevices();
-      assertEquals(1, devices.size());
-      dev = devices.get("1");
-      assertNotNull(dev);
-      assertEquals("open", dev.getBasicStatus());
-      assertEquals(-1.0, dev.getContactPriority(), 0.001);
-      assertNotNull(dev.getContactURI());
-      SipURI ubUri = (SipURI) ub.getContactInfo().getContactHeader().getAddress().getURI();
-      String devUri = dev.getContactURI();
-      assertTrue(devUri.indexOf(ubUri.getScheme()) != -1);
-      assertTrue(devUri.indexOf(ubUri.getHost()) != -1);
-      assertTrue(devUri.indexOf(String.valueOf(ubUri.getPort())) != -1);
-      assertTrue(devUri.indexOf(ubUri.getTransportParam()) != -1);
-      assertTrue(devUri.indexOf(ubUri.getUser()) != -1);
-      assertTrue(devUri.indexOf("lr") != -1);
-      assertEquals(0, dev.getDeviceExtensions().size());
-      assertEquals(0, dev.getDeviceNotes().size());
-      assertEquals("1", dev.getId());
-      assertEquals(0, dev.getStatusExtensions().size());
-      assertNull(dev.getTimestamp());
+    // check PRESENCE info - devices/tuples
+    devices = sub.getPresenceDevices();
+    assertEquals(1, devices.size());
+    dev = devices.get("1");
+    assertNotNull(dev);
+    assertEquals("open", dev.getBasicStatus());
+    assertEquals(-1.0, dev.getContactPriority(), 0.001);
+    assertNotNull(dev.getContactURI());
+    SipURI ubUri = (SipURI) ub.getContactInfo().getContactHeader().getAddress().getURI();
+    String devUri = dev.getContactURI();
+    assertTrue(devUri.indexOf(ubUri.getScheme()) != -1);
+    assertTrue(devUri.indexOf(ubUri.getHost()) != -1);
+    assertTrue(devUri.indexOf(String.valueOf(ubUri.getPort())) != -1);
+    assertTrue(devUri.indexOf(ubUri.getTransportParam()) != -1);
+    assertTrue(devUri.indexOf(ubUri.getUser()) != -1);
+    assertTrue(devUri.indexOf("lr") != -1);
+    assertEquals(0, dev.getDeviceExtensions().size());
+    assertEquals(0, dev.getDeviceNotes().size());
+    assertEquals("1", dev.getId());
+    assertEquals(0, dev.getStatusExtensions().size());
+    assertNull(dev.getTimestamp());
 
-      // check PRESENCE info - top-level extensions
-      assertEquals(0, sub.getPresenceExtensions().size());
+    // check PRESENCE info - top-level extensions
+    assertEquals(0, sub.getPresenceExtensions().size());
 
-      // check PRESENCE info - top-level notes
-      assertEquals(0, sub.getPresenceNotes().size());
+    // check PRESENCE info - top-level notes
+    assertEquals(0, sub.getPresenceNotes().size());
 
-      // reply to the NOTIFY
-      assertTrue(sub.replyToNotify(reqevent, response));
+    // reply to the NOTIFY
+    assertTrue(sub.replyToNotify(reqevent, response));
 
-      assertEquals(1, ua.getBuddyList().size());
-      assertEquals(0, ua.getRetiredBuddies().size());
-      assertNoSubscriptionErrors(sub);
+    assertEquals(1, ua.getBuddyList().size());
+    assertEquals(0, ua.getRetiredBuddies().size());
+    assertNoSubscriptionErrors(sub);
 
-      // ******** III. Refresh subscription
+    // ******** III. Refresh subscription
 
-      sub = ua.getBuddyInfo(buddy);
-      assertTrue(sub.refreshBuddy(1790, 2000));
+    sub = ua.getBuddyInfo(buddy);
+    assertTrue(sub.refreshBuddy(1790, 2000));
 
-      // check the return info
-      assertEquals(1, ua.getBuddyList().size());
-      assertEquals(0, ua.getRetiredBuddies().size());
-      assertNoSubscriptionErrors(sub);
-      assertNotNull(ua.getBuddyInfo(buddy));
-      assertEquals(sub.getTargetUri(), ua.getBuddyInfo(buddy).getTargetUri());
-      assertTrue(sub.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionPending());
-      assertFalse(sub.isSubscriptionTerminated());
-      assertEquals(SipResponse.OK, sub.getReturnCode());
-      respEvent = sub.getCurrentResponse();
-      response = respEvent.getResponse();
-      assertEquals(1790, response.getExpires().getExpires());
-      assertEquals(response.toString(), sub.getLastReceivedResponse().getMessage().toString());
-      receivedResponses = sub.getAllReceivedResponses();
-      assertEquals(3, receivedResponses.size());
-      assertEquals(response.toString(), receivedResponses.get(2).toString());
+    // check the return info
+    assertEquals(1, ua.getBuddyList().size());
+    assertEquals(0, ua.getRetiredBuddies().size());
+    assertNoSubscriptionErrors(sub);
+    assertNotNull(ua.getBuddyInfo(buddy));
+    assertEquals(sub.getTargetUri(), ua.getBuddyInfo(buddy).getTargetUri());
+    assertTrue(sub.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionPending());
+    assertFalse(sub.isSubscriptionTerminated());
+    assertEquals(SipResponse.OK, sub.getReturnCode());
+    respEvent = sub.getCurrentResponse();
+    response = respEvent.getResponse();
+    assertEquals(1790, response.getExpires().getExpires());
+    assertEquals(response.toString(), sub.getLastReceivedResponse().getMessage().toString());
+    receivedResponses = sub.getAllReceivedResponses();
+    assertEquals(3, receivedResponses.size());
+    assertEquals(response.toString(), receivedResponses.get(2).toString());
 
-      // process the received response
-      assertTrue(sub.processResponse(1000));
+    // process the received response
+    assertTrue(sub.processResponse(1000));
 
-      // check the response processing results
-      assertTrue(sub.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionPending());
-      assertFalse(sub.isSubscriptionTerminated());
-      assertNull(sub.getTerminationReason());
-      int timeleft = sub.getTimeLeft();
-      assertTrue("Expected time left to be close to 1790, it was " + timeleft, timeleft <= 1790
-          && timeleft >= 1700);
-      assertEquals(1, ua.getBuddyList().size());
-      assertEquals(0, ua.getRetiredBuddies().size());
-      assertNoSubscriptionErrors(sub);
+    // check the response processing results
+    assertTrue(sub.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionPending());
+    assertFalse(sub.isSubscriptionTerminated());
+    assertNull(sub.getTerminationReason());
+    int timeleft = sub.getTimeLeft();
+    assertTrue("Expected time left to be close to 1790, it was " + timeleft, timeleft <= 1790
+        && timeleft >= 1700);
+    assertEquals(1, ua.getBuddyList().size());
+    assertEquals(0, ua.getRetiredBuddies().size());
+    assertNoSubscriptionErrors(sub);
 
-      // ********* IV. Log the buddy out, check status change
+    // ********* IV. Log the buddy out, check status change
 
-      ub.unregister(ub.getContactInfo().getURI(), 5000);
-      Thread.sleep(500);
+    ub.unregister(ub.getContactInfo().getURI(), 5000);
+    Thread.sleep(500);
 
-      // get the resulting NOTIFY
-      reqevent = sub.waitNotify(1000); // TODO - why this NOTIFY w/status
-      // open? reply to it
-      response = sub.processNotify(reqevent);
-      assertTrue(sub.replyToNotify(reqevent, response));
+    // get the resulting NOTIFY
+    reqevent = sub.waitNotify(1000); // TODO - why this NOTIFY w/status
+    // open? reply to it
+    response = sub.processNotify(reqevent);
+    assertTrue(sub.replyToNotify(reqevent, response));
 
-      reqevent = sub.waitNotify(1000);
-      assertNotNull(reqevent);
-      assertNoSubscriptionErrors(sub);
+    reqevent = sub.waitNotify(1000);
+    assertNotNull(reqevent);
+    assertNoSubscriptionErrors(sub);
 
-      // process the NOTIFY
-      response = sub.processNotify(reqevent);
-      assertNotNull(response);
-      assertEquals(1, ua.getBuddyList().size());
-      assertEquals(0, ua.getRetiredBuddies().size());
-      assertNoSubscriptionErrors(sub);
+    // process the NOTIFY
+    response = sub.processNotify(reqevent);
+    assertNotNull(response);
+    assertEquals(1, ua.getBuddyList().size());
+    assertEquals(0, ua.getRetiredBuddies().size());
+    assertNoSubscriptionErrors(sub);
 
-      // check the processing results
-      assertTrue(sub.isSubscriptionActive());
-      assertNull(sub.getTerminationReason());
-      assertTrue(sub.getTimeLeft() <= timeleft);
-      assertEquals(SipResponse.OK, sub.getReturnCode()); // response code
+    // check the processing results
+    assertTrue(sub.isSubscriptionActive());
+    assertNull(sub.getTerminationReason());
+    assertTrue(sub.getTimeLeft() <= timeleft);
+    assertEquals(SipResponse.OK, sub.getReturnCode()); // response code
 
-      // check PRESENCE info - devices/tuples
-      devices = sub.getPresenceDevices();
-      assertEquals(1, devices.size());
-      dev = devices.get("1");
-      assertNotNull(dev);
-      assertEquals("closed", dev.getBasicStatus());
-      assertEquals(-1.0, dev.getContactPriority(), 0.001);
-      assertNull(dev.getContactURI());
-      assertEquals(0, dev.getDeviceExtensions().size());
-      assertEquals(0, dev.getDeviceNotes().size());
-      assertEquals("1", dev.getId());
-      assertEquals(0, dev.getStatusExtensions().size());
-      assertNull(dev.getTimestamp());
+    // check PRESENCE info - devices/tuples
+    devices = sub.getPresenceDevices();
+    assertEquals(1, devices.size());
+    dev = devices.get("1");
+    assertNotNull(dev);
+    assertEquals("closed", dev.getBasicStatus());
+    assertEquals(-1.0, dev.getContactPriority(), 0.001);
+    assertNull(dev.getContactURI());
+    assertEquals(0, dev.getDeviceExtensions().size());
+    assertEquals(0, dev.getDeviceNotes().size());
+    assertEquals("1", dev.getId());
+    assertEquals(0, dev.getStatusExtensions().size());
+    assertNull(dev.getTimestamp());
 
-      // check PRESENCE info - top-level extensions
-      assertEquals(0, sub.getPresenceExtensions().size());
+    // check PRESENCE info - top-level extensions
+    assertEquals(0, sub.getPresenceExtensions().size());
 
-      // check PRESENCE info - top-level notes
-      assertEquals(0, sub.getPresenceNotes().size());
+    // check PRESENCE info - top-level notes
+    assertEquals(0, sub.getPresenceNotes().size());
 
-      // reply to the NOTIFY
-      assertTrue(sub.replyToNotify(reqevent, response));
+    // reply to the NOTIFY
+    assertTrue(sub.replyToNotify(reqevent, response));
 
-      // *********** V. Finally, unsubscribe (end subscription)
+    // *********** V. Finally, unsubscribe (end subscription)
 
-      // remove buddy from contacts list, terminating SUBSCRIBE sequence
-      sub = ua.getBuddyInfo(buddy);
-      assertTrue(sub.removeBuddy(2000));
+    // remove buddy from contacts list, terminating SUBSCRIBE sequence
+    sub = ua.getBuddyInfo(buddy);
+    assertTrue(sub.removeBuddy(2000));
 
-      // check immediate impacts - buddy lists, subscription state
-      assertEquals(0, ua.getBuddyList().size());
-      assertEquals(1, ua.getRetiredBuddies().size());
-      assertNoSubscriptionErrors(sub);
-      assertNotNull(ua.getBuddyInfo(buddy)); // check buddy can still be
-      // found
-      assertEquals(sub.getTargetUri(), ua.getBuddyInfo(buddy).getTargetUri());
-      assertFalse(sub.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionPending());
-      assertTrue(sub.isSubscriptionTerminated());
-      String reason = sub.getTerminationReason();
-      assertNotNull(reason);
+    // check immediate impacts - buddy lists, subscription state
+    assertEquals(0, ua.getBuddyList().size());
+    assertEquals(1, ua.getRetiredBuddies().size());
+    assertNoSubscriptionErrors(sub);
+    assertNotNull(ua.getBuddyInfo(buddy)); // check buddy can still be
+    // found
+    assertEquals(sub.getTargetUri(), ua.getBuddyInfo(buddy).getTargetUri());
+    assertFalse(sub.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionPending());
+    assertTrue(sub.isSubscriptionTerminated());
+    String reason = sub.getTerminationReason();
+    assertNotNull(reason);
 
-      // check the SUBSCRIBE response code, process the response
-      assertEquals(SipResponse.OK, sub.getReturnCode());
+    // check the SUBSCRIBE response code, process the response
+    assertEquals(SipResponse.OK, sub.getReturnCode());
 
-      respEvent = sub.getCurrentResponse();
-      response = respEvent.getResponse(); // check out the response
-      // details
-      assertEquals("OK", response.getReasonPhrase());
-      assertEquals(0, response.getExpires().getExpires());
-      assertEquals(response.toString(), sub.getLastReceivedResponse().getMessage().toString());
-      receivedResponses = sub.getAllReceivedResponses();
-      assertEquals(4, receivedResponses.size());
-      assertEquals(response.toString(), receivedResponses.get(3).toString());
+    respEvent = sub.getCurrentResponse();
+    response = respEvent.getResponse(); // check out the response
+    // details
+    assertEquals("OK", response.getReasonPhrase());
+    assertEquals(0, response.getExpires().getExpires());
+    assertEquals(response.toString(), sub.getLastReceivedResponse().getMessage().toString());
+    receivedResponses = sub.getAllReceivedResponses();
+    assertEquals(4, receivedResponses.size());
+    assertEquals(response.toString(), receivedResponses.get(3).toString());
 
-      // process the received response
-      assertTrue(sub.processResponse(300));
+    // process the received response
+    assertTrue(sub.processResponse(300));
 
-      // check the response processing results
-      assertFalse(sub.isSubscriptionActive());
-      assertFalse(sub.isSubscriptionPending());
-      assertTrue(sub.isSubscriptionTerminated());
-      assertEquals(reason, sub.getTerminationReason());
-      assertEquals(0, sub.getTimeLeft());
-      assertEquals(0, ua.getBuddyList().size());
-      assertEquals(1, ua.getRetiredBuddies().size());
-      assertNoSubscriptionErrors(sub);
+    // check the response processing results
+    assertFalse(sub.isSubscriptionActive());
+    assertFalse(sub.isSubscriptionPending());
+    assertTrue(sub.isSubscriptionTerminated());
+    assertEquals(reason, sub.getTerminationReason());
+    assertEquals(0, sub.getTimeLeft());
+    assertEquals(0, ua.getBuddyList().size());
+    assertEquals(1, ua.getRetiredBuddies().size());
+    assertNoSubscriptionErrors(sub);
 
-      // get the NOTIFY
-      reqevent = sub.waitNotify(1000);
-      assertNotNull(reqevent);
-      assertNoSubscriptionErrors(sub);
+    // get the NOTIFY
+    reqevent = sub.waitNotify(1000);
+    assertNotNull(reqevent);
+    assertNoSubscriptionErrors(sub);
 
-      // process the NOTIFY
-      response = sub.processNotify(reqevent);
-      assertNotNull(response);
+    // process the NOTIFY
+    response = sub.processNotify(reqevent);
+    assertNotNull(response);
 
-      assertEquals(0, ua.getBuddyList().size());
-      assertEquals(1, ua.getRetiredBuddies().size());
-      assertNoSubscriptionErrors(sub);
+    assertEquals(0, ua.getBuddyList().size());
+    assertEquals(1, ua.getRetiredBuddies().size());
+    assertNoSubscriptionErrors(sub);
 
-      // check the processing results
-      assertTrue(sub.isSubscriptionTerminated());
-      assertNotNull(sub.getTerminationReason());
-      assertEquals(0, sub.getTimeLeft());
-      assertEquals(SipResponse.OK, sub.getReturnCode()); // response code
+    // check the processing results
+    assertTrue(sub.isSubscriptionTerminated());
+    assertNotNull(sub.getTerminationReason());
+    assertEquals(0, sub.getTimeLeft());
+    assertEquals(SipResponse.OK, sub.getReturnCode()); // response code
 
-      // check PRESENCE info got updated w/last NOTIFY - devices/tuples
-      devices = sub.getPresenceDevices();
-      assertEquals(1, devices.size());
-      dev = devices.get("1");
-      assertNotNull(dev);
-      assertEquals("closed", dev.getBasicStatus());
-      assertEquals(-1.0, dev.getContactPriority(), 0.001);
-      assertNull(dev.getContactURI());
-      assertEquals(0, dev.getDeviceExtensions().size());
-      assertEquals(0, dev.getDeviceNotes().size());
-      assertEquals("1", dev.getId());
-      assertEquals(0, dev.getStatusExtensions().size());
-      assertNull(dev.getTimestamp());
+    // check PRESENCE info got updated w/last NOTIFY - devices/tuples
+    devices = sub.getPresenceDevices();
+    assertEquals(1, devices.size());
+    dev = devices.get("1");
+    assertNotNull(dev);
+    assertEquals("closed", dev.getBasicStatus());
+    assertEquals(-1.0, dev.getContactPriority(), 0.001);
+    assertNull(dev.getContactURI());
+    assertEquals(0, dev.getDeviceExtensions().size());
+    assertEquals(0, dev.getDeviceNotes().size());
+    assertEquals("1", dev.getId());
+    assertEquals(0, dev.getStatusExtensions().size());
+    assertNull(dev.getTimestamp());
 
-      // check PRESENCE info - top-level extensions
-      assertEquals(0, sub.getPresenceExtensions().size());
+    // check PRESENCE info - top-level extensions
+    assertEquals(0, sub.getPresenceExtensions().size());
 
-      // check PRESENCE info - top-level notes
-      assertEquals(0, sub.getPresenceNotes().size());
+    // check PRESENCE info - top-level notes
+    assertEquals(0, sub.getPresenceNotes().size());
 
-      // reply to the NOTIFY
-      assertTrue(sub.replyToNotify(reqevent, response));
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    // reply to the NOTIFY
+    assertTrue(sub.replyToNotify(reqevent, response));
   }
 }
