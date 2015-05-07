@@ -82,7 +82,7 @@ public class TestWithStun extends SipTestCase {
 
   private String myUrl;
 
-  private String publicIP;
+  private String publicIp;
 
   private int publicPort;
 
@@ -147,14 +147,14 @@ public class TestWithStun extends SipTestCase {
       throw ex;
     }
 
-    SipStack.trace("My public IP address = " + publicIP + ", port = " + publicPort);
+    SipStack.trace("My public IP address = " + publicIp + ", port = " + publicPort);
 
     try {
       ua =
           sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
               proxyPort, myUrl);
 
-      ua.setPublicAddress(publicIP, publicPort);
+      ua.setPublicAddress(publicIp, publicPort);
     } catch (Exception ex) {
       fail("Exception creating SipPhone: " + ex.getClass().getName() + ": " + ex.getMessage());
       throw ex;
@@ -185,7 +185,7 @@ public class TestWithStun extends SipTestCase {
 
     StunAddress stunAddress = stunReport.getPublicAddress();
 
-    publicIP = stunAddress.getSocketAddress().getAddress().getHostAddress();
+    publicIp = stunAddress.getSocketAddress().getAddress().getHostAddress();
     publicPort = stunAddress.getSocketAddress().getPort();
 
     // must shutdown stun process, otherwise, stun4j is holding on the same
@@ -224,7 +224,7 @@ public class TestWithStun extends SipTestCase {
           "your-publicserver-account2", "your-publicserver-account2-password"));
 
       // set public address on ub
-      ub.setPublicAddress(publicIP, publicPort);
+      ub.setPublicAddress(publicIp, publicPort);
 
       ub.register(null, 9600);
       assertLastOperationSuccess(
