@@ -148,10 +148,10 @@ public class ExampleTestWithProxyNoAuth {
     assertLastOperationSuccess("Caller registration failed - " + ua.format(), ua);
 
     try {
-      String user_b = "sip:becky@" + properties.getProperty("sipunit.test.domain");
+      String userB = "sip:becky@" + properties.getProperty("sipunit.test.domain");
       SipPhone ub =
           sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, user_b);
+              proxyPort, userB);
 
       // invoke the Sip operation, then separately check positive result;
       // no failure/error details, just the standard JUnit fail output:
@@ -159,27 +159,27 @@ public class ExampleTestWithProxyNoAuth {
       ub.register(null, 600);
       assertLastOperationSuccess(ub);
 
-      SipCall a = ua.createSipCall();
-      SipCall b = ub.createSipCall();
+      SipCall callA = ua.createSipCall();
+      SipCall callB = ub.createSipCall();
 
-      b.listenForIncomingCall();
+      callB.listenForIncomingCall();
       Thread.sleep(10);
 
       // another way to invoke the operation and check the result
       // separately:
 
-      boolean status_ok = a.initiateOutgoingCall(user_b, null);
-      assertTrue("Initiate outgoing call failed - " + a.format(), status_ok);
+      boolean statusOk = callA.initiateOutgoingCall(userB, null);
+      assertTrue("Initiate outgoing call failed - " + callA.format(), statusOk);
 
       // invoke the Sip operation and check positive result in one step,
       // no operation error details if the test fails:
 
-      assertTrue("Wait incoming call error or timeout", b.waitForIncomingCall(5000));
+      assertTrue("Wait incoming call error or timeout", callB.waitForIncomingCall(5000));
 
       // invoke the Sip operation and result check in one step,
       // only standard JUnit output if the test fails:
 
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
 
       Thread.sleep(1000);
 
@@ -187,46 +187,46 @@ public class ExampleTestWithProxyNoAuth {
       // to follow what a test is doing since the Sip operations are not
       // buried as parameters in assert statements:
 
-      b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
-      assertLastOperationSuccess("Sending answer response failed - " + b.format(), b);
+      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+      assertLastOperationSuccess("Sending answer response failed - " + callB.format(), callB);
 
       // note with the single step method, you cannot include operation
       // error details for when the test fails: ' + a.format()' wouldn't
       // work in the first parameter here:
 
-      assertTrue("Wait response error", a.waitOutgoingCallResponse(10000));
+      assertTrue("Wait response error", callA.waitOutgoingCallResponse(10000));
 
-      SipResponse resp = a.getLastReceivedResponse(); // watch for TRYING
-      int status_code = resp.getStatusCode();
-      while (status_code != Response.RINGING) {
-        assertFalse("Unexpected final response, status = " + status_code, status_code > 200);
+      SipResponse resp = callA.getLastReceivedResponse(); // watch for TRYING
+      int statusCode = resp.getStatusCode();
+      while (statusCode != Response.RINGING) {
+        assertFalse("Unexpected final response, status = " + statusCode, statusCode > 200);
 
-        assertFalse("Got OK but no RINGING", status_code == Response.OK);
+        assertFalse("Got OK but no RINGING", statusCode == Response.OK);
 
-        a.waitOutgoingCallResponse(10000);
-        assertLastOperationSuccess("Subsequent response never received - " + a.format(), a);
-        resp = a.getLastReceivedResponse();
-        status_code = resp.getStatusCode();
+        callA.waitOutgoingCallResponse(10000);
+        assertLastOperationSuccess("Subsequent response never received - " + callA.format(), callA);
+        resp = callA.getLastReceivedResponse();
+        statusCode = resp.getStatusCode();
       }
 
       // if you want operation error details in your test fail output,
       // you have to invoke and complete the operation first:
 
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("Wait response error - " + a.format(), a);
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("Wait response error - " + callA.format(), callA);
 
       // throw out any 'TRYING' responses
       // Note, you can also get the response status code from the SipCall
       // class itself (in addition to getting it from the response as
       // above)
-      while (a.getReturnCode() == Response.TRYING) {
-        a.waitOutgoingCallResponse(10000);
-        assertLastOperationSuccess("Subsequent response never received - " + a.format(), a);
+      while (callA.getReturnCode() == Response.TRYING) {
+        callA.waitOutgoingCallResponse(10000);
+        assertLastOperationSuccess("Subsequent response never received - " + callA.format(), callA);
       }
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
 
       // check for OK response.
-      assertEquals("Unexpected response received", Response.OK, a.getReturnCode());
+      assertEquals("Unexpected response received", Response.OK, callA.getReturnCode());
 
       // check out some header asserts
       assertHeaderContains(resp, "From", myUrl);
@@ -235,22 +235,22 @@ public class ExampleTestWithProxyNoAuth {
       assertHeaderNotPresent(resp, "Content-Type");
 
       // continue with the test call
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
       Thread.sleep(1000);
 
-      b.listenForDisconnect();
-      assertLastOperationSuccess("b listen disc - " + b.format(), b);
+      callB.listenForDisconnect();
+      assertLastOperationSuccess("b listen disc - " + callB.format(), callB);
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.waitForDisconnect(10000);
-      assertLastOperationSuccess("b wait disc - " + b.format(), b);
+      callB.waitForDisconnect(10000);
+      assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
 
-      b.respondToDisconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.respondToDisconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
       ub.unregister(null, 10000);
       assertLastOperationSuccess("unregistering user b - " + ub.format(), ub);
