@@ -201,8 +201,10 @@ public class TestReferNoProxy {
     assertEquals("udp", uri.getTransportParam());
     assertEquals("SUBSCRIBE", uri.getMethodParam());
     assertEquals("abc", uri.getMAddrParam());
-    assertTrue("sip:sipmaster@192.168.1.11:5060;transport=udp;method=SUBSCRIBE;maddr=abc"
-        .equalsIgnoreCase(uri.toString()));
+    assertTrue(uri.toString().startsWith("sip:sipmaster@192.168.1.11"));
+    assertTrue(uri.toString().indexOf("transport=udp") > 0);
+    assertTrue(uri.toString().indexOf("maddr=abc") > 0);
+    assertTrue(uri.toString().indexOf("method=SUBSCRIBE") > 0);
     // test joinUriHeader, Map<String, String> otherUriHeaders
     Map<String, String> headerMap = new HashMap<>();
     headerMap.put("Contact", "sip:abc@192.168.1.12");
@@ -220,7 +222,9 @@ public class TestReferNoProxy {
     assertEquals("abc", uri.getMAddrParam());
     assertEquals("otherDialog%3Bto-tag%abc%3Bfrom-tag%3Ddef", uri.getHeader("Join"));
     assertEquals("sip:abc@192.168.1.12", uri.getHeader("Contact"));
-    assertTrue(uri.toString().startsWith("sip:sipmaster@192.168.1.11;transport=tls;maddr=abc"));
+    assertTrue(uri.toString().startsWith("sip:sipmaster@192.168.1.11"));
+    assertTrue(uri.toString().indexOf("transport=tls") > 0);
+    assertTrue(uri.toString().indexOf("maddr=abc") > 0);
     assertTrue(uri.toString().indexOf("Join=otherDialog%3Bto-tag%abc%3Bfrom-tag%3Ddef") > 0);
     assertTrue(uri.toString().indexOf("Contact=sip:abc@192.168.1.12") > 0);
 
