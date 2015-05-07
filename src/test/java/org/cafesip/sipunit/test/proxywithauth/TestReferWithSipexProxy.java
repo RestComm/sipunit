@@ -152,31 +152,21 @@ public class TestReferWithSipexProxy {
    */
   @Before
   public void setUp() throws Exception {
-    try {
-      sipStack = new SipStack(testProtocol, myPort, properties);
-      SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-          || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-      SipStack.trace("Properties: " + properties.toString());
-    } catch (Exception ex) {
-      fail("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    sipStack = new SipStack(testProtocol, myPort, properties);
+    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
+        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
+    SipStack.trace("Properties: " + properties.toString());
 
-    try {
-      ua =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, myUrl);
+    ua =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, myUrl);
 
-      // register with the server
-      ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
-          "a1b2c3d4"));
-      ua.register(null, 3600);
-      assertLastOperationSuccess(
-          "Caller registration using pre-set credentials failed - " + ua.format(), ua);
-    } catch (Exception ex) {
-      fail("Exception creating SipPhone: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    // register with the server
+    ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
+        "a1b2c3d4"));
+    ua.register(null, 3600);
+    assertLastOperationSuccess(
+        "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
     ub = null;
   }
