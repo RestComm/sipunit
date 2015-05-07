@@ -152,6 +152,26 @@ public class TestReferNoProxy {
     }
   }
 
+  @Test(expected = ParseException.class)
+  public void testBadInput() throws Exception {
+    ua.getUri(null, "sipmaster@192.168.1.11:5060", null, null, null, null, null, null, null);
+  }
+
+  @Test(expected = ParseException.class)
+  public void testBadInput1() throws Exception {
+    ua.getUri("doodah", "sipmaster@192.168.1.11:5060", null, null, null, null, null, null, null);
+  }
+
+  @Test(expected = ParseException.class)
+  public void testBadInput2() throws Exception {
+    ua.getUri("sip:", "sipmaster", null, null, null, null, null, null, null);
+  }
+
+  @Test(expected = ParseException.class)
+  public void testBadInput3() throws Exception {
+    ua.getUri("sip:", "sip:sipmaster@192.168.1.11:5060", null, null, null, null, null, null, null);
+  }
+
   @Test
   public void testGetURI() throws Exception {
     // test scheme and userHostPort
@@ -177,23 +197,6 @@ public class TestReferNoProxy {
     assertEquals("192.168.1.11", uri.getHost());
     assertEquals(5060, uri.getPort());
     assertTrue("sip:sipmaster@192.168.1.11:5060".equalsIgnoreCase(uri.toString()));
-
-    try {
-      uri =
-          ua.getUri(null, "sipmaster@192.168.1.11:5060", null, null, null, null, null, null, null);
-      fail("getUri() accepted bad input");
-      uri =
-          ua.getUri("doodah", "sipmaster@192.168.1.11:5060", null, null, null, null, null, null,
-              null);
-      fail("getUri() accepted bad input");
-      uri = ua.getUri("sip:", "sipmaster", null, null, null, null, null, null, null);
-      fail("getUri() accepted bad input");
-      uri =
-          ua.getUri("sip:", "sip:sipmaster@192.168.1.11:5060", null, null, null, null, null, null,
-              null);
-      fail("getUri() accepted bad input");
-    } catch (ParseException e) {
-    }
 
     // test transportUriParameter, methodUriParameter, otherUriParameters
     Map<String, String> paramMap = new HashMap<>();
