@@ -118,22 +118,12 @@ public class TestReferNoProxy {
    */
   @Before
   public void setUp() throws Exception {
-    try {
-      sipStack = new SipStack(testProtocol, myPort, properties);
-      SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-          || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-    } catch (Exception ex) {
-      fail("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    sipStack = new SipStack(testProtocol, myPort, properties);
+    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
+        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
 
-    try {
-      ua = sipStack.createSipPhone("sip:amit@nist.gov");
-      ua.setLoopback(true);
-    } catch (Exception ex) {
-      fail("Exception creating SipPhone: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    ua = sipStack.createSipPhone("sip:amit@nist.gov");
+    ua.setLoopback(true);
   }
 
   /**
@@ -1773,7 +1763,6 @@ public class TestReferNoProxy {
     assertTrue(subscription.getEventErrors().size() > 0);
 
     subscription.dispose();
-
   }
 
   @Test
@@ -2041,7 +2030,6 @@ public class TestReferNoProxy {
     // we're done
     callA.disposeNoBye();
     callB.disposeNoBye();
-
   }
 
   @Test
@@ -2146,7 +2134,6 @@ public class TestReferNoProxy {
     assertFalse(contactHdrs.hasNext());
     assertHeaderContains(msg, ContentTypeHeader.NAME, "applicationn/texxt");
     assertBodyContains(msg, "myReferBod");
-
   }
 
   @Test
@@ -2191,7 +2178,6 @@ public class TestReferNoProxy {
     assertFalse(contactHdrs.hasNext());
     assertHeaderContains(msg, ContentTypeHeader.NAME, "applicationn/texxt");
     assertBodyContains(msg, "myReferBod");
-
   }
 
   @Test
