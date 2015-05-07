@@ -280,9 +280,9 @@ public class TestReferNoProxy {
     assertEquals("OK", resp.getReasonPhrase());
     assertNull(resp.getExpires());
     assertEquals(resp.toString(), subscription.getLastReceivedResponse().getMessage().toString());
-    ArrayList<SipResponse> received_responses = subscription.getAllReceivedResponses();
-    assertEquals(1, received_responses.size());
-    assertEquals(resp.toString(), received_responses.get(0).toString());
+    ArrayList<SipResponse> receivedResponses = subscription.getAllReceivedResponses();
+    assertEquals(1, receivedResponses.size());
+    assertEquals(resp.toString(), receivedResponses.get(0).toString());
     assertEquals(1, ua.getRefererList().size());
     assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
     assertEquals(subscription, ua.getRefererInfoByDialog(subscription.getDialogId()).get(0));
@@ -316,15 +316,15 @@ public class TestReferNoProxy {
     assertEquals(Request.NOTIFY, request.getMethod());
     assertEquals(2400,
         ((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME)).getExpires());
-    ArrayList<SipRequest> received_requests = subscription.getAllReceivedRequests();
-    assertEquals(1, received_requests.size());
+    ArrayList<SipRequest> receivedRequests = subscription.getAllReceivedRequests();
+    assertEquals(1, receivedRequests.size());
     SipRequest req = subscription.getLastReceivedRequest();
     assertNotNull(req);
     assertTrue(req.isNotify());
     assertFalse(req.isSubscribe());
-    assertEquals(((SipRequest) received_requests.get(0)).getMessage().toString(),
+    assertEquals(((SipRequest) receivedRequests.get(0)).getMessage().toString(),
         request.toString());
-    assertEquals(received_requests.get(0).toString(), req.toString());
+    assertEquals(receivedRequests.get(0).toString(), req.toString());
     assertBodyContains(req, notifyBody);
     assertNoSubscriptionErrors(subscription);
 
@@ -370,9 +370,9 @@ public class TestReferNoProxy {
     assertEquals("OK Done", resp.getReasonPhrase());
     assertEquals(0, resp.getExpires().getExpires());
     assertEquals(resp.toString(), subscription.getLastReceivedResponse().getMessage().toString());
-    received_responses = subscription.getAllReceivedResponses();
-    assertEquals(2, received_responses.size());
-    assertEquals(resp.toString(), received_responses.get(1).toString());
+    receivedResponses = subscription.getAllReceivedResponses();
+    assertEquals(2, receivedResponses.size());
+    assertEquals(resp.toString(), receivedResponses.get(1).toString());
     assertEquals(1, ua.getRefererList().size());
     assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
     assertEquals(subscription, ua.getRefererInfoByDialog(subscription.getDialogId()).get(0));
@@ -407,15 +407,15 @@ public class TestReferNoProxy {
     assertEquals(Request.NOTIFY, request.getMethod());
     assertEquals(-1,
         ((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME)).getExpires());
-    received_requests = subscription.getAllReceivedRequests();
-    assertEquals(2, received_requests.size());
+    receivedRequests = subscription.getAllReceivedRequests();
+    assertEquals(2, receivedRequests.size());
     req = subscription.getLastReceivedRequest();
     assertNotNull(req);
     assertTrue(req.isNotify());
     assertFalse(req.isSubscribe());
-    assertEquals(((SipRequest) received_requests.get(1)).getMessage().toString(),
+    assertEquals(((SipRequest) receivedRequests.get(1)).getMessage().toString(),
         request.toString());
-    assertEquals(received_requests.get(1).toString(), req.toString());
+    assertEquals(receivedRequests.get(1).toString(), req.toString());
     assertBodyContains(req, notifyBody);
     assertNoSubscriptionErrors(subscription);
 
@@ -450,31 +450,31 @@ public class TestReferNoProxy {
     // create and set up the far end
     SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
     ub.setLoopback(true);
-    SipCall b = ub.createSipCall();
-    assertTrue(b.listenForIncomingCall());
+    SipCall callB = ub.createSipCall();
+    assertTrue(callB.listenForIncomingCall());
 
     // make the call from A
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@cafesip.org", ua.getStackAddress() + ':' + myPort + '/'
             + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
     // B side answer the call
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
     Thread.sleep(20);
-    assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
     Thread.sleep(200);
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", a);
-    a.sendInviteOkAck();
-    assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    assertAnswered("Outgoing call leg not answered", callA);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
     Thread.sleep(1000);
 
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
-    referHandler.setDialog(b.getDialog());
+    referHandler.setDialog(callB.getDialog());
     assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED, "Accepted"));
 
     // A side - send a REFER message
@@ -482,7 +482,7 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", null, null, null,
             "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994", null, null);
 
-    ReferSubscriber subscription = ua.refer(a.getDialog(), referTo, null, 4000);
+    ReferSubscriber subscription = ua.refer(callA.getDialog(), referTo, null, 4000);
     if (subscription == null) {
       fail(ua.getReturnCode() + ':' + ua.getErrorMessage());
     }
@@ -492,7 +492,7 @@ public class TestReferNoProxy {
     assertNotNull(requestEvent);
     Request req = requestEvent.getRequest();
     assertEquals(SipRequest.REFER, req.getMethod());
-    assertEquals(b.getDialogId(), requestEvent.getDialog().getDialogId());
+    assertEquals(callB.getDialogId(), requestEvent.getDialog().getDialogId());
 
     // A side - check the initial results - subscription, response,
     // SipPhone referer list
@@ -505,14 +505,14 @@ public class TestReferNoProxy {
     assertEquals("Accepted", resp.getReasonPhrase());
     assertNull(resp.getExpires());
     assertEquals(resp.toString(), subscription.getLastReceivedResponse().getMessage().toString());
-    ArrayList<SipResponse> received_responses = subscription.getAllReceivedResponses();
-    assertEquals(1, received_responses.size());
-    assertEquals(resp.toString(), received_responses.get(0).toString());
+    ArrayList<SipResponse> receivedResponses = subscription.getAllReceivedResponses();
+    assertEquals(1, receivedResponses.size());
+    assertEquals(resp.toString(), receivedResponses.get(0).toString());
     assertEquals(1, ua.getRefererList().size());
     assertEquals(subscription, ua.getRefererList().get(0));
     assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
     assertEquals(subscription, ua.getRefererInfoByDialog(subscription.getDialogId()).get(0));
-    assertEquals(subscription, ua.getRefererInfoByDialog(a.getDialogId()).get(0));
+    assertEquals(subscription, ua.getRefererInfoByDialog(callA.getDialogId()).get(0));
 
     // A side - process the received response
     assertTrue(subscription.processResponse(1000));
@@ -527,7 +527,7 @@ public class TestReferNoProxy {
 
     // B side - send a NOTIFY
     Thread.sleep(20);
-    Request notifyRequest = b.getDialog().createRequest(SipRequest.NOTIFY);
+    Request notifyRequest = callB.getDialog().createRequest(SipRequest.NOTIFY);
     notifyRequest =
         referHandler.addNotifyHeaders(notifyRequest, null, null,
             SubscriptionStateHeader.TERMINATED, "noresource", "SIP/2.0 100 Trying\n", 0);
@@ -544,14 +544,14 @@ public class TestReferNoProxy {
     assertEquals(Request.NOTIFY, request.getMethod());
     assertTrue(((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
         .getExpires() < 1);
-    ArrayList<SipRequest> received_requests = subscription.getAllReceivedRequests();
-    assertEquals(1, received_requests.size());
+    ArrayList<SipRequest> receivedRequests = subscription.getAllReceivedRequests();
+    assertEquals(1, receivedRequests.size());
     SipRequest sipreq = subscription.getLastReceivedRequest();
     assertNotNull(sipreq);
     assertTrue(sipreq.isNotify());
     assertFalse(sipreq.isSubscribe());
-    assertEquals(received_requests.get(0).getMessage().toString(), request.toString());
-    assertEquals(received_requests.get(0).toString(), sipreq.toString());
+    assertEquals(receivedRequests.get(0).getMessage().toString(), request.toString());
+    assertEquals(receivedRequests.get(0).toString(), sipreq.toString());
     assertBodyContains(sipreq, "SIP/2.0 100 Trying");
 
     // A side - process the NOTIFY
@@ -581,8 +581,8 @@ public class TestReferNoProxy {
     assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse().getStatusCode());
 
     // cleanup
-    a.disposeNoBye();
-    b.disposeNoBye();
+    callA.disposeNoBye();
+    callB.disposeNoBye();
   }
 
   @Test
@@ -597,39 +597,39 @@ public class TestReferNoProxy {
     // create and set up the far end
     SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
     ub.setLoopback(true);
-    SipCall b = ub.createSipCall();
-    assertTrue(b.listenForIncomingCall());
+    SipCall callB = ub.createSipCall();
+    assertTrue(callB.listenForIncomingCall());
 
     // make the call from A
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@cafesip.org", ua.getStackAddress() + ':' + myPort + '/'
             + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
     // B side answer the call
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
     Thread.sleep(20);
-    assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
     Thread.sleep(200);
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", a);
-    a.sendInviteOkAck();
-    assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    assertAnswered("Outgoing call leg not answered", callA);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
     Thread.sleep(1000);
 
     // B sends in-dialog REFER to A, gets 202 Accepted
     // A side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ua);
-    referHandler.setDialog(a.getDialog());
+    referHandler.setDialog(callA.getDialog());
     assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED, "Accepted"));
 
     // B side - send a REFER message
     SipURI referTo =
         ub.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
 
-    ReferSubscriber subscription = ub.refer(b.getDialog(), referTo, "myeventid", 4000);
+    ReferSubscriber subscription = ub.refer(callB.getDialog(), referTo, "myeventid", 4000);
     if (subscription == null) {
       fail(ub.getReturnCode() + ':' + ub.getErrorMessage());
     }
@@ -639,7 +639,7 @@ public class TestReferNoProxy {
     assertNotNull(requestEvent);
     Request req = requestEvent.getRequest();
     assertEquals(SipRequest.REFER, req.getMethod());
-    assertEquals(a.getDialogId(), requestEvent.getDialog().getDialogId());
+    assertEquals(callA.getDialogId(), requestEvent.getDialog().getDialogId());
     assertEquals("myeventid", ((EventHeader) req.getHeader(EventHeader.NAME)).getEventId());
 
     // B side - check the initial results - subscription, response,
@@ -660,7 +660,7 @@ public class TestReferNoProxy {
     assertEquals(subscription, ub.getRefererList().get(0));
     assertEquals(subscription, ub.getRefererInfo(referTo).get(0));
     assertEquals(subscription, ub.getRefererInfoByDialog(subscription.getDialogId()).get(0));
-    assertEquals(subscription, ub.getRefererInfoByDialog(b.getDialogId()).get(0));
+    assertEquals(subscription, ub.getRefererInfoByDialog(callB.getDialogId()).get(0));
 
     // B side - process the received response
     assertTrue(subscription.processResponse(1000));
@@ -676,7 +676,7 @@ public class TestReferNoProxy {
     // A sends state-active NOTIFY to B, gets OK in response
     // A side - send a NOTIFY
     Thread.sleep(20);
-    Request notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+    Request notifyRequest = callA.getDialog().createRequest(SipRequest.NOTIFY);
     notifyRequest =
         referHandler.addNotifyHeaders(notifyRequest, null, null, SubscriptionStateHeader.ACTIVE,
             null, "SIP/2.0 100 Trying\n", 60);
@@ -693,14 +693,14 @@ public class TestReferNoProxy {
     assertEquals(Request.NOTIFY, request.getMethod());
     assertEquals(60,
         ((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME)).getExpires());
-    ArrayList<SipRequest> received_requests = subscription.getAllReceivedRequests();
-    assertEquals(1, received_requests.size());
+    ArrayList<SipRequest> receivedRequests = subscription.getAllReceivedRequests();
+    assertEquals(1, receivedRequests.size());
     SipRequest sipreq = subscription.getLastReceivedRequest();
     assertNotNull(sipreq);
     assertTrue(sipreq.isNotify());
     assertFalse(sipreq.isSubscribe());
-    assertEquals(received_requests.get(0).getMessage().toString(), request.toString());
-    assertEquals(received_requests.get(0).toString(), sipreq.toString());
+    assertEquals(receivedRequests.get(0).getMessage().toString(), request.toString());
+    assertEquals(receivedRequests.get(0).toString(), sipreq.toString());
     assertBodyContains(sipreq, "SIP/2.0 100 Trying");
     assertHeaderContains(sipreq, EventHeader.NAME, "myeventid");
 
@@ -730,7 +730,7 @@ public class TestReferNoProxy {
 
     // A sends another NOTIFY to B, gets OK in response
     Thread.sleep(800);
-    notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+    notifyRequest = callA.getDialog().createRequest(SipRequest.NOTIFY);
     notifyRequest =
         referHandler.addNotifyHeaders(notifyRequest, null, null, SubscriptionStateHeader.ACTIVE,
             null, "SIP/2.0 180 Ringing\n", 20);
@@ -745,11 +745,11 @@ public class TestReferNoProxy {
     request = reqevent.getRequest();
     assertEquals(20,
         ((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME)).getExpires());
-    received_requests = subscription.getAllReceivedRequests();
-    assertEquals(2, received_requests.size());
+    receivedRequests = subscription.getAllReceivedRequests();
+    assertEquals(2, receivedRequests.size());
     sipreq = subscription.getLastReceivedRequest();
     assertNotNull(sipreq);
-    assertEquals(received_requests.get(1).getMessage().toString(), request.toString());
+    assertEquals(receivedRequests.get(1).getMessage().toString(), request.toString());
     assertBodyContains(sipreq, "SIP/2.0 180 Ringing");
 
     // B side - process the NOTIFY
@@ -790,7 +790,7 @@ public class TestReferNoProxy {
     // A sends subscription-terminating NOTIFY to B, gets OK in response
     // A side - send a NOTIFY
     Thread.sleep(20);
-    notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
+    notifyRequest = callA.getDialog().createRequest(SipRequest.NOTIFY);
     notifyRequest =
         referHandler.addNotifyHeaders(notifyRequest, null, null,
             SubscriptionStateHeader.TERMINATED, "noresource", "SIP/2.0 100 Trying\n", 0);
@@ -807,14 +807,14 @@ public class TestReferNoProxy {
     assertEquals(Request.NOTIFY, request.getMethod());
     assertTrue(((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
         .getExpires() < 1);
-    received_requests = subscription.getAllReceivedRequests();
-    assertEquals(3, received_requests.size());
+    receivedRequests = subscription.getAllReceivedRequests();
+    assertEquals(3, receivedRequests.size());
     sipreq = subscription.getLastReceivedRequest();
     assertNotNull(sipreq);
     assertTrue(sipreq.isNotify());
     assertFalse(sipreq.isSubscribe());
-    assertEquals(received_requests.get(2).getMessage().toString(), request.toString());
-    assertEquals(received_requests.get(2).toString(), sipreq.toString());
+    assertEquals(receivedRequests.get(2).getMessage().toString(), request.toString());
+    assertEquals(receivedRequests.get(2).toString(), sipreq.toString());
     assertBodyContains(sipreq, "SIP/2.0 100 Trying");
 
     // B side - process the NOTIFY
@@ -843,8 +843,8 @@ public class TestReferNoProxy {
     assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse().getStatusCode());
 
     // cleanup
-    a.disposeNoBye();
-    b.disposeNoBye();
+    callA.disposeNoBye();
+    callB.disposeNoBye();
   }
 
   @Test
@@ -857,31 +857,31 @@ public class TestReferNoProxy {
     // create and set up the far end
     SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
     ub.setLoopback(true);
-    SipCall b = ub.createSipCall();
-    assertTrue(b.listenForIncomingCall());
+    SipCall callB = ub.createSipCall();
+    assertTrue(callB.listenForIncomingCall());
 
     // make the call from A
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@cafesip.org", ua.getStackAddress() + ':' + myPort + '/'
             + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
     // B side answer the call
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
     Thread.sleep(20);
-    assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
     Thread.sleep(200);
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", a);
-    a.sendInviteOkAck();
-    assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    assertAnswered("Outgoing call leg not answered", callA);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
     Thread.sleep(1000);
 
     // B side - set up REFER handler
     ReferNotifySender referHandler = new ReferNotifySender(ub);
-    referHandler.setDialog(b.getDialog());
+    referHandler.setDialog(callB.getDialog());
     assertTrue(referHandler.processReferSendNotifyBeforeResponse(2000, SipResponse.ACCEPTED,
         "Accepted", SubscriptionStateHeader.TERMINATED, "noresource", "SIP/2.0 100 Trying\n", 0));
 
@@ -890,7 +890,7 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", null, null, null,
             "12345%40192.168.118.3%3Bto-tag%3D12345%3Bfrom-tag%3D5FFE-3994", null, null);
 
-    ReferSubscriber subscription = ua.refer(a.getDialog(), referTo, "eventbackward", 1000);
+    ReferSubscriber subscription = ua.refer(callA.getDialog(), referTo, "eventbackward", 1000);
     if (subscription == null) {
       fail(ua.getReturnCode() + ':' + ua.getErrorMessage());
     }
@@ -900,7 +900,7 @@ public class TestReferNoProxy {
     assertNotNull(requestEvent);
     Request req = requestEvent.getRequest();
     assertEquals(SipRequest.REFER, req.getMethod());
-    assertEquals(b.getDialogId(), requestEvent.getDialog().getDialogId());
+    assertEquals(callB.getDialogId(), requestEvent.getDialog().getDialogId());
 
     // A side - check the initial results - subscription, response,
     // SipPhone referer list
@@ -913,14 +913,14 @@ public class TestReferNoProxy {
     assertEquals("Accepted", resp.getReasonPhrase());
     assertNull(resp.getExpires());
     assertEquals(resp.toString(), subscription.getLastReceivedResponse().getMessage().toString());
-    ArrayList<SipResponse> received_responses = subscription.getAllReceivedResponses();
-    assertEquals(1, received_responses.size());
-    assertEquals(resp.toString(), received_responses.get(0).toString());
+    ArrayList<SipResponse> receivedResponses = subscription.getAllReceivedResponses();
+    assertEquals(1, receivedResponses.size());
+    assertEquals(resp.toString(), receivedResponses.get(0).toString());
     assertEquals(1, ua.getRefererList().size());
     assertEquals(subscription, ua.getRefererList().get(0));
     assertEquals(subscription, ua.getRefererInfo(referTo).get(0));
     assertEquals(subscription, ua.getRefererInfoByDialog(subscription.getDialogId()).get(0));
-    assertEquals(subscription, ua.getRefererInfoByDialog(a.getDialogId()).get(0));
+    assertEquals(subscription, ua.getRefererInfoByDialog(callA.getDialogId()).get(0));
 
     // A side - process the received response
     assertTrue(subscription.processResponse(2000));
@@ -943,14 +943,14 @@ public class TestReferNoProxy {
     assertEquals(Request.NOTIFY, request.getMethod());
     assertTrue(((SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME))
         .getExpires() < 1);
-    ArrayList<SipRequest> received_requests = subscription.getAllReceivedRequests();
-    assertEquals(1, received_requests.size());
+    ArrayList<SipRequest> receivedRequests = subscription.getAllReceivedRequests();
+    assertEquals(1, receivedRequests.size());
     SipRequest sipreq = subscription.getLastReceivedRequest();
     assertNotNull(sipreq);
     assertTrue(sipreq.isNotify());
     assertFalse(sipreq.isSubscribe());
-    assertEquals(received_requests.get(0).getMessage().toString(), request.toString());
-    assertEquals(received_requests.get(0).toString(), sipreq.toString());
+    assertEquals(receivedRequests.get(0).getMessage().toString(), request.toString());
+    assertEquals(receivedRequests.get(0).toString(), sipreq.toString());
     assertBodyContains(sipreq, "SIP/2.0 100 Trying");
 
     // A side - process the NOTIFY
@@ -982,8 +982,8 @@ public class TestReferNoProxy {
     assertEquals(SipResponse.OK, sipresp.getResponseEvent().getResponse().getStatusCode());
 
     // cleanup
-    a.disposeNoBye();
-    b.disposeNoBye();
+    callA.disposeNoBye();
+    callB.disposeNoBye();
   }
 
   @Test
@@ -1212,31 +1212,31 @@ public class TestReferNoProxy {
     // create and set up the far end
     SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
     ub.setLoopback(true);
-    SipCall b = ub.createSipCall();
-    assertTrue(b.listenForIncomingCall());
+    SipCall callB = ub.createSipCall();
+    assertTrue(callB.listenForIncomingCall());
 
     // make the call from A
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@cafesip.org", ua.getStackAddress() + ':' + myPort + '/'
             + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
     // B side answer the call
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
     Thread.sleep(20);
-    assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
     Thread.sleep(200);
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", a);
-    a.sendInviteOkAck();
-    assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    assertAnswered("Outgoing call leg not answered", callA);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
     Thread.sleep(1000);
 
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
-    referHandler.setDialog(b.getDialog());
+    referHandler.setDialog(callB.getDialog());
     assertTrue(referHandler.processRefer(4000, SipResponse.NOT_ACCEPTABLE_HERE,
         "Not Acceptable Here"));
     Thread.sleep(50);
@@ -1244,7 +1244,7 @@ public class TestReferNoProxy {
     // A side - send a REFER message in-dialog
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
-    ReferSubscriber subscription = ua.refer(a.getDialog(), referTo, null, 4000);
+    ReferSubscriber subscription = ua.refer(callA.getDialog(), referTo, null, 4000);
     assertNull(subscription);
     assertEquals(SipResponse.NOT_ACCEPTABLE_HERE, ua.getReturnCode());
   }
@@ -1983,22 +1983,22 @@ public class TestReferNoProxy {
     // Setup - Establish a call from A to B
     SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
     ub.setLoopback(true);
-    SipCall b = ub.createSipCall();
-    assertTrue(b.listenForIncomingCall());
-    SipCall a =
+    SipCall callB = ub.createSipCall();
+    assertTrue(callB.listenForIncomingCall());
+    SipCall callA =
         ua.makeCall("sip:becky@cafesip.org", ua.getStackAddress() + ':' + myPort + '/'
             + testProtocol);
-    assertNotNull(a);
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+    assertNotNull(callA);
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
     Thread.sleep(200);
-    assertAnswered(a);
-    assertTrue(a.sendInviteOkAck());
+    assertAnswered(callA);
+    assertTrue(callA.sendInviteOkAck());
     Thread.sleep(200);
 
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
-    referHandler.setDialog(b.getDialog());
+    referHandler.setDialog(callB.getDialog());
     assertTrue(referHandler.processRefer(2000, SipResponse.ACCEPTED, "Accepted"));
 
     // A side - send a REFER message with additional/replace headers & body
@@ -2018,7 +2018,7 @@ public class TestReferNoProxy {
     replaceHeaders.add(hdr);
 
     ReferSubscriber subscription =
-        ua.refer(a.getDialog(), referTo, null, 500, additionalHeaders, replaceHeaders,
+        ua.refer(callA.getDialog(), referTo, null, 500, additionalHeaders, replaceHeaders,
             "myReferBody");
     assertNotNull(subscription);
 
@@ -2036,8 +2036,8 @@ public class TestReferNoProxy {
     assertBodyContains(msg, "myReferBod");
 
     // we're done
-    a.disposeNoBye();
-    b.disposeNoBye();
+    callA.disposeNoBye();
+    callB.disposeNoBye();
 
   }
 
@@ -2046,22 +2046,22 @@ public class TestReferNoProxy {
     // Setup - Establish a call from A to B
     SipPhone ub = sipStack.createSipPhone("sip:becky@cafesip.org");
     ub.setLoopback(true);
-    SipCall b = ub.createSipCall();
-    assertTrue(b.listenForIncomingCall());
-    SipCall a =
+    SipCall callB = ub.createSipCall();
+    assertTrue(callB.listenForIncomingCall());
+    SipCall callA =
         ua.makeCall("sip:becky@cafesip.org", ua.getStackAddress() + ':' + myPort + '/'
             + testProtocol);
-    assertNotNull(a);
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+    assertNotNull(callA);
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
     Thread.sleep(200);
-    assertAnswered(a);
-    assertTrue(a.sendInviteOkAck());
+    assertAnswered(callA);
+    assertTrue(callA.sendInviteOkAck());
     Thread.sleep(200);
 
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
-    referHandler.setDialog(b.getDialog());
+    referHandler.setDialog(callB.getDialog());
     assertTrue(referHandler.processRefer(2000, SipResponse.ACCEPTED, "Accepted"));
 
     // A side - send a REFER message with additional/replace headers & body
@@ -2080,7 +2080,7 @@ public class TestReferNoProxy {
     replaceHeaders.add(hdr.toString());
 
     ReferSubscriber subscription =
-        ua.refer(a.getDialog(), referTo, null, 500, "myReferBody", "applicationn", "texxt",
+        ua.refer(callA.getDialog(), referTo, null, 500, "myReferBody", "applicationn", "texxt",
             additionalHeaders, replaceHeaders);
     assertNotNull(subscription);
 
@@ -2098,8 +2098,8 @@ public class TestReferNoProxy {
     assertBodyContains(msg, "myReferBod");
 
     // we're done
-    a.disposeNoBye();
-    b.disposeNoBye();
+    callA.disposeNoBye();
+    callB.disposeNoBye();
   }
 
   @Test
