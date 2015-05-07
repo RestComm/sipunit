@@ -159,23 +159,13 @@ public class TestWithProxyAuthentication {
    */
   @Before
   public void setUp() throws Exception {
-    try {
-      sipStack = new SipStack(testProtocol, myPort, properties);
-      SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-          || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-    } catch (Exception ex) {
-      fail("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    sipStack = new SipStack(testProtocol, myPort, properties);
+    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
+        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
 
-    try {
-      ua =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, myUrl);
-    } catch (Exception ex) {
-      fail("Exception creating SipPhone: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    ua =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, myUrl);
   }
 
   /**
@@ -188,32 +178,27 @@ public class TestWithProxyAuthentication {
   }
 
   @Test
-  public void testAuthRegistration() {
+  public void testAuthRegistration() throws Exception {
     SipStack.trace("testAuthRegistration");
 
     ua.register("amit", "a1b2c3d4", null, 4890, 10000);
     assertLastOperationSuccess("user a registration - " + ua.format(), ua);
 
     // check that the proper default contact address was registered
-    try {
-      SipURI defaultContact =
-          ua.getParent().getAddressFactory()
-              .createSipURI(((SipURI) ua.getAddress().getURI()).getUser(), ua.getStackAddress());
-      defaultContact.setPort(ua.getParent().getSipProvider().getListeningPoints()[0].getPort());
-      defaultContact.setTransportParam(ua.getParent().getSipProvider().getListeningPoints()[0]
-          .getTransport());
-      defaultContact.setSecure(((SipURI) ua.getAddress().getURI()).isSecure());
-      defaultContact.setLrParam();
+    SipURI defaultContact =
+        ua.getParent().getAddressFactory()
+            .createSipURI(((SipURI) ua.getAddress().getURI()).getUser(), ua.getStackAddress());
+    defaultContact.setPort(ua.getParent().getSipProvider().getListeningPoints()[0].getPort());
+    defaultContact.setTransportParam(ua.getParent().getSipProvider().getListeningPoints()[0]
+        .getTransport());
+    defaultContact.setSecure(((SipURI) ua.getAddress().getURI()).isSecure());
+    defaultContact.setLrParam();
 
-      assertEquals("The default contact is wrong", defaultContact.toString(), ua.getContactInfo()
-          .getURI());
+    assertEquals("The default contact is wrong", defaultContact.toString(), ua.getContactInfo()
+        .getURI());
 
-      assertEquals("The default contact is wrong", "sip:amit@" + ua.getStackAddress() + ':'
-          + myPort + ";transport=" + testProtocol + ";lr", ua.getContactInfo().getURI());
-    } catch (Exception ex) {
-      fail("Exception while forming default contact URI: " + ex.getClass().getName() + ": "
-          + ex.getMessage());
-    }
+    assertEquals("The default contact is wrong", "sip:amit@" + ua.getStackAddress() + ':'
+        + myPort + ";transport=" + testProtocol + ";lr", ua.getContactInfo().getURI());
 
     // check contact expiry
     // assertEquals("wrong contact expiry", 4890,
@@ -221,10 +206,7 @@ public class TestWithProxyAuthentication {
     // why proxy/registrar doesn't take it?
 
     // wait 1 sec then unregister
-    try {
-      Thread.sleep(1000);
-    } catch (Exception ex) {
-    }
+    Thread.sleep(1000);
 
     ua.unregister("a@" + properties.getProperty("sipunit.proxy.host"), 10000); // unregister the
                                                                                // wrong contact
@@ -235,20 +217,15 @@ public class TestWithProxyAuthentication {
   }
 
   @Test
-  public void testCustomContactRegistration() {
+  public void testCustomContactRegistration() throws Exception {
     SipStack.trace("testCustomContactRegistration");
 
     ua.register("amit", "a1b2c3d4", "sip:billy@bob.land:9090;transport=tcp", 4890, 10000);
     assertLastOperationSuccess("user a registration - " + ua.format(), ua);
 
     // check that the proper default contact address was registered
-    try {
-      assertEquals("The registered contact is wrong", "sip:billy@bob.land:9090;transport=tcp", ua
-          .getContactInfo().getURI().toString());
-    } catch (Exception ex) {
-      fail("Exception while checking contact info: " + ex.getClass().getName() + ": "
-          + ex.getMessage());
-    }
+    assertEquals("The registered contact is wrong", "sip:billy@bob.land:9090;transport=tcp", ua
+        .getContactInfo().getURI().toString());
 
     // check contact expiry
     // assertEquals("wrong contact expiry", 4890,
@@ -256,10 +233,7 @@ public class TestWithProxyAuthentication {
     // why proxy/registrar doesn't take it?
 
     // wait 1 sec then unregister
-    try {
-      Thread.sleep(1000);
-    } catch (Exception ex) {
-    }
+    Thread.sleep(1000);
 
     ua.unregister("a@" + properties.getProperty("sipunit.proxy.host"), 10000); // unregister the
                                                                                // wrong contact
@@ -285,7 +259,7 @@ public class TestWithProxyAuthentication {
    * using pre-set credentials
    */
   @Test
-  public void testBothSidesAsynchMakeCall() {
+  public void testBothSidesAsynchMakeCall() throws Exception {
     // test the nonblocking version
     // of
     // SipPhone.makeCall()
@@ -298,72 +272,67 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      SipCall callB = ub.createSipCall();
-      callB.listenForIncomingCall();
-      Thread.sleep(50);
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
+    Thread.sleep(50);
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
-      assertLastOperationSuccess(ua.format(), ua);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(callB.waitForIncomingCall(5000));
-      callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
-      Thread.sleep(300);
-      assertNotAnswered("Call leg shouldn't be answered yet", callA);
-      assertNotAnswered(callB);
+    assertTrue(callB.waitForIncomingCall(5000));
+    callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+    Thread.sleep(300);
+    assertNotAnswered("Call leg shouldn't be answered yet", callA);
+    assertNotAnswered(callB);
 
-      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
-      Thread.sleep(500);
+    callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
+    Thread.sleep(500);
 
-      assertAnswered("Outgoing call leg not answered", callA);
-      assertAnswered(callB);
-      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
+    assertAnswered("Outgoing call leg not answered", callA);
+    assertAnswered(callB);
+    assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
-      assertTrue("Shouldn't have received anything at the called party side", callB
-          .getAllReceivedResponses().size() == 0);
+    assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
+    assertTrue("Shouldn't have received anything at the called party side", callB
+        .getAllReceivedResponses().size() == 0);
 
-      // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
-      // verify OK was received
-      assertResponseReceived(SipResponse.OK, callA);
-      // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
+    // verify RINGING was received
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+    // verify OK was received
+    assertResponseReceived(SipResponse.OK, callA);
+    // check negative
+    assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+    assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
-      // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
-          .getLastReceivedResponse().getStatusCode());
+    // verify getLastReceivedResponse() method
+    assertEquals("Last response received wasn't answer", SipResponse.OK, callA
+        .getLastReceivedResponse().getStatusCode());
 
-      callA.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
-      callA.listenForDisconnect();
-      Thread.sleep(100);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    callA.listenForDisconnect();
+    Thread.sleep(100);
 
-      callB.disconnect();
-      assertLastOperationSuccess("b disc - " + callB.format(), callB);
+    callB.disconnect();
+    assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      callA.waitForDisconnect(5000);
-      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
+    callA.waitForDisconnect(5000);
+    assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-      callA.respondToDisconnect();
+    callA.respondToDisconnect();
 
-      Thread.sleep(500);
-      ub.dispose();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    Thread.sleep(500);
+    ub.dispose();
   }
 
   /**
@@ -373,7 +342,7 @@ public class TestWithProxyAuthentication {
   @Test
   @Ignore
   // TODO fix - why BYE failing?
-  public void testAsynchMakeCallCallerDisc() {
+  public void testAsynchMakeCallCallerDisc() throws Exception {
     // test the nonblocking version
     // of
     // SipPhone.makeCall()
@@ -386,87 +355,82 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      SipCall callB = ub.createSipCall();
-      callB.listenForIncomingCall();
-      Thread.sleep(50);
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
+    Thread.sleep(50);
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
-      assertLastOperationSuccess(ua.format(), ua);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      boolean status = callB.waitForIncomingCall(4000);
-      assertTrue(callB.format(), status);
-      callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
-      Thread.sleep(300);
-      assertNotAnswered("Call leg shouldn't be answered yet", callA);
-      assertNotAnswered(callB);
+    boolean status = callB.waitForIncomingCall(4000);
+    assertTrue(callB.format(), status);
+    callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+    Thread.sleep(300);
+    assertNotAnswered("Call leg shouldn't be answered yet", callA);
+    assertNotAnswered(callB);
 
-      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
-      Thread.sleep(500);
+    callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
+    Thread.sleep(500);
 
-      assertAnswered("Outgoing call leg not answered", callA);
-      assertAnswered(callB);
-      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
+    assertAnswered("Outgoing call leg not answered", callA);
+    assertAnswered(callB);
+    assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
-      assertTrue("Shouldn't have received anything at the called party side", callB
-          .getAllReceivedResponses().size() == 0);
+    assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
+    assertTrue("Shouldn't have received anything at the called party side", callB
+        .getAllReceivedResponses().size() == 0);
 
-      // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
-      // verify OK was received
-      assertResponseReceived(SipResponse.OK, callA);
-      // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
+    // verify RINGING was received
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+    // verify OK was received
+    assertResponseReceived(SipResponse.OK, callA);
+    // check negative
+    assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+    assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
-      // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
-          .getLastReceivedResponse().getStatusCode());
+    // verify getLastReceivedResponse() method
+    assertEquals("Last response received wasn't answer", SipResponse.OK, callA
+        .getLastReceivedResponse().getStatusCode());
 
-      callA.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
-      Thread.sleep(2000);
-      callB.listenForDisconnect();
-      Thread.sleep(1000);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    Thread.sleep(2000);
+    callB.listenForDisconnect();
+    Thread.sleep(1000);
 
-      // a.disconnect();
-      // instead, send the BYE myself without credentials due to
-      // SipExchange rejecting cached credentials (bug 2845998)
-      // and handle the challenge myself
-      Request bye = callA.getDialog().createRequest(Request.BYE);
-      SipTransaction trans = ua.sendRequestWithTransaction(bye, false, callA.getDialog());
-      assertNotNull(trans);
-      EventObject respEvent = ua.waitResponse(trans, 1000);
-      assertNotNull(respEvent);
-      assertTrue(respEvent instanceof ResponseEvent);
-      Response resp = ((ResponseEvent) respEvent).getResponse();
-      assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp.getStatusCode());
-      Request newBye = ua.processAuthChallenge(resp, bye, null, null);
-      assertNotNull(newBye);
-      assertNotNull(ua.sendRequestWithTransaction(newBye, true, callA.getDialog()));
+    // a.disconnect();
+    // instead, send the BYE myself without credentials due to
+    // SipExchange rejecting cached credentials (bug 2845998)
+    // and handle the challenge myself
+    Request bye = callA.getDialog().createRequest(Request.BYE);
+    SipTransaction trans = ua.sendRequestWithTransaction(bye, false, callA.getDialog());
+    assertNotNull(trans);
+    EventObject respEvent = ua.waitResponse(trans, 1000);
+    assertNotNull(respEvent);
+    assertTrue(respEvent instanceof ResponseEvent);
+    Response resp = ((ResponseEvent) respEvent).getResponse();
+    assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp.getStatusCode());
+    Request newBye = ua.processAuthChallenge(resp, bye, null, null);
+    assertNotNull(newBye);
+    assertNotNull(ua.sendRequestWithTransaction(newBye, true, callA.getDialog()));
 
-      callB.waitForDisconnect(5000);
-      assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+    callB.waitForDisconnect(5000);
+    assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
 
-      callB.respondToDisconnect();
+    callB.respondToDisconnect();
 
-      Thread.sleep(1000);
-      ub.dispose();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    Thread.sleep(1000);
+    ub.dispose();
   }
 
   /**
@@ -475,7 +439,7 @@ public class TestWithProxyAuthentication {
    * <p>
    * Uncomment to test.
    */
-  public void xtestMakeCallFailureCheck() {
+  public void xtestMakeCallFailureCheck() throws Exception {
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
     ua.register(null, 1800);
@@ -483,29 +447,24 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      String badRoute = properties.getProperty("sipunit.proxy.host") + ":" + (proxyPort + 1);
+    String badRoute = properties.getProperty("sipunit.proxy.host") + ":" + (proxyPort + 1);
 
-      // test asynchronous makeCall() failure
+    // test asynchronous makeCall() failure
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), badRoute
-              + "/udp");
-      assertLastOperationSuccess(ua.format(), ua);
-      assertNotAnswered("Call leg shouldn't be answered", callA);
-      Thread.sleep(120000);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), badRoute
+            + "/udp");
+    assertLastOperationSuccess(ua.format(), ua);
+    assertNotAnswered("Call leg shouldn't be answered", callA);
+    Thread.sleep(120000);
 
-      assertTrue("Outgoing call leg error status incorrect", callA.callTimeoutOrError()); // should
-                                                                                          // get
-      // a timeout
+    assertTrue("Outgoing call leg error status incorrect", callA.callTimeoutOrError()); // should
+                                                                                        // get
+    // a timeout
 
-      callA.dispose();
+    callA.dispose();
 
-      // synchronous makeCall() test not applicable, SipCall null
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    // synchronous makeCall() test not applicable, SipCall null
   }
 
   /**
@@ -514,7 +473,7 @@ public class TestWithProxyAuthentication {
    * 
    */
   @Test
-  public void testBothSidesCallerDisc() {
+  public void testBothSidesCallerDisc() throws Exception {
     // test the blocking version of
     // SipPhone.makeCall()
     SipStack.trace("testBothSidesCallerDisc");
@@ -563,61 +522,57 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      PhoneB phoneB = new PhoneB();
-      phoneB.start();
+    PhoneB phoneB = new PhoneB();
+    phoneB.start();
 
-      // give user b time to register
-      Thread.sleep(2000);
+    // give user b time to register
+    Thread.sleep(2000);
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), SipResponse.OK,
-              5000, null);
-      assertLastOperationSuccess(ua.format(), ua);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), SipResponse.OK,
+            5000, null);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertAnswered("Outgoing call leg not answered", callA);
-      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
+    assertAnswered("Outgoing call leg not answered", callA);
+    assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
+    assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
 
-      // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
-      // verify OK was received
-      assertResponseReceived(SipResponse.OK, callA);
-      // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
+    // verify RINGING was received
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+    // verify OK was received
+    assertResponseReceived(SipResponse.OK, callA);
+    // check negative
+    assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+    assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
-      // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
-          .getLastReceivedResponse().getStatusCode());
+    // verify getLastReceivedResponse() method
+    assertEquals("Last response received wasn't answer", SipResponse.OK, callA
+        .getLastReceivedResponse().getStatusCode());
 
-      callA.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
-      Thread.sleep(2000);
+    Thread.sleep(2000);
 
-      // a.disconnect();
-      // assertLastOperationSuccess("a disc - " + a.format(), a);
-      // instead, send the BYE myself without credentials due to
-      // SipExchange rejecting cached credentials (bug 2845998)
-      // and handle the challenge myself
-      Request bye = callA.getDialog().createRequest(Request.BYE);
-      SipTransaction trans = ua.sendRequestWithTransaction(bye, false, callA.getDialog());
-      assertNotNull(trans);
-      EventObject respEvent = ua.waitResponse(trans, 1000);
-      assertNotNull(respEvent);
-      assertTrue(respEvent instanceof ResponseEvent);
-      Response resp = ((ResponseEvent) respEvent).getResponse();
-      assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp.getStatusCode());
-      Request newBye = ua.processAuthChallenge(resp, bye, null, null);
-      assertNotNull(newBye);
-      assertNotNull(ua.sendRequestWithTransaction(newBye, false, callA.getDialog()));
+    // a.disconnect();
+    // assertLastOperationSuccess("a disc - " + a.format(), a);
+    // instead, send the BYE myself without credentials due to
+    // SipExchange rejecting cached credentials (bug 2845998)
+    // and handle the challenge myself
+    Request bye = callA.getDialog().createRequest(Request.BYE);
+    SipTransaction trans = ua.sendRequestWithTransaction(bye, false, callA.getDialog());
+    assertNotNull(trans);
+    EventObject respEvent = ua.waitResponse(trans, 1000);
+    assertNotNull(respEvent);
+    assertTrue(respEvent instanceof ResponseEvent);
+    Response resp = ((ResponseEvent) respEvent).getResponse();
+    assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp.getStatusCode());
+    Request newBye = ua.processAuthChallenge(resp, bye, null, null);
+    assertNotNull(newBye);
+    assertNotNull(ua.sendRequestWithTransaction(newBye, false, callA.getDialog()));
 
-      phoneB.join();
-    } catch (Exception e) {
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    phoneB.join();
   }
 
   @Test
@@ -752,7 +707,7 @@ public class TestWithProxyAuthentication {
   }
 
   @Test
-  public void testMakeCallExtraStringParms() {
+  public void testMakeCallExtraStringParms() throws Exception {
     // test the blocking version of
     // SipPhone.makeCall() with extra String parameters
     SipStack.trace("testBothSidesCallerDisc");
@@ -809,75 +764,71 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      PhoneB phoneB = new PhoneB();
-      phoneB.start();
+    PhoneB phoneB = new PhoneB();
+    phoneB.start();
 
-      // give user b time to register
-      Thread.sleep(2000);
+    // give user b time to register
+    Thread.sleep(2000);
 
-      // set up outbound INVITE contents
+    // set up outbound INVITE contents
 
-      ArrayList<String> addnlHeaders = new ArrayList<>();
-      addnlHeaders.add(new String("Priority: 5"));
+    ArrayList<String> addnlHeaders = new ArrayList<>();
+    addnlHeaders.add(new String("Priority: 5"));
 
-      ArrayList<String> replaceHeaders = new ArrayList<>();
-      replaceHeaders.add(new String("Contact: <sip:doodah@"
-          + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
-      replaceHeaders.add(new String("Max-Forwards: 62"));
+    ArrayList<String> replaceHeaders = new ArrayList<>();
+    replaceHeaders.add(new String("Contact: <sip:doodah@"
+        + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
+    replaceHeaders.add(new String("Max-Forwards: 62"));
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), SipResponse.OK,
-              5000, null, "my body", "applicationn", "texxt", addnlHeaders, replaceHeaders);
-      assertLastOperationSuccess(ua.format(), ua);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), SipResponse.OK,
+            5000, null, "my body", "applicationn", "texxt", addnlHeaders, replaceHeaders);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertAnswered("Outgoing call leg not answered", callA);
-      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
+    assertAnswered("Outgoing call leg not answered", callA);
+    assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
+    assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
 
-      // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
-      // verify OK was received
-      assertResponseReceived(SipResponse.OK, callA);
-      // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
+    // verify RINGING was received
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+    // verify OK was received
+    assertResponseReceived(SipResponse.OK, callA);
+    // check negative
+    assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+    assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
-      // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
-          .getLastReceivedResponse().getStatusCode());
+    // verify getLastReceivedResponse() method
+    assertEquals("Last response received wasn't answer", SipResponse.OK, callA
+        .getLastReceivedResponse().getStatusCode());
 
-      callA.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
-      Thread.sleep(2000);
+    Thread.sleep(2000);
 
-      // a.disconnect();
-      // assertLastOperationSuccess("a disc - " + a.format(), a);
-      // instead, send the BYE myself without credentials due to
-      // SipExchange rejecting cached credentials (bug 2845998)
-      // and handle the challenge myself
-      Request bye = callA.getDialog().createRequest(Request.BYE);
-      SipTransaction trans = ua.sendRequestWithTransaction(bye, false, callA.getDialog());
-      assertNotNull(trans);
-      EventObject respEvent = ua.waitResponse(trans, 1000);
-      assertNotNull(respEvent);
-      assertTrue(respEvent instanceof ResponseEvent);
-      Response resp = ((ResponseEvent) respEvent).getResponse();
-      assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp.getStatusCode());
-      Request newBye = ua.processAuthChallenge(resp, bye, null, null);
-      assertNotNull(newBye);
-      assertNotNull(ua.sendRequestWithTransaction(newBye, false, callA.getDialog()));
+    // a.disconnect();
+    // assertLastOperationSuccess("a disc - " + a.format(), a);
+    // instead, send the BYE myself without credentials due to
+    // SipExchange rejecting cached credentials (bug 2845998)
+    // and handle the challenge myself
+    Request bye = callA.getDialog().createRequest(Request.BYE);
+    SipTransaction trans = ua.sendRequestWithTransaction(bye, false, callA.getDialog());
+    assertNotNull(trans);
+    EventObject respEvent = ua.waitResponse(trans, 1000);
+    assertNotNull(respEvent);
+    assertTrue(respEvent instanceof ResponseEvent);
+    Response resp = ((ResponseEvent) respEvent).getResponse();
+    assertEquals(Response.PROXY_AUTHENTICATION_REQUIRED, resp.getStatusCode());
+    Request newBye = ua.processAuthChallenge(resp, bye, null, null);
+    assertNotNull(newBye);
+    assertNotNull(ua.sendRequestWithTransaction(newBye, false, callA.getDialog()));
 
-      phoneB.join();
-    } catch (Exception e) {
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    phoneB.join();
   }
 
   @Test
-  public void testNonblockingMakeCallExtraJainsipParms() {
+  public void testNonblockingMakeCallExtraJainsipParms() throws Exception {
     // test the
     // nonblocking
     // SipPhone.makeCall() with extra JAIN SIP parameters
@@ -891,103 +842,98 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      SipCall callB = ub.createSipCall();
-      callB.listenForIncomingCall();
-      Thread.sleep(50);
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
+    Thread.sleep(50);
 
-      // set up outbound INVITE contents
+    // set up outbound INVITE contents
 
-      ArrayList<Header> addnlHeaders = new ArrayList<>();
-      addnlHeaders.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
-      addnlHeaders.add(ua.getParent().getHeaderFactory()
-          .createContentTypeHeader("applicationn", "texxt"));
+    ArrayList<Header> addnlHeaders = new ArrayList<>();
+    addnlHeaders.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
+    addnlHeaders.add(ua.getParent().getHeaderFactory()
+        .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replaceHeaders = new ArrayList<>();
-      URI bogusContact =
-          ua.getParent()
-              .getAddressFactory()
-              .createURI(
-                  "sip:doodah@" + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort);
-      Address bogusAddr = ua.getParent().getAddressFactory().createAddress(bogusContact);
-      replaceHeaders.add(ua.getParent().getHeaderFactory().createContactHeader(bogusAddr)); // verify
-                                                                                            // replacement
-      replaceHeaders.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
+    ArrayList<Header> replaceHeaders = new ArrayList<>();
+    URI bogusContact =
+        ua.getParent()
+            .getAddressFactory()
+            .createURI(
+                "sip:doodah@" + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort);
+    Address bogusAddr = ua.getParent().getAddressFactory().createAddress(bogusContact);
+    replaceHeaders.add(ua.getParent().getHeaderFactory().createContactHeader(bogusAddr)); // verify
+                                                                                          // replacement
+    replaceHeaders.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null,
-              addnlHeaders, replaceHeaders, "my body");
-      assertLastOperationSuccess(ua.format(), ua);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null,
+            addnlHeaders, replaceHeaders, "my body");
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(callB.waitForIncomingCall(5000));
+    assertTrue(callB.waitForIncomingCall(5000));
 
-      assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-      assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME,
-          "applicationn/texxt");
-      assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "61");
-      assertBodyContains(callB.getLastReceivedRequest(), "my body");
+    assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+    assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME,
+        "applicationn/texxt");
+    assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+    assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "61");
+    assertBodyContains(callB.getLastReceivedRequest(), "my body");
 
-      callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
-      Thread.sleep(300);
-      assertNotAnswered("Call leg shouldn't be answered yet", callA);
-      assertNotAnswered(callB);
+    callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+    Thread.sleep(300);
+    assertNotAnswered("Call leg shouldn't be answered yet", callA);
+    assertNotAnswered(callB);
 
-      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
-      Thread.sleep(500);
+    callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
+    Thread.sleep(500);
 
-      assertAnswered("Outgoing call leg not answered", callA);
-      assertAnswered(callB);
-      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
+    assertAnswered("Outgoing call leg not answered", callA);
+    assertAnswered(callB);
+    assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
-      assertTrue("Shouldn't have received anything at the called party side", callB
-          .getAllReceivedResponses().size() == 0);
+    assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
+    assertTrue("Shouldn't have received anything at the called party side", callB
+        .getAllReceivedResponses().size() == 0);
 
-      // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
-      // verify OK was received
-      assertResponseReceived(SipResponse.OK, callA);
-      // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
+    // verify RINGING was received
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+    // verify OK was received
+    assertResponseReceived(SipResponse.OK, callA);
+    // check negative
+    assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+    assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
-      // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
-          .getLastReceivedResponse().getStatusCode());
+    // verify getLastReceivedResponse() method
+    assertEquals("Last response received wasn't answer", SipResponse.OK, callA
+        .getLastReceivedResponse().getStatusCode());
 
-      callA.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
-      callA.listenForDisconnect();
-      Thread.sleep(100);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    callA.listenForDisconnect();
+    Thread.sleep(100);
 
-      callB.disconnect();
-      assertLastOperationSuccess("b disc - " + callB.format(), callB);
+    callB.disconnect();
+    assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      callA.waitForDisconnect(5000);
-      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
+    callA.waitForDisconnect(5000);
+    assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-      callA.respondToDisconnect();
+    callA.respondToDisconnect();
 
-      Thread.sleep(500);
-      ub.dispose();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    Thread.sleep(500);
+    ub.dispose();
   }
 
   @Test
-  public void testNonblockingMakeCallExtraStringParms() {
+  public void testNonblockingMakeCallExtraStringParms() throws Exception {
     // test the
     // nonblocking
     // version
@@ -1002,96 +948,91 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      SipCall callB = ub.createSipCall();
-      callB.listenForIncomingCall();
-      Thread.sleep(50);
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
+    Thread.sleep(50);
 
-      // set up outbound INVITE contents
+    // set up outbound INVITE contents
 
-      ArrayList<String> addnlHeaders = new ArrayList<>();
-      addnlHeaders.add(new String("Priority: 5"));
+    ArrayList<String> addnlHeaders = new ArrayList<>();
+    addnlHeaders.add(new String("Priority: 5"));
 
-      ArrayList<String> replaceHeaders = new ArrayList<>();
-      replaceHeaders.add(new String("Contact: <sip:doodah@"
-          + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
-      replaceHeaders.add(new String("Max-Forwards: 62"));
+    ArrayList<String> replaceHeaders = new ArrayList<>();
+    replaceHeaders.add(new String("Contact: <sip:doodah@"
+        + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
+    replaceHeaders.add(new String("Max-Forwards: 62"));
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null,
-              "my body", "applicationn", "texxt", addnlHeaders, replaceHeaders);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null,
+            "my body", "applicationn", "texxt", addnlHeaders, replaceHeaders);
 
-      assertLastOperationSuccess(ua.format(), ua);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(callB.waitForIncomingCall(5000));
+    assertTrue(callB.waitForIncomingCall(5000));
 
-      assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-      assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME,
-          "applicationn/texxt");
-      assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "61");
-      assertBodyContains(callB.getLastReceivedRequest(), "my body");
+    assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+    assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME,
+        "applicationn/texxt");
+    assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+    assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "61");
+    assertBodyContains(callB.getLastReceivedRequest(), "my body");
 
-      callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
-      Thread.sleep(300);
-      assertNotAnswered("Call leg shouldn't be answered yet", callA);
-      assertNotAnswered(callB);
+    callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+    Thread.sleep(300);
+    assertNotAnswered("Call leg shouldn't be answered yet", callA);
+    assertNotAnswered(callB);
 
-      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
-      Thread.sleep(500);
+    callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
+    Thread.sleep(500);
 
-      assertAnswered("Outgoing call leg not answered", callA);
-      assertAnswered(callB);
-      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
+    assertAnswered("Outgoing call leg not answered", callA);
+    assertAnswered(callB);
+    assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
-      assertTrue("Shouldn't have received anything at the called party side", callB
-          .getAllReceivedResponses().size() == 0);
+    assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
+    assertTrue("Shouldn't have received anything at the called party side", callB
+        .getAllReceivedResponses().size() == 0);
 
-      // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
-      // verify OK was received
-      assertResponseReceived(SipResponse.OK, callA);
-      // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
+    // verify RINGING was received
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+    // verify OK was received
+    assertResponseReceived(SipResponse.OK, callA);
+    // check negative
+    assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+    assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
-      // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
-          .getLastReceivedResponse().getStatusCode());
+    // verify getLastReceivedResponse() method
+    assertEquals("Last response received wasn't answer", SipResponse.OK, callA
+        .getLastReceivedResponse().getStatusCode());
 
-      callA.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
-      callA.listenForDisconnect();
-      Thread.sleep(100);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    callA.listenForDisconnect();
+    Thread.sleep(100);
 
-      callB.disconnect();
-      assertLastOperationSuccess("b disc - " + callB.format(), callB);
+    callB.disconnect();
+    assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      callA.waitForDisconnect(5000);
-      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
+    callA.waitForDisconnect(5000);
+    assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-      callA.respondToDisconnect();
+    callA.respondToDisconnect();
 
-      Thread.sleep(500);
-      ub.dispose();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    Thread.sleep(500);
+    ub.dispose();
   }
 
   @Test
-  public void testMiscExtraParms() {
+  public void testMiscExtraParms() throws Exception {
     // test the remaining SipCall methods
     // that take extra parameters
     SipStack.trace("testMiscExtraParms");
@@ -1103,159 +1044,154 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      SipCall phoneB = ub.createSipCall();
-      phoneB.listenForIncomingCall();
-      Thread.sleep(50);
+    SipCall phoneB = ub.createSipCall();
+    phoneB.listenForIncomingCall();
+    Thread.sleep(50);
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
 
-      assertLastOperationSuccess(ua.format(), ua);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(phoneB.waitForIncomingCall(5000));
+    assertTrue(phoneB.waitForIncomingCall(5000));
 
-      // create extra parameters for sendIncomingCallResponse()
+    // create extra parameters for sendIncomingCallResponse()
 
-      ArrayList<String> addnlHeaders = new ArrayList<>();
-      addnlHeaders.add(new String("Priority: 5"));
+    ArrayList<String> addnlHeaders = new ArrayList<>();
+    addnlHeaders.add(new String("Priority: 5"));
 
-      ArrayList<String> replaceHeaders = new ArrayList<>();
-      replaceHeaders.add(new String("Contact: <sip:doodah@"
-          + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
-      replaceHeaders.add(new String("Max-Forwards: 62"));
+    ArrayList<String> replaceHeaders = new ArrayList<>();
+    replaceHeaders.add(new String("Contact: <sip:doodah@"
+        + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
+    replaceHeaders.add(new String("Max-Forwards: 62"));
 
-      phoneB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600, "my body", "applicationn",
-          "texxt", addnlHeaders, replaceHeaders);
-      Thread.sleep(300);
-      assertNotAnswered("Call leg shouldn't be answered yet", callA);
-      assertNotAnswered(phoneB);
+    phoneB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600, "my body", "applicationn",
+        "texxt", addnlHeaders, replaceHeaders);
+    Thread.sleep(300);
+    assertNotAnswered("Call leg shouldn't be answered yet", callA);
+    assertNotAnswered(phoneB);
 
-      // verify extra parameters were received in the message
+    // verify extra parameters were received in the message
 
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
 
-      SipResponse response = callA.findMostRecentResponse(SipResponse.RINGING);
-      assertHeaderContains(response, PriorityHeader.NAME, "5");
-      assertHeaderContains(response, ContentTypeHeader.NAME, "applicationn/texxt");
-      assertHeaderContains(response, ContactHeader.NAME, "doodah");
-      assertHeaderContains(response, MaxForwardsHeader.NAME, "62");
-      assertBodyContains(response, "my body");
+    SipResponse response = callA.findMostRecentResponse(SipResponse.RINGING);
+    assertHeaderContains(response, PriorityHeader.NAME, "5");
+    assertHeaderContains(response, ContentTypeHeader.NAME, "applicationn/texxt");
+    assertHeaderContains(response, ContactHeader.NAME, "doodah");
+    assertHeaderContains(response, MaxForwardsHeader.NAME, "62");
+    assertBodyContains(response, "my body");
 
-      phoneB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
-      Thread.sleep(500);
+    phoneB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
+    Thread.sleep(500);
 
-      assertAnswered("Outgoing call leg not answered", callA);
-      assertAnswered(phoneB);
-      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
+    assertAnswered("Outgoing call leg not answered", callA);
+    assertAnswered(phoneB);
+    assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
-      assertTrue("Shouldn't have received anything at the called party side", phoneB
-          .getAllReceivedResponses().size() == 0);
+    assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() >= 2);
+    assertTrue("Shouldn't have received anything at the called party side", phoneB
+        .getAllReceivedResponses().size() == 0);
 
-      // verify OK was received
-      assertResponseReceived(SipResponse.OK, callA);
-      // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
+    // verify OK was received
+    assertResponseReceived(SipResponse.OK, callA);
+    // check negative
+    assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+    assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
-      // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
-          .getLastReceivedResponse().getStatusCode());
+    // verify getLastReceivedResponse() method
+    assertEquals("Last response received wasn't answer", SipResponse.OK, callA
+        .getLastReceivedResponse().getStatusCode());
 
-      // create extra parameters for sendInviteOkAck()
+    // create extra parameters for sendInviteOkAck()
 
-      addnlHeaders.clear();
-      addnlHeaders.add(new String("Priority: 6"));
-      addnlHeaders.add(new String("Route: " + ub.getContactInfo().getURI()));
+    addnlHeaders.clear();
+    addnlHeaders.add(new String("Priority: 6"));
+    addnlHeaders.add(new String("Route: " + ub.getContactInfo().getURI()));
 
-      replaceHeaders.clear();
-      replaceHeaders.add(new String("Contact: <sip:dooodah@"
-          + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
-      replaceHeaders.add(new String("Max-Forwards: 63"));
+    replaceHeaders.clear();
+    replaceHeaders.add(new String("Contact: <sip:dooodah@"
+        + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
+    replaceHeaders.add(new String("Max-Forwards: 63"));
 
-      callA.sendInviteOkAck("my boddy", "application", "text", addnlHeaders, replaceHeaders);
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    callA.sendInviteOkAck("my boddy", "application", "text", addnlHeaders, replaceHeaders);
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
-      // verify extra parameters were received in the message
+    // verify extra parameters were received in the message
 
-      assertTrue(phoneB.waitForAck(1000));
-      SipRequest request = phoneB.getLastReceivedRequest();
-      assertHeaderContains(request, PriorityHeader.NAME, "6");
-      assertHeaderContains(request, ContentTypeHeader.NAME, "application/text");
-      assertHeaderContains(request, ContactHeader.NAME, "dooodah");
-      assertHeaderContains(request, MaxForwardsHeader.NAME, "63");
-      assertBodyContains(request, "my boddy");
+    assertTrue(phoneB.waitForAck(1000));
+    SipRequest request = phoneB.getLastReceivedRequest();
+    assertHeaderContains(request, PriorityHeader.NAME, "6");
+    assertHeaderContains(request, ContentTypeHeader.NAME, "application/text");
+    assertHeaderContains(request, ContactHeader.NAME, "dooodah");
+    assertHeaderContains(request, MaxForwardsHeader.NAME, "63");
+    assertBodyContains(request, "my boddy");
 
-      callA.listenForDisconnect();
-      Thread.sleep(100);
+    callA.listenForDisconnect();
+    Thread.sleep(100);
 
-      // create extra parameters for disconnect()
+    // create extra parameters for disconnect()
 
-      addnlHeaders.clear();
-      addnlHeaders.add(new String("Priority: 7"));
+    addnlHeaders.clear();
+    addnlHeaders.add(new String("Priority: 7"));
 
-      replaceHeaders.clear();
-      replaceHeaders.add(new String("Contact: <sip:doooodah@"
-          + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
-      replaceHeaders.add(new String("Max-Forwards: 64"));
+    replaceHeaders.clear();
+    replaceHeaders.add(new String("Contact: <sip:doooodah@"
+        + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
+    replaceHeaders.add(new String("Max-Forwards: 64"));
 
-      phoneB.disconnect("my bodddy", "appl", "txt", addnlHeaders, replaceHeaders);
-      assertLastOperationSuccess("b disc - " + phoneB.format(), phoneB);
+    phoneB.disconnect("my bodddy", "appl", "txt", addnlHeaders, replaceHeaders);
+    assertLastOperationSuccess("b disc - " + phoneB.format(), phoneB);
 
-      // verify extra parameters were received in the message
+    // verify extra parameters were received in the message
 
-      callA.waitForDisconnect(1000);
-      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
+    callA.waitForDisconnect(1000);
+    assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-      request = callA.getLastReceivedRequest();
-      assertHeaderContains(request, PriorityHeader.NAME, "7");
-      assertHeaderContains(request, ContentTypeHeader.NAME, "appl/txt");
-      assertHeaderContains(request, ContactHeader.NAME, "doooodah");
-      assertHeaderContains(request, MaxForwardsHeader.NAME, "64");
-      assertBodyContains(request, "my bodddy");
+    request = callA.getLastReceivedRequest();
+    assertHeaderContains(request, PriorityHeader.NAME, "7");
+    assertHeaderContains(request, ContentTypeHeader.NAME, "appl/txt");
+    assertHeaderContains(request, ContactHeader.NAME, "doooodah");
+    assertHeaderContains(request, MaxForwardsHeader.NAME, "64");
+    assertBodyContains(request, "my bodddy");
 
-      // create extra parameters for respondToDisconnect()
+    // create extra parameters for respondToDisconnect()
 
-      addnlHeaders.clear();
-      addnlHeaders.add(new String("Priority: 8"));
-      addnlHeaders.add(new String("Route: " + ub.getContactInfo().getURI()));
+    addnlHeaders.clear();
+    addnlHeaders.add(new String("Priority: 8"));
+    addnlHeaders.add(new String("Route: " + ub.getContactInfo().getURI()));
 
-      replaceHeaders.clear();
-      replaceHeaders.add(new String("Contact: <sip:ddah@"
-          + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
-      replaceHeaders.add(new String("Max-Forwards: 65"));
+    replaceHeaders.clear();
+    replaceHeaders.add(new String("Contact: <sip:ddah@"
+        + properties.getProperty("javax.sip.IP_ADDRESS") + ':' + myPort + '>'));
+    replaceHeaders.add(new String("Max-Forwards: 65"));
 
-      callA.respondToDisconnect(SipResponse.ACCEPTED, "OK", "my bdy", "app", "xt", addnlHeaders,
-          replaceHeaders);
+    callA.respondToDisconnect(SipResponse.ACCEPTED, "OK", "my bdy", "app", "xt", addnlHeaders,
+        replaceHeaders);
 
-      // verify extra parameters were received in the message
+    // verify extra parameters were received in the message
 
-      /*
-       * TODO - BYE response gets to proxy but not to the far end - is it a proxy problem, or
-       * something wrong we're doing here? Resolve and uncomment the following:
-       * 
-       * Thread.sleep(500); response = b.getLastReceivedResponse(); assertEquals(202,
-       * response.getStatusCode()); assertHeaderContains(response, PriorityHeader.NAME, "8");
-       * assertHeaderContains(response, ContentTypeHeader.NAME, "app/xt");
-       * assertHeaderContains(response, ContactHeader.NAME, "ddah"); assertHeaderContains(response,
-       * MaxForwardsHeader.NAME, "65"); assertBodyContains(response, "my bdy");
-       */
+    /*
+     * TODO - BYE response gets to proxy but not to the far end - is it a proxy problem, or
+     * something wrong we're doing here? Resolve and uncomment the following:
+     * 
+     * Thread.sleep(500); response = b.getLastReceivedResponse(); assertEquals(202,
+     * response.getStatusCode()); assertHeaderContains(response, PriorityHeader.NAME, "8");
+     * assertHeaderContains(response, ContentTypeHeader.NAME, "app/xt");
+     * assertHeaderContains(response, ContactHeader.NAME, "ddah"); assertHeaderContains(response,
+     * MaxForwardsHeader.NAME, "65"); assertBodyContains(response, "my bdy");
+     */
 
-      ub.dispose();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    ub.dispose();
   }
 
   /**
@@ -1263,7 +1199,7 @@ public class TestWithProxyAuthentication {
    * credentials
    */
   @Test
-  public void testBothSidesCalleeDisc() {
+  public void testBothSidesCalleeDisc() throws Exception {
     // test the blocking version of
     // SipPhone.makeCall()
     SipStack.trace("testBothSidesCalleeDisc");
@@ -1308,30 +1244,26 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      PhoneB phoneB = new PhoneB();
-      phoneB.start();
+    PhoneB phoneB = new PhoneB();
+    phoneB.start();
 
-      // give user b time to register
-      Thread.sleep(2000);
+    // give user b time to register
+    Thread.sleep(2000);
 
-      SipCall callA =
-          ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), SipResponse.OK,
-              5000, null);
-      assertLastOperationSuccess(ua.format(), ua);
+    SipCall callA =
+        ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), SipResponse.OK,
+            5000, null);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      callA.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
-      callA.listenForDisconnect();
-      callA.waitForDisconnect(10000);
-      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
-      callA.respondToDisconnect();
+    callA.listenForDisconnect();
+    callA.waitForDisconnect(10000);
+    assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
+    callA.respondToDisconnect();
 
-      phoneB.join();
-    } catch (Exception e) {
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    phoneB.join();
   }
 
   /**
@@ -1339,7 +1271,7 @@ public class TestWithProxyAuthentication {
    * TestNoProxy does the other direction
    */
   @Test
-  public void testReinvite() {
+  public void testReinvite() throws Exception {
     SipStack.trace("testReinvite");
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
@@ -1347,311 +1279,305 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.setLoopback(true);
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.setLoopback(true);
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      // establish a call
-      SipCall callB = ub.createSipCall();
-      callB.listenForIncomingCall();
-      Thread.sleep(20);
+    // establish a call
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
+    Thread.sleep(20);
 
-      SipCall callA =
-          ua.makeCall("sip:becky@cafesip.org", properties.getProperty("javax.sip.IP_ADDRESS") + ':'
-              + myPort + '/' + testProtocol);
-      // TODO - this is direct to ub for now - sipex discards reinvite
-      // (bug 2847529)
+    SipCall callA =
+        ua.makeCall("sip:becky@cafesip.org", properties.getProperty("javax.sip.IP_ADDRESS") + ':'
+            + myPort + '/' + testProtocol);
+    // TODO - this is direct to ub for now - sipex discards reinvite
+    // (bug 2847529)
 
-      assertLastOperationSuccess(ua.format(), ua);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(callB.waitForIncomingCall(5000));
-      assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600));
-      Thread.sleep(200);
-      assertResponseReceived(SipResponse.OK, callA);
-      assertTrue(callA.sendInviteOkAck());
-      Thread.sleep(300);
+    assertTrue(callB.waitForIncomingCall(5000));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600));
+    Thread.sleep(200);
+    assertResponseReceived(SipResponse.OK, callA);
+    assertTrue(callA.sendInviteOkAck());
+    Thread.sleep(300);
 
-      // send request - test reinvite with no specific parameters
+    // send request - test reinvite with no specific parameters
 
-      callB.listenForReinvite();
-      SipTransaction siptransA =
-          callA.sendReinvite(null, null, (ArrayList<Header>) null, null, null);
-      assertNotNull(siptransA);
-      SipTransaction siptransB = callB.waitForReinvite(1000);
-      assertNotNull(siptransB);
+    callB.listenForReinvite();
+    SipTransaction siptransA =
+        callA.sendReinvite(null, null, (ArrayList<Header>) null, null, null);
+    assertNotNull(siptransA);
+    SipTransaction siptransB = callB.waitForReinvite(1000);
+    assertNotNull(siptransB);
 
-      SipMessage req = callB.getLastReceivedRequest();
-      String origContactUriA =
-          ((ContactHeader) req.getMessage().getHeader(ContactHeader.NAME)).getAddress().getURI()
-              .toString();
+    SipMessage req = callB.getLastReceivedRequest();
+    String origContactUriA =
+        ((ContactHeader) req.getMessage().getHeader(ContactHeader.NAME)).getAddress().getURI()
+            .toString();
 
-      // check contact info
-      assertEquals(ua.getContactInfo().getURI(), origContactUriA);
-      assertHeaderNotContains(req, ContactHeader.NAME, "My DisplayName");
+    // check contact info
+    assertEquals(ua.getContactInfo().getURI(), origContactUriA);
+    assertHeaderNotContains(req, ContactHeader.NAME, "My DisplayName");
 
-      // check body
-      assertHeaderNotPresent(req, ContentTypeHeader.NAME);
-      assertBodyNotPresent(req);
+    // check body
+    assertHeaderNotPresent(req, ContentTypeHeader.NAME);
+    assertBodyNotPresent(req);
 
-      // check additional headers
-      assertHeaderNotPresent(req, PriorityHeader.NAME);
-      assertHeaderNotPresent(req, ReasonHeader.NAME);
+    // check additional headers
+    assertHeaderNotPresent(req, PriorityHeader.NAME);
+    assertHeaderNotPresent(req, ReasonHeader.NAME);
 
-      // check override headers
-      assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
+    // check override headers
+    assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
 
-      // send response - test new contact only
+    // send response - test new contact only
 
-      String origContactUriB = ub.getContactInfo().getURI();
-      String contactNoLrB = origContactUriB.substring(0, origContactUriB.lastIndexOf("lr") - 1);
-      assertTrue(callB.respondToReinvite(siptransB, SipResponse.OK, "ok reinvite response", -1,
-          contactNoLrB, null, null, (String) null, null));
+    String origContactUriB = ub.getContactInfo().getURI();
+    String contactNoLrB = origContactUriB.substring(0, origContactUriB.lastIndexOf("lr") - 1);
+    assertTrue(callB.respondToReinvite(siptransB, SipResponse.OK, "ok reinvite response", -1,
+        contactNoLrB, null, null, (String) null, null));
 
+    assertTrue(callA.waitReinviteResponse(siptransA, 2000));
+    while (callA.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
       assertTrue(callA.waitReinviteResponse(siptransA, 2000));
-      while (callA.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
-        assertTrue(callA.waitReinviteResponse(siptransA, 2000));
-      }
-
-      // check response code
-      SipResponse response = callA.getLastReceivedResponse();
-      assertEquals(Response.OK, response.getStatusCode());
-      assertEquals("ok reinvite response", response.getReasonPhrase());
-
-      // check contact info
-      assertEquals(ub.getContactInfo().getURI(), contactNoLrB); // changed
-      assertFalse(origContactUriB.equals(contactNoLrB));
-      assertHeaderNotContains(response, ContactHeader.NAME, ";lr");
-      assertHeaderContains(response, ContactHeader.NAME, contactNoLrB);
-      assertHeaderNotContains(response, ContactHeader.NAME, "My DisplayName");
-
-      // check body
-      assertHeaderNotPresent(response, ContentTypeHeader.NAME);
-      assertBodyNotPresent(response);
-
-      // check additional headers
-      assertHeaderNotPresent(response, PriorityHeader.NAME);
-      assertHeaderNotPresent(response, ReasonHeader.NAME);
-
-      // check override headers
-      assertHeaderContains(response, ContentLengthHeader.NAME, "0");
-
-      // send ACK
-      assertTrue(callA.sendReinviteOkAck(siptransA));
-      assertTrue(callB.waitForAck(1000));
-      Thread.sleep(100); //
-
-      // send request - test new contact and display name
-
-      callB.listenForReinvite();
-      String contactNoLrA = origContactUriA.substring(0, origContactUriA.lastIndexOf("lr") - 1);
-      siptransA =
-          callA.sendReinvite(contactNoLrA, "My DisplayName", (ArrayList<Header>) null, null, null);
-      assertNotNull(siptransA);
-      siptransB = callB.waitForReinvite(1000);
-      assertNotNull(siptransB);
-
-      req = callB.getLastReceivedRequest();
-
-      // check contact info
-      assertEquals(ua.getContactInfo().getURI(), contactNoLrA); // changed
-      assertFalse(origContactUriA.equals(contactNoLrA));
-      assertHeaderNotContains(req, ContactHeader.NAME, ";lr");
-      assertHeaderContains(req, ContactHeader.NAME, contactNoLrA);
-      assertHeaderContains(req, ContactHeader.NAME, "My DisplayName");
-
-      // check body
-      assertHeaderNotPresent(req, ContentTypeHeader.NAME);
-      assertBodyNotPresent(req);
-
-      // check additional headers
-      assertHeaderNotPresent(req, PriorityHeader.NAME);
-      assertHeaderNotPresent(req, ReasonHeader.NAME);
-
-      // check override headers
-      assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
-
-      // send response - test body only
-
-      assertTrue(callB.respondToReinvite(siptransB, SipResponse.OK, "ok reinvite response", -1,
-          null, null, "DooDah", "application", "text"));
-
-      assertTrue(callA.waitReinviteResponse(siptransA, 2000));
-      while (callA.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
-        assertTrue(callA.waitReinviteResponse(siptransA, 2000));
-      }
-
-      // check response code
-      response = callA.getLastReceivedResponse();
-      assertEquals(Response.OK, response.getStatusCode());
-      assertEquals("ok reinvite response", response.getReasonPhrase());
-
-      // check contact info
-      assertHeaderNotContains(response, ContactHeader.NAME, ";lr");
-      assertHeaderContains(response, ContactHeader.NAME, contactNoLrB);
-      assertHeaderNotContains(response, ContactHeader.NAME, "My DisplayName");
-
-      // check body
-      assertHeaderPresent(response, ContentTypeHeader.NAME);
-      ContentTypeHeader ctHeader =
-          (ContentTypeHeader) response.getMessage().getHeader(ContentTypeHeader.NAME);
-      assertEquals("application", ctHeader.getContentType());
-      assertEquals("text", ctHeader.getContentSubType());
-      assertBodyContains(response, "DooDah");
-
-      // check additional headers
-      assertHeaderNotPresent(response, PriorityHeader.NAME);
-      assertHeaderNotPresent(response, ReasonHeader.NAME);
-
-      // check override headers
-      // done, content sub type not overidden
-
-      // send ACK
-      assertTrue(callA.sendReinviteOkAck(siptransA));
-      assertTrue(callB.waitForAck(1000));
-      Thread.sleep(100);
-
-      // send request - test additional & replace headers (String)
-
-      callB.listenForReinvite();
-
-      ArrayList<String> addnlHeaders = new ArrayList<>(2);
-      addnlHeaders.add("Priority: Urgent");
-      addnlHeaders.add("Reason: SIP; cause=41; text=\"I made it up\"");
-
-      ArrayList<String> replaceHeaders = new ArrayList<>(1);
-      MaxForwardsHeader hdr = ua.getParent().getHeaderFactory().createMaxForwardsHeader(22);
-      replaceHeaders.add(hdr.toString());
-
-      siptransA =
-          callA.sendReinvite(null, null, "mybody", "myapp", "mysubapp", addnlHeaders, replaceHeaders);
-      assertNotNull(siptransA);
-      siptransB = callB.waitForReinvite(1000);
-      assertNotNull(siptransB);
-
-      req = callB.getLastReceivedRequest();
-
-      // check contact info
-      assertHeaderNotContains(req, ContactHeader.NAME, ";lr");
-      assertHeaderContains(req, ContactHeader.NAME, contactNoLrA);
-      assertHeaderContains(req, ContactHeader.NAME, "My DisplayName");
-
-      // check body
-      assertHeaderContains(req, ContentTypeHeader.NAME, "myapp/mysubapp");
-      assertBodyContains(req, "mybo");
-
-      // check additional headers
-      assertHeaderContains(req, PriorityHeader.NAME, PriorityHeader.URGENT);
-      assertHeaderContains(req, ReasonHeader.NAME, "41");
-      assertHeaderContains(req, ReasonHeader.NAME, "I made it up");
-
-      // check override headers
-      assertHeaderContains(req, MaxForwardsHeader.NAME, "22");
-
-      // test everything
-
-      ArrayList<Header> addnlHdrHeaders = new ArrayList<>();
-      PriorityHeader priHeaders =
-          ub.getParent().getHeaderFactory().createPriorityHeader(PriorityHeader.NORMAL);
-      ReasonHeader reasonHeaders =
-          ub.getParent().getHeaderFactory().createReasonHeader("SIP", 42, "I made it up");
-      ctHeader = ub.getParent().getHeaderFactory().createContentTypeHeader("applicationn", "sdp");
-      addnlHdrHeaders.add(priHeaders);
-      addnlHdrHeaders.add(reasonHeaders);
-      addnlHdrHeaders.add(ctHeader);
-
-      ArrayList<Header> replaceHdrHeaders = new ArrayList<>();
-      replaceHdrHeaders.add(ub.getParent().getHeaderFactory()
-          .createContentTypeHeader("mycontenttype", "mycontentsubtype"));
-
-      assertTrue(callB.respondToReinvite(siptransB, SipResponse.OK, "ok reinvite last response",
-          -1, origContactUriB, "Original info", addnlHdrHeaders, replaceHdrHeaders, "DooDahDay"));
-
-      assertTrue(callA.waitReinviteResponse(siptransA, 2000));
-      while (callA.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
-        assertTrue(callA.waitReinviteResponse(siptransA, 2000));
-      }
-
-      // check response code
-      response = callA.getLastReceivedResponse();
-      assertEquals(Response.OK, response.getStatusCode());
-      assertEquals("ok reinvite last response", response.getReasonPhrase());
-
-      // check contact info
-      assertEquals(ub.getContactInfo().getURI(), origContactUriB); // changed
-      assertFalse(origContactUriB.equals(contactNoLrB));
-      assertHeaderContains(response, ContactHeader.NAME, ";lr");
-      assertHeaderContains(response, ContactHeader.NAME, origContactUriB);
-      assertHeaderContains(response, ContactHeader.NAME, "Original info");
-
-      // check body
-      assertHeaderPresent(response, ContentTypeHeader.NAME);
-      ctHeader = (ContentTypeHeader) response.getMessage().getHeader(ContentTypeHeader.NAME);
-      assertEquals("mycontenttype", ctHeader.getContentType());
-      assertEquals("mycontentsubtype", ctHeader.getContentSubType());
-      assertBodyContains(response, "DooD");
-
-      // check additional headers
-      assertHeaderContains(response, PriorityHeader.NAME, PriorityHeader.NORMAL);
-      assertHeaderContains(response, ReasonHeader.NAME, "42");
-
-      // check override headers
-      assertHeaderContains(response, ContentTypeHeader.NAME, "mycontenttype/mycontentsubtype");
-
-      // send ACK
-      // with additional, replacement String headers, and body
-      addnlHeaders = new ArrayList<>(1);
-      addnlHeaders.add("Event: presence");
-
-      replaceHeaders = new ArrayList<>(3);
-      replaceHeaders.add("Max-Forwards: 29");
-      replaceHeaders.add("Priority: Urgent");
-      replaceHeaders.add("Reason: SIP; cause=44; text=\"dummy\"");
-
-      assertTrue(callA.sendReinviteOkAck(siptransA, "ack body", "mytype", "mysubtype", addnlHeaders,
-          replaceHeaders));
-      assertTrue(callB.waitForAck(1000));
-      SipRequest reqAck = callB.getLastReceivedRequest();
-
-      assertHeaderContains(reqAck, ReasonHeader.NAME, "dummy");
-      assertHeaderContains(reqAck, MaxForwardsHeader.NAME, "29");
-      assertHeaderContains(reqAck, PriorityHeader.NAME, "gent");
-      assertHeaderContains(reqAck, EventHeader.NAME, "presence");
-      assertHeaderContains(reqAck, ContentTypeHeader.NAME, "mysubtype");
-      assertBodyContains(reqAck, "ack body");
-
-      Thread.sleep(100); //
-
-      // done, finish up
-      callB.listenForDisconnect();
-      Thread.sleep(100);
-
-      callA.disconnect();
-      assertLastOperationSuccess("a disc - " + callA.format(), callA);
-
-      callB.waitForDisconnect(5000);
-      assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
-
-      callB.respondToDisconnect();
-
-      Thread.sleep(100);
-      ub.dispose();
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
     }
+
+    // check response code
+    SipResponse response = callA.getLastReceivedResponse();
+    assertEquals(Response.OK, response.getStatusCode());
+    assertEquals("ok reinvite response", response.getReasonPhrase());
+
+    // check contact info
+    assertEquals(ub.getContactInfo().getURI(), contactNoLrB); // changed
+    assertFalse(origContactUriB.equals(contactNoLrB));
+    assertHeaderNotContains(response, ContactHeader.NAME, ";lr");
+    assertHeaderContains(response, ContactHeader.NAME, contactNoLrB);
+    assertHeaderNotContains(response, ContactHeader.NAME, "My DisplayName");
+
+    // check body
+    assertHeaderNotPresent(response, ContentTypeHeader.NAME);
+    assertBodyNotPresent(response);
+
+    // check additional headers
+    assertHeaderNotPresent(response, PriorityHeader.NAME);
+    assertHeaderNotPresent(response, ReasonHeader.NAME);
+
+    // check override headers
+    assertHeaderContains(response, ContentLengthHeader.NAME, "0");
+
+    // send ACK
+    assertTrue(callA.sendReinviteOkAck(siptransA));
+    assertTrue(callB.waitForAck(1000));
+    Thread.sleep(100); //
+
+    // send request - test new contact and display name
+
+    callB.listenForReinvite();
+    String contactNoLrA = origContactUriA.substring(0, origContactUriA.lastIndexOf("lr") - 1);
+    siptransA =
+        callA.sendReinvite(contactNoLrA, "My DisplayName", (ArrayList<Header>) null, null, null);
+    assertNotNull(siptransA);
+    siptransB = callB.waitForReinvite(1000);
+    assertNotNull(siptransB);
+
+    req = callB.getLastReceivedRequest();
+
+    // check contact info
+    assertEquals(ua.getContactInfo().getURI(), contactNoLrA); // changed
+    assertFalse(origContactUriA.equals(contactNoLrA));
+    assertHeaderNotContains(req, ContactHeader.NAME, ";lr");
+    assertHeaderContains(req, ContactHeader.NAME, contactNoLrA);
+    assertHeaderContains(req, ContactHeader.NAME, "My DisplayName");
+
+    // check body
+    assertHeaderNotPresent(req, ContentTypeHeader.NAME);
+    assertBodyNotPresent(req);
+
+    // check additional headers
+    assertHeaderNotPresent(req, PriorityHeader.NAME);
+    assertHeaderNotPresent(req, ReasonHeader.NAME);
+
+    // check override headers
+    assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
+
+    // send response - test body only
+
+    assertTrue(callB.respondToReinvite(siptransB, SipResponse.OK, "ok reinvite response", -1,
+        null, null, "DooDah", "application", "text"));
+
+    assertTrue(callA.waitReinviteResponse(siptransA, 2000));
+    while (callA.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
+      assertTrue(callA.waitReinviteResponse(siptransA, 2000));
+    }
+
+    // check response code
+    response = callA.getLastReceivedResponse();
+    assertEquals(Response.OK, response.getStatusCode());
+    assertEquals("ok reinvite response", response.getReasonPhrase());
+
+    // check contact info
+    assertHeaderNotContains(response, ContactHeader.NAME, ";lr");
+    assertHeaderContains(response, ContactHeader.NAME, contactNoLrB);
+    assertHeaderNotContains(response, ContactHeader.NAME, "My DisplayName");
+
+    // check body
+    assertHeaderPresent(response, ContentTypeHeader.NAME);
+    ContentTypeHeader ctHeader =
+        (ContentTypeHeader) response.getMessage().getHeader(ContentTypeHeader.NAME);
+    assertEquals("application", ctHeader.getContentType());
+    assertEquals("text", ctHeader.getContentSubType());
+    assertBodyContains(response, "DooDah");
+
+    // check additional headers
+    assertHeaderNotPresent(response, PriorityHeader.NAME);
+    assertHeaderNotPresent(response, ReasonHeader.NAME);
+
+    // check override headers
+    // done, content sub type not overidden
+
+    // send ACK
+    assertTrue(callA.sendReinviteOkAck(siptransA));
+    assertTrue(callB.waitForAck(1000));
+    Thread.sleep(100);
+
+    // send request - test additional & replace headers (String)
+
+    callB.listenForReinvite();
+
+    ArrayList<String> addnlHeaders = new ArrayList<>(2);
+    addnlHeaders.add("Priority: Urgent");
+    addnlHeaders.add("Reason: SIP; cause=41; text=\"I made it up\"");
+
+    ArrayList<String> replaceHeaders = new ArrayList<>(1);
+    MaxForwardsHeader hdr = ua.getParent().getHeaderFactory().createMaxForwardsHeader(22);
+    replaceHeaders.add(hdr.toString());
+
+    siptransA =
+        callA.sendReinvite(null, null, "mybody", "myapp", "mysubapp", addnlHeaders, replaceHeaders);
+    assertNotNull(siptransA);
+    siptransB = callB.waitForReinvite(1000);
+    assertNotNull(siptransB);
+
+    req = callB.getLastReceivedRequest();
+
+    // check contact info
+    assertHeaderNotContains(req, ContactHeader.NAME, ";lr");
+    assertHeaderContains(req, ContactHeader.NAME, contactNoLrA);
+    assertHeaderContains(req, ContactHeader.NAME, "My DisplayName");
+
+    // check body
+    assertHeaderContains(req, ContentTypeHeader.NAME, "myapp/mysubapp");
+    assertBodyContains(req, "mybo");
+
+    // check additional headers
+    assertHeaderContains(req, PriorityHeader.NAME, PriorityHeader.URGENT);
+    assertHeaderContains(req, ReasonHeader.NAME, "41");
+    assertHeaderContains(req, ReasonHeader.NAME, "I made it up");
+
+    // check override headers
+    assertHeaderContains(req, MaxForwardsHeader.NAME, "22");
+
+    // test everything
+
+    ArrayList<Header> addnlHdrHeaders = new ArrayList<>();
+    PriorityHeader priHeaders =
+        ub.getParent().getHeaderFactory().createPriorityHeader(PriorityHeader.NORMAL);
+    ReasonHeader reasonHeaders =
+        ub.getParent().getHeaderFactory().createReasonHeader("SIP", 42, "I made it up");
+    ctHeader = ub.getParent().getHeaderFactory().createContentTypeHeader("applicationn", "sdp");
+    addnlHdrHeaders.add(priHeaders);
+    addnlHdrHeaders.add(reasonHeaders);
+    addnlHdrHeaders.add(ctHeader);
+
+    ArrayList<Header> replaceHdrHeaders = new ArrayList<>();
+    replaceHdrHeaders.add(ub.getParent().getHeaderFactory()
+        .createContentTypeHeader("mycontenttype", "mycontentsubtype"));
+
+    assertTrue(callB.respondToReinvite(siptransB, SipResponse.OK, "ok reinvite last response",
+        -1, origContactUriB, "Original info", addnlHdrHeaders, replaceHdrHeaders, "DooDahDay"));
+
+    assertTrue(callA.waitReinviteResponse(siptransA, 2000));
+    while (callA.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
+      assertTrue(callA.waitReinviteResponse(siptransA, 2000));
+    }
+
+    // check response code
+    response = callA.getLastReceivedResponse();
+    assertEquals(Response.OK, response.getStatusCode());
+    assertEquals("ok reinvite last response", response.getReasonPhrase());
+
+    // check contact info
+    assertEquals(ub.getContactInfo().getURI(), origContactUriB); // changed
+    assertFalse(origContactUriB.equals(contactNoLrB));
+    assertHeaderContains(response, ContactHeader.NAME, ";lr");
+    assertHeaderContains(response, ContactHeader.NAME, origContactUriB);
+    assertHeaderContains(response, ContactHeader.NAME, "Original info");
+
+    // check body
+    assertHeaderPresent(response, ContentTypeHeader.NAME);
+    ctHeader = (ContentTypeHeader) response.getMessage().getHeader(ContentTypeHeader.NAME);
+    assertEquals("mycontenttype", ctHeader.getContentType());
+    assertEquals("mycontentsubtype", ctHeader.getContentSubType());
+    assertBodyContains(response, "DooD");
+
+    // check additional headers
+    assertHeaderContains(response, PriorityHeader.NAME, PriorityHeader.NORMAL);
+    assertHeaderContains(response, ReasonHeader.NAME, "42");
+
+    // check override headers
+    assertHeaderContains(response, ContentTypeHeader.NAME, "mycontenttype/mycontentsubtype");
+
+    // send ACK
+    // with additional, replacement String headers, and body
+    addnlHeaders = new ArrayList<>(1);
+    addnlHeaders.add("Event: presence");
+
+    replaceHeaders = new ArrayList<>(3);
+    replaceHeaders.add("Max-Forwards: 29");
+    replaceHeaders.add("Priority: Urgent");
+    replaceHeaders.add("Reason: SIP; cause=44; text=\"dummy\"");
+
+    assertTrue(callA.sendReinviteOkAck(siptransA, "ack body", "mytype", "mysubtype", addnlHeaders,
+        replaceHeaders));
+    assertTrue(callB.waitForAck(1000));
+    SipRequest reqAck = callB.getLastReceivedRequest();
+
+    assertHeaderContains(reqAck, ReasonHeader.NAME, "dummy");
+    assertHeaderContains(reqAck, MaxForwardsHeader.NAME, "29");
+    assertHeaderContains(reqAck, PriorityHeader.NAME, "gent");
+    assertHeaderContains(reqAck, EventHeader.NAME, "presence");
+    assertHeaderContains(reqAck, ContentTypeHeader.NAME, "mysubtype");
+    assertBodyContains(reqAck, "ack body");
+
+    Thread.sleep(100); //
+
+    // done, finish up
+    callB.listenForDisconnect();
+    Thread.sleep(100);
+
+    callA.disconnect();
+    assertLastOperationSuccess("a disc - " + callA.format(), callA);
+
+    callB.waitForDisconnect(5000);
+    assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+
+    callB.respondToDisconnect();
+
+    Thread.sleep(100);
+    ub.dispose();
   }
 
   // this method tests cancel from a to b
   @Test
-  public void testCancel() {
+  public void testCancel() throws Exception {
     SipStack.trace("testCancel");
 
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
@@ -1660,58 +1586,53 @@ public class TestWithProxyAuthentication {
     assertLastOperationSuccess(
         "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-    try {
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
-          "a1b2c3d4"));
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, "sip:becky@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "becky",
+        "a1b2c3d4"));
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      SipCall callB = ub.createSipCall();
-      callB.listenForIncomingCall();
-      Thread.sleep(100);
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
+    Thread.sleep(100);
 
-      SipCall callA = ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
-      assertLastOperationSuccess(ua.format(), ua);
+    SipCall callA = ua.makeCall("sip:becky@" + properties.getProperty("sipunit.test.domain"), null);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(callB.waitForIncomingCall(5000));
-      callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
-      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
-      Thread.sleep(200);
-      assertResponseReceived(SipResponse.RINGING, callA);
-      Thread.sleep(300);
+    assertTrue(callB.waitForIncomingCall(5000));
+    callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+    assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
+    Thread.sleep(200);
+    assertResponseReceived(SipResponse.RINGING, callA);
+    Thread.sleep(300);
 
-      // Initiate the Cancel
-      callB.listenForCancel();
-      Thread.sleep(500);
-      SipTransaction cancel = callA.sendCancel();
-      assertNotNull(cancel);
+    // Initiate the Cancel
+    callB.listenForCancel();
+    Thread.sleep(500);
+    SipTransaction cancel = callA.sendCancel();
+    assertNotNull(cancel);
 
-      // check b
-      SipTransaction trans1 = callB.waitForCancel(5000);
-      assertNotNull(trans1);
-      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
-      assertTrue(callB.respondToCancel(trans1, 200, "0K", -1));
+    // check b
+    SipTransaction trans1 = callB.waitForCancel(5000);
+    assertNotNull(trans1);
+    assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
+    assertTrue(callB.respondToCancel(trans1, 200, "0K", -1));
 
-      // check a
-      assertTrue(callA.waitForCancelResponse(cancel, 5000));
-      Thread.sleep(500);
-      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, callA);
+    // check a
+    assertTrue(callA.waitForCancelResponse(cancel, 5000));
+    Thread.sleep(500);
+    assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, callA);
 
-      // check that the original INVITE transaction got responded to
-      Thread.sleep(100);
-      assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
-          SipResponse.REQUEST_TERMINATED, callA);
+    // check that the original INVITE transaction got responded to
+    Thread.sleep(100);
+    assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
+        SipResponse.REQUEST_TERMINATED, callA);
 
-      // close the INVITE transaction on the called leg
-      assertTrue("487 NOT SENT",
-          callB.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    // close the INVITE transaction on the called leg
+    assertTrue("487 NOT SENT",
+        callB.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
   }
 }
