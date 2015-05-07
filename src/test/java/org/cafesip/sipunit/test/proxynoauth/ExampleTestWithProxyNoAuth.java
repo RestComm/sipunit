@@ -24,11 +24,7 @@ import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import javax.sip.message.Response;
+
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipResponse;
@@ -36,6 +32,11 @@ import org.cafesip.sipunit.SipStack;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Properties;
+import javax.sip.message.Response;
 
 /**
  * This class tests some SipUnit API methods.
