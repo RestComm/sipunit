@@ -19,15 +19,16 @@ package org.cafesip.sipunit.test.noproxy;
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import java.util.Properties;
-import javax.sip.message.Response;
+
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipStack;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Properties;
+import javax.sip.message.Response;
 
 /**
  * This class tests two SipStacks on the same machine. This test makes use of the fact that with
