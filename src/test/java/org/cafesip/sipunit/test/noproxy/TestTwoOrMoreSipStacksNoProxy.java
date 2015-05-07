@@ -89,10 +89,10 @@ public class TestTwoOrMoreSipStacksNoProxy {
   private Properties properties2 = new Properties(defaultProperties2);
 
   public TestTwoOrMoreSipStacksNoProxy() {
-    Properties input_props = new Properties();
-    input_props.putAll(System.getProperties());
+    Properties inputProps = new Properties();
+    inputProps.putAll(System.getProperties());
 
-    String prop = input_props.getProperty("sipunit.testport.1");
+    String prop = inputProps.getProperty("sipunit.testport.1");
     if (prop != null) {
       try {
         port1 = Integer.parseInt(prop);
@@ -103,7 +103,7 @@ public class TestTwoOrMoreSipStacksNoProxy {
       }
     }
 
-    prop = input_props.getProperty("sipunit.testport.2");
+    prop = inputProps.getProperty("sipunit.testport.2");
     if (prop != null) {
       try {
         port2 = Integer.parseInt(prop);
@@ -114,12 +114,12 @@ public class TestTwoOrMoreSipStacksNoProxy {
       }
     }
 
-    prop = input_props.getProperty("sipunit.test.protocol");
+    prop = inputProps.getProperty("sipunit.test.protocol");
     if (prop != null) {
       testProtocol = prop;
     }
 
-    prop = input_props.getProperty("sipunit.trace");
+    prop = inputProps.getProperty("sipunit.trace");
     if (prop != null) {
       sipunitTrace = prop.trim().equalsIgnoreCase("true") || prop.trim().equalsIgnoreCase("on");
     }
@@ -177,56 +177,56 @@ public class TestTwoOrMoreSipStacksNoProxy {
       SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
       ub.setLoopback(true);
 
-      SipCall a = ua.createSipCall();
-      SipCall b = ub.createSipCall();
+      SipCall callA = ua.createSipCall();
+      SipCall callB = ub.createSipCall();
 
-      b.listenForIncomingCall();
+      callB.listenForIncomingCall();
       Thread.sleep(10);
 
-      a.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
           + testProtocol);
-      assertLastOperationSuccess("a initiate call - " + a.format(), a);
+      assertLastOperationSuccess("a initiate call - " + callA.format(), callA);
 
-      b.waitForIncomingCall(4000);
-      assertLastOperationSuccess("b wait incoming call - " + b.format(), b);
+      callB.waitForIncomingCall(4000);
+      assertLastOperationSuccess("b wait incoming call - " + callB.format(), callB);
 
-      b.sendIncomingCallResponse(Response.RINGING, null, -1);
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+      callB.sendIncomingCallResponse(Response.RINGING, null, -1);
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
 
       Thread.sleep(200);
 
-      b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
-      assertLastOperationSuccess("b send OK - " + b.format(), b);
+      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+      assertLastOperationSuccess("b send OK - " + callB.format(), callB);
 
-      a.waitOutgoingCallResponse(5000);
-      assertLastOperationSuccess("a wait 1st response - " + a.format(), a);
-      assertEquals("Unexpected 1st response received", Response.RINGING, a.getReturnCode());
-      assertNotNull("Default response reason not sent", a.getLastReceivedResponse()
+      callA.waitOutgoingCallResponse(5000);
+      assertLastOperationSuccess("a wait 1st response - " + callA.format(), callA);
+      assertEquals("Unexpected 1st response received", Response.RINGING, callA.getReturnCode());
+      assertNotNull("Default response reason not sent", callA.getLastReceivedResponse()
           .getReasonPhrase());
-      assertEquals("Unexpected default reason", "Ringing", a.getLastReceivedResponse()
+      assertEquals("Unexpected default reason", "Ringing", callA.getLastReceivedResponse()
           .getReasonPhrase());
 
-      a.waitOutgoingCallResponse(5000);
-      assertLastOperationSuccess("a wait 2nd response - " + a.format(), a);
+      callA.waitOutgoingCallResponse(5000);
+      assertLastOperationSuccess("a wait 2nd response - " + callA.format(), callA);
 
-      assertEquals("Unexpected 2nd response received", Response.OK, a.getReturnCode());
+      assertEquals("Unexpected 2nd response received", Response.OK, callA.getReturnCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
       Thread.sleep(500);
 
-      a.listenForDisconnect();
-      assertLastOperationSuccess("a listen disc - " + a.format(), a);
+      callA.listenForDisconnect();
+      assertLastOperationSuccess("a listen disc - " + callA.format(), callA);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(3000);
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(3000);
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-      a.respondToDisconnect();
-      assertLastOperationSuccess("a respond to disc - " + a.format(), a);
+      callA.respondToDisconnect();
+      assertLastOperationSuccess("a respond to disc - " + callA.format(), callA);
 
       ub.dispose();
     } catch (Exception e) {
