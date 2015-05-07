@@ -27,8 +27,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+
+import org.cafesip.sipunit.ReferNotifySender;
+import org.cafesip.sipunit.ReferSubscriber;
+import org.cafesip.sipunit.SipCall;
+import org.cafesip.sipunit.SipMessage;
+import org.cafesip.sipunit.SipPhone;
+import org.cafesip.sipunit.SipRequest;
+import org.cafesip.sipunit.SipResponse;
+import org.cafesip.sipunit.SipSession;
+import org.cafesip.sipunit.SipStack;
+import org.cafesip.sipunit.SipTransaction;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,19 +63,6 @@ import javax.sip.header.OrganizationHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-import org.cafesip.sipunit.ReferNotifySender;
-import org.cafesip.sipunit.ReferSubscriber;
-import org.cafesip.sipunit.SipCall;
-import org.cafesip.sipunit.SipMessage;
-import org.cafesip.sipunit.SipPhone;
-import org.cafesip.sipunit.SipRequest;
-import org.cafesip.sipunit.SipResponse;
-import org.cafesip.sipunit.SipSession;
-import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTransaction;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * This class tests SipUnit refer functionality. Currently only the outbound REFER side is
