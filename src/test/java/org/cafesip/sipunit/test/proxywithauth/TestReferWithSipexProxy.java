@@ -22,15 +22,7 @@ import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Properties;
-import javax.sip.RequestEvent;
-import javax.sip.address.SipURI;
-import javax.sip.header.SubscriptionStateHeader;
-import javax.sip.message.Request;
-import javax.sip.message.Response;
+
 import org.cafesip.sipunit.Credential;
 import org.cafesip.sipunit.ReferNotifySender;
 import org.cafesip.sipunit.ReferSubscriber;
@@ -41,6 +33,15 @@ import org.cafesip.sipunit.SipStack;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Properties;
+import javax.sip.RequestEvent;
+import javax.sip.address.SipURI;
+import javax.sip.header.SubscriptionStateHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 /**
  * This class tests authentication challenges for SipUnit REFER subscriptions. Tests in this class
