@@ -135,6 +135,9 @@ public class TestWithStun extends SipTestCase {
   /*
    * @see SipTestCase#setUp()
    */
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   public void setUp() throws Exception {
     // use the stun server to find out my public address
     assertTrue(getPublicAddress());
@@ -196,9 +199,10 @@ public class TestWithStun extends SipTestCase {
     return true;
   }
 
-  /*
-   * @see SipTestCase#tearDown()
+  /**
+   * Release the sipStack and a user agent for the test.
    */
+  @After
   public void tearDown() throws Exception {
     ua.dispose();
     sipStack.dispose();
