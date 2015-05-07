@@ -187,65 +187,65 @@ public class TestNoProxy {
       ub.listenRequestMessage();
       Thread.sleep(100);
 
-      AddressFactory addr_factory = ua.getParent().getAddressFactory();
-      HeaderFactory hdr_factory = ua.getParent().getHeaderFactory();
+      AddressFactory addrFactory = ua.getParent().getAddressFactory();
+      HeaderFactory headerFactory = ua.getParent().getHeaderFactory();
 
       Request invite =
           ua.getParent().getMessageFactory()
               .createRequest("INVITE sip:becky@nist.gov SIP/2.0\r\n\r\n");
 
       invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
-      invite.addHeader(hdr_factory.createCSeqHeader((long) 1, Request.INVITE));
-      invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua.generateNewTag()));
+      invite.addHeader(headerFactory.createCSeqHeader((long) 1, Request.INVITE));
+      invite.addHeader(headerFactory.createFromHeader(ua.getAddress(), ua.generateNewTag()));
 
-      Address to_address = addr_factory.createAddress(addr_factory.createURI("sip:becky@nist.gov"));
-      invite.addHeader(hdr_factory.createToHeader(to_address, null));
+      Address toAddress = addrFactory.createAddress(addrFactory.createURI("sip:becky@nist.gov"));
+      invite.addHeader(headerFactory.createToHeader(toAddress, null));
 
-      Address contact_address =
-          addr_factory.createAddress("sip:amit@" + ua.getStackAddress() + ':' + myPort);
-      invite.addHeader(hdr_factory.createContactHeader(contact_address));
+      Address contactAddress =
+          addrFactory.createAddress("sip:amit@" + ua.getStackAddress() + ':' + myPort);
+      invite.addHeader(headerFactory.createContactHeader(contactAddress));
 
-      invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
-      ArrayList<ViaHeader> via_headers = ua.getViaHeaders();
-      invite.addHeader((ViaHeader) via_headers.get(0));
+      invite.addHeader(headerFactory.createMaxForwardsHeader(5));
+      ArrayList<ViaHeader> viaHeaders = ua.getViaHeaders();
+      invite.addHeader((ViaHeader) viaHeaders.get(0));
 
       // create and add the Route Header
-      Address route_address =
-          addr_factory.createAddress("sip:becky@" + ub.getStackAddress() + ':' + myPort + '/'
+      Address route =
+          addrFactory.createAddress("sip:becky@" + ub.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
-      invite.addHeader(hdr_factory.createRouteHeader(route_address));
+      invite.addHeader(headerFactory.createRouteHeader(route));
 
       SipTransaction trans = ua.sendRequestWithTransaction(invite, false, null);
       assertNotNull(ua.format(), trans);
       // call sent
 
-      RequestEvent inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      RequestEvent incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
       Response response =
-          ub.getParent().getMessageFactory().createResponse(Response.TRYING, inc_req.getRequest());
-      SipTransaction transb = ub.sendReply(inc_req, response);
+          ub.getParent().getMessageFactory().createResponse(Response.TRYING, incReq.getRequest());
+      SipTransaction transb = ub.sendReply(incReq, response);
       assertNotNull(ub.format(), transb);
       // trying response sent
 
       Thread.sleep(500);
 
-      URI callee_contact =
+      URI calleeContact =
           ub.getParent().getAddressFactory()
               .createURI("sip:becky@" + ub.getStackAddress() + ':' + myPort);
-      Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
+      Address contact = ub.getParent().getAddressFactory().createAddress(calleeContact);
 
-      String to_tag = ub.generateNewTag();
+      String toTag = ub.generateNewTag();
 
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1);
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1);
       assertLastOperationSuccess(ub.format(), ub);
       // ringing response sent
 
       Thread.sleep(500);
 
       response =
-          ub.getParent().getMessageFactory().createResponse(Response.OK, inc_req.getRequest());
+          ub.getParent().getMessageFactory().createResponse(Response.OK, incReq.getRequest());
       response.addHeader(ub.getParent().getHeaderFactory().createContactHeader(contact));
 
       ub.sendReply(transb, response);
@@ -254,13 +254,13 @@ public class TestNoProxy {
 
       Thread.sleep(800);
 
-      EventObject response_event = ua.waitResponse(trans, 10000);
+      EventObject responseEvent = ua.waitResponse(trans, 10000);
       // wait for trying
 
-      assertNotNull(ua.format(), response_event);
-      assertFalse("Operation timed out", response_event instanceof TimeoutEvent);
+      assertNotNull(ua.format(), responseEvent);
+      assertFalse("Operation timed out", responseEvent instanceof TimeoutEvent);
 
-      assertEquals("Should have received TRYING", Response.TRYING, ((ResponseEvent) response_event)
+      assertEquals("Should have received TRYING", Response.TRYING, ((ResponseEvent) responseEvent)
           .getResponse().getStatusCode());
       // response(s) received, we're done
 
@@ -283,36 +283,36 @@ public class TestNoProxy {
           SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
           ub.setLoopback(true);
           ub.listenRequestMessage();
-          SipCall b = ub.createSipCall();
+          SipCall callB = ub.createSipCall();
 
           // wait for session establishment
-          b.waitForIncomingCall(10000);
-          assertLastOperationSuccess("b wait incoming call - " + b.format(), b);
-          Dialog bDialog = b.getLastTransaction().getServerTransaction().getDialog();
+          callB.waitForIncomingCall(10000);
+          assertLastOperationSuccess("b wait incoming call - " + callB.format(), callB);
+          Dialog dialogB = callB.getLastTransaction().getServerTransaction().getDialog();
 
           Header allow = ub.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
-          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0, new ArrayList<>(
+          callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0, new ArrayList<>(
               Arrays.asList(allow)), null, null);
-          assertLastOperationSuccess("b send OK - " + b.format(), b);
+          assertLastOperationSuccess("b send OK - " + callB.format(), callB);
 
           // wait for INFO request
-          RequestEvent inc_req = ub.waitRequest(2000);
-          while (inc_req != null) {
-            if (inc_req.getRequest().getMethod().equals(Request.INFO)) {
+          RequestEvent incReq = ub.waitRequest(2000);
+          while (incReq != null) {
+            if (incReq.getRequest().getMethod().equals(Request.INFO)) {
               break;
             }
-            inc_req = ub.waitRequest(2000);
+            incReq = ub.waitRequest(2000);
           }
-          if (inc_req == null) {
+          if (incReq == null) {
             fail("didn't get expected INFO message");
           }
 
           // first - send my INFO request before responding to
           // received INFO
-          Request infoRequest = bDialog.createRequest(Request.INFO);
+          Request infoRequest = dialogB.createRequest(Request.INFO);
 
-          SipTransaction bRespTrans = ub.sendRequestWithTransaction(infoRequest, false, bDialog);
-          if (null == bRespTrans) {
+          SipTransaction respTransB = ub.sendRequestWithTransaction(infoRequest, false, dialogB);
+          if (null == respTransB) {
             String msg = "B side failed sending INFO: " + ub.getErrorMessage();
             fail(msg);
           }
@@ -322,14 +322,14 @@ public class TestNoProxy {
 
           // second - send 200 OK for the received INFO
           Response response =
-              ub.getParent().getMessageFactory().createResponse(Response.OK, inc_req.getRequest());
-          SipTransaction transb = ub.sendReply(inc_req, response);
+              ub.getParent().getMessageFactory().createResponse(Response.OK, incReq.getRequest());
+          SipTransaction transb = ub.sendReply(incReq, response);
           assertNotNull(ub.format(), transb);
 
           // wait disconnect
-          b.waitForDisconnect(20000);
-          assertLastOperationSuccess("b wait disc - " + b.format(), b);
-          assertTrue(b.respondToDisconnect());
+          callB.waitForDisconnect(20000);
+          assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+          assertTrue(callB.respondToDisconnect());
 
           Thread.sleep(1000);
           ub.dispose();
@@ -342,28 +342,28 @@ public class TestNoProxy {
     }
 
     try {
-      PhoneB b = new PhoneB();
-      b.start();
+      PhoneB phoneB = new PhoneB();
+      phoneB.start();
 
       ua.listenRequestMessage();
       Thread.sleep(100);
 
-      SipCall a = ua.createSipCall();
+      SipCall callA = ua.createSipCall();
 
       // first establish the session
 
       Header allow = ua.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
 
-      a.initiateOutgoingCall("sip:amit@nist.gov", "sip:becky@nist.gov", ua.getStackAddress() + ':'
+      callA.initiateOutgoingCall("sip:amit@nist.gov", "sip:becky@nist.gov", ua.getStackAddress() + ':'
           + myPort + '/' + testProtocol, new ArrayList<>(Arrays.asList(allow)), null, null);
-      assertLastOperationSuccess("a initiate call - " + a.format(), a);
-      Dialog aDialog = a.getLastTransaction().getClientTransaction().getDialog();
+      assertLastOperationSuccess("a initiate call - " + callA.format(), callA);
+      Dialog aDialog = callA.getLastTransaction().getClientTransaction().getDialog();
 
-      assertTrue(a.waitOutgoingCallResponse(10000));
-      assertEquals("Unexpected response received", Response.OK, a.getReturnCode());
+      assertTrue(callA.waitOutgoingCallResponse(10000));
+      assertEquals("Unexpected response received", Response.OK, callA.getReturnCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
       Thread.sleep(1000);
 
@@ -387,16 +387,16 @@ public class TestNoProxy {
       assertEquals(Response.OK, ((ResponseEvent) respEvent).getResponse().getStatusCode());
 
       // second - verify INFO was received by ua
-      RequestEvent inc_req = ua.waitRequest(2000);
-      assertNotNull(inc_req);
-      assertEquals(Request.INFO, inc_req.getRequest().getMethod());
+      RequestEvent incReq = ua.waitRequest(2000);
+      assertNotNull(incReq);
+      assertEquals(Request.INFO, incReq.getRequest().getMethod());
 
       // Tear down
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.join();
+      phoneB.join();
 
     } catch (Exception e) {
       fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
@@ -416,34 +416,34 @@ public class TestNoProxy {
           SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
           ub.setLoopback(true);
           ub.listenRequestMessage();
-          SipCall b = ub.createSipCall();
+          SipCall callB = ub.createSipCall();
 
           // wait for session establishment
-          b.waitForIncomingCall(10000);
-          assertLastOperationSuccess("b wait incoming call - " + b.format(), b);
-          Dialog bDialog = b.getLastTransaction().getServerTransaction().getDialog();
+          callB.waitForIncomingCall(10000);
+          assertLastOperationSuccess("b wait incoming call - " + callB.format(), callB);
+          Dialog dialogB = callB.getLastTransaction().getServerTransaction().getDialog();
 
           Header allow = ub.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
-          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0, new ArrayList<>(
+          callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0, new ArrayList<>(
               Arrays.asList(allow)), null, null);
-          assertLastOperationSuccess("b send OK - " + b.format(), b);
+          assertLastOperationSuccess("b send OK - " + callB.format(), callB);
 
           // wait for INFO request
-          RequestEvent inc_req = ub.waitRequest(2000);
-          while (inc_req != null) {
-            if (inc_req.getRequest().getMethod().equals(Request.INFO)) {
+          RequestEvent incReq = ub.waitRequest(2000);
+          while (incReq != null) {
+            if (incReq.getRequest().getMethod().equals(Request.INFO)) {
               break;
             }
-            inc_req = ub.waitRequest(2000);
+            incReq = ub.waitRequest(2000);
           }
-          if (inc_req == null) {
+          if (incReq == null) {
             fail("didn't get expected INFO message");
           }
 
           // first - send 200 OK for the received INFO
           Response response =
-              ub.getParent().getMessageFactory().createResponse(Response.OK, inc_req.getRequest());
-          SipTransaction transb = ub.sendReply(inc_req, response);
+              ub.getParent().getMessageFactory().createResponse(Response.OK, incReq.getRequest());
+          SipTransaction transb = ub.sendReply(incReq, response);
           assertNotNull(ub.format(), transb);
 
           // wait for some time, make sure it gets to other side
@@ -451,18 +451,18 @@ public class TestNoProxy {
 
           // second - send my INFO request before responding to
           // received INFO
-          Request infoRequest = bDialog.createRequest(Request.INFO);
+          Request infoRequest = dialogB.createRequest(Request.INFO);
 
-          SipTransaction bRespTrans = ub.sendRequestWithTransaction(infoRequest, false, bDialog);
-          if (null == bRespTrans) {
+          SipTransaction respTransB = ub.sendRequestWithTransaction(infoRequest, false, dialogB);
+          if (null == respTransB) {
             String msg = "B side failed sending INFO: " + ub.getErrorMessage();
             fail(msg);
           }
 
           // wait disconnect
-          b.waitForDisconnect(20000);
-          assertLastOperationSuccess("b wait disc - " + b.format(), b);
-          assertTrue(b.respondToDisconnect());
+          callB.waitForDisconnect(20000);
+          assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+          assertTrue(callB.respondToDisconnect());
 
           Thread.sleep(1000);
           ub.dispose();
@@ -475,28 +475,28 @@ public class TestNoProxy {
     }
 
     try {
-      PhoneB b = new PhoneB();
-      b.start();
+      PhoneB phoneB = new PhoneB();
+      phoneB.start();
 
       ua.listenRequestMessage();
       Thread.sleep(100);
 
-      SipCall a = ua.createSipCall();
+      SipCall callA = ua.createSipCall();
 
       // first establish the session
 
       Header allow = ua.getParent().getHeaderFactory().createAllowHeader(Request.INFO);
 
-      a.initiateOutgoingCall("sip:amit@nist.gov", "sip:becky@nist.gov", ua.getStackAddress() + ':'
+      callA.initiateOutgoingCall("sip:amit@nist.gov", "sip:becky@nist.gov", ua.getStackAddress() + ':'
           + myPort + '/' + testProtocol, new ArrayList<>(Arrays.asList(allow)), null, null);
-      assertLastOperationSuccess("a initiate call - " + a.format(), a);
-      Dialog aDialog = a.getLastTransaction().getClientTransaction().getDialog();
+      assertLastOperationSuccess("a initiate call - " + callA.format(), callA);
+      Dialog aDialog = callA.getLastTransaction().getClientTransaction().getDialog();
 
-      assertTrue(a.waitOutgoingCallResponse(10000));
-      assertEquals("Unexpected response received", Response.OK, a.getReturnCode());
+      assertTrue(callA.waitOutgoingCallResponse(10000));
+      assertEquals("Unexpected response received", Response.OK, callA.getReturnCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
       Thread.sleep(1000);
 
@@ -512,9 +512,9 @@ public class TestNoProxy {
       }
 
       // first - verify INFO was received by ua
-      RequestEvent inc_req = ua.waitRequest(10000);
-      assertNotNull(inc_req);
-      assertEquals(Request.INFO, inc_req.getRequest().getMethod());
+      RequestEvent incReq = ua.waitRequest(10000);
+      assertNotNull(incReq);
+      assertEquals(Request.INFO, incReq.getRequest().getMethod());
 
       // second - wait for a 200 OK
       EventObject respEvent = ua.waitResponse(responseTransaction, 10000);
@@ -526,10 +526,10 @@ public class TestNoProxy {
 
       // Tear down
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.join();
+      phoneB.join();
     } catch (Exception e) {
       fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
     }
@@ -543,56 +543,56 @@ public class TestNoProxy {
       SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
       ub.setLoopback(true);
 
-      SipCall a = ua.createSipCall();
-      SipCall b = ub.createSipCall();
+      SipCall callA = ua.createSipCall();
+      SipCall callB = ub.createSipCall();
 
-      b.listenForIncomingCall();
+      callB.listenForIncomingCall();
       Thread.sleep(10);
 
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess("a initiate call - " + a.format(), a);
+      assertLastOperationSuccess("a initiate call - " + callA.format(), callA);
 
-      b.waitForIncomingCall(10000);
-      assertLastOperationSuccess("b wait incoming call - " + b.format(), b);
+      callB.waitForIncomingCall(10000);
+      assertLastOperationSuccess("b wait incoming call - " + callB.format(), callB);
 
-      b.sendIncomingCallResponse(Response.RINGING, null, -1);
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
-
-      Thread.sleep(1000);
-
-      b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
-      assertLastOperationSuccess("b send OK - " + b.format(), b);
-
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait 1st response - " + a.format(), a);
-      assertEquals("Unexpected 1st response received", Response.RINGING, a.getReturnCode());
-      assertNotNull("Default response reason not sent", a.getLastReceivedResponse()
-          .getReasonPhrase());
-      assertEquals("Unexpected default reason", "Ringing", a.getLastReceivedResponse()
-          .getReasonPhrase());
-
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait 2nd response - " + a.format(), a);
-
-      assertEquals("Unexpected 2nd response received", Response.OK, a.getReturnCode());
-
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callB.sendIncomingCallResponse(Response.RINGING, null, -1);
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
 
       Thread.sleep(1000);
 
-      a.listenForDisconnect();
-      assertLastOperationSuccess("a listen disc - " + a.format(), a);
+      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+      assertLastOperationSuccess("b send OK - " + callB.format(), callB);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait 1st response - " + callA.format(), callA);
+      assertEquals("Unexpected 1st response received", Response.RINGING, callA.getReturnCode());
+      assertNotNull("Default response reason not sent", callA.getLastReceivedResponse()
+          .getReasonPhrase());
+      assertEquals("Unexpected default reason", "Ringing", callA.getLastReceivedResponse()
+          .getReasonPhrase());
 
-      a.waitForDisconnect(5000);
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait 2nd response - " + callA.format(), callA);
 
-      a.respondToDisconnect();
-      assertLastOperationSuccess("a respond to disc - " + a.format(), a);
+      assertEquals("Unexpected 2nd response received", Response.OK, callA.getReturnCode());
+
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+
+      Thread.sleep(1000);
+
+      callA.listenForDisconnect();
+      assertLastOperationSuccess("a listen disc - " + callA.format(), callA);
+
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
+
+      callA.waitForDisconnect(5000);
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
+
+      callA.respondToDisconnect();
+      assertLastOperationSuccess("a respond to disc - " + callA.format(), callA);
 
       ub.dispose();
     } catch (Exception e) {
@@ -605,22 +605,22 @@ public class TestNoProxy {
     // in this test, user a is handled at the SipCall level and user b at the
     // SipSession level (we send a body in the response)
     try {
-      SipCall a = ua.createSipCall();
+      SipCall callA = ua.createSipCall();
       SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
       ub.setLoopback(true);
 
       ub.listenRequestMessage();
       Thread.sleep(50);
 
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess("a initiate call - " + a.format(), a);
+      assertLastOperationSuccess("a initiate call - " + callA.format(), callA);
 
-      RequestEvent inc_req = ub.waitRequest(10000);
-      assertNotNull(ub.format(), inc_req);
+      RequestEvent incReq = ub.waitRequest(10000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      SipRequest req = new SipRequest(inc_req.getRequest());
+      SipRequest req = new SipRequest(incReq.getRequest());
 
       // Incoming request - header/body asserts
 
@@ -634,26 +634,26 @@ public class TestNoProxy {
 
       // send TRYING
       Response response =
-          ub.getParent().getMessageFactory().createResponse(Response.TRYING, inc_req.getRequest());
-      SipTransaction transb = ub.sendReply(inc_req, response);
+          ub.getParent().getMessageFactory().createResponse(Response.TRYING, incReq.getRequest());
+      SipTransaction transb = ub.sendReply(incReq, response);
       assertNotNull(ub.format(), transb);
       // trying response sent
 
       Thread.sleep(100);
 
       // send message with a body
-      URI callee_contact =
+      URI calleeContact =
           ub.getParent().getAddressFactory()
               .createURI("sip:becky@" + ub.getStackAddress() + ':' + myPort);
-      Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
-      String to_tag = ub.generateNewTag();
+      Address contact = ub.getParent().getAddressFactory().createAddress(calleeContact);
+      String toTag = ub.generateNewTag();
       response =
-          ub.getParent().getMessageFactory().createResponse(Response.RINGING, inc_req.getRequest()); // why
+          ub.getParent().getMessageFactory().createResponse(Response.RINGING, incReq.getRequest()); // why
                                                                                                      // OK
       // doesn't
       // work here?
       response.setReasonPhrase("Hello World");
-      ((ToHeader) response.getHeader(ToHeader.NAME)).setTag(to_tag);
+      ((ToHeader) response.getHeader(ToHeader.NAME)).setTag(toTag);
       response.addHeader(ub.getParent().getHeaderFactory().createContactHeader(contact));
       ContentTypeHeader ct =
           ub.getParent().getHeaderFactory().createContentTypeHeader("application", "sdp");
@@ -665,19 +665,19 @@ public class TestNoProxy {
 
       Thread.sleep(100);
 
-      a.waitOutgoingCallResponse(4000);
-      assertLastOperationSuccess("a wait 1st response - " + a.format(), a);
-      while (a.getReturnCode() == Response.TRYING) {
-        a.waitOutgoingCallResponse(4000);
-        assertLastOperationSuccess("a wait nth response - " + a.format(), a);
+      callA.waitOutgoingCallResponse(4000);
+      assertLastOperationSuccess("a wait 1st response - " + callA.format(), callA);
+      while (callA.getReturnCode() == Response.TRYING) {
+        callA.waitOutgoingCallResponse(4000);
+        assertLastOperationSuccess("a wait nth response - " + callA.format(), callA);
       }
 
       // Incoming response - header/body asserts
 
-      assertBodyPresent(a.getLastReceivedResponse());
-      assertBodyContains(a.getLastReceivedResponse(), "his is a test body");
+      assertBodyPresent(callA.getLastReceivedResponse());
+      assertBodyContains(callA.getLastReceivedResponse(), "his is a test body");
 
-      SipResponse resp = a.getLastReceivedResponse();
+      SipResponse resp = callA.getLastReceivedResponse();
       assertHeaderPresent(resp, "Contact");
       assertHeaderNotPresent(resp, "Contacts");
       assertHeaderNotContains(resp, "Contact", "amit");
@@ -686,10 +686,10 @@ public class TestNoProxy {
       // ub needs to send BYE, so SipCall gets a request and can verify
       // higher
       // level request/response asserts
-      Request invite = inc_req.getRequest();
-      ContactHeader caller_contact = (ContactHeader) invite.getHeader(ContactHeader.NAME);
-      FromHeader a_party = (FromHeader) invite.getHeader(FromHeader.NAME);
-      ToHeader b_party = (ToHeader) response.getHeader(ToHeader.NAME);
+      Request invite = incReq.getRequest();
+      ContactHeader callerContact = (ContactHeader) invite.getHeader(ContactHeader.NAME);
+      FromHeader partyA = (FromHeader) invite.getHeader(FromHeader.NAME);
+      ToHeader partyB = (ToHeader) response.getHeader(ToHeader.NAME);
       CSeqHeader cseq =
           ub.getParent()
               .getHeaderFactory()
@@ -700,65 +700,65 @@ public class TestNoProxy {
           ub.getParent()
               .getMessageFactory()
               .createRequest(
-                  caller_contact.getAddress().getURI(),
+                  callerContact.getAddress().getURI(),
                   Request.BYE,
                   (CallIdHeader) invite.getHeader(CallIdHeader.NAME),
                   cseq,
                   ub.getParent().getHeaderFactory()
-                      .createFromHeader(b_party.getAddress(), b_party.getTag()),
+                      .createFromHeader(partyB.getAddress(), partyB.getTag()),
                   ub.getParent().getHeaderFactory()
-                      .createToHeader(a_party.getAddress(), a_party.getTag()), ub.getViaHeaders(),
+                      .createToHeader(partyA.getAddress(), partyA.getTag()), ub.getViaHeaders(),
                   ub.getParent().getHeaderFactory().createMaxForwardsHeader(5));
 
       bye.addHeader(ub.getParent().getHeaderFactory()
-          .createRouteHeader(caller_contact.getAddress()));
+          .createRouteHeader(callerContact.getAddress()));
 
-      assertTrue(a.listenForDisconnect());
+      assertTrue(callA.listenForDisconnect());
       assertTrue(ub.sendUnidirectionalRequest(bye, false));
-      assertTrue(a.waitForDisconnect(2000));
+      assertTrue(callA.waitForDisconnect(2000));
 
       // MessageListener level - methods, request/response assertions
 
-      SipRequest received_bye = a.getLastReceivedRequest();
-      assertNotNull(received_bye);
+      SipRequest receivedBye = callA.getLastReceivedRequest();
+      assertNotNull(receivedBye);
 
-      ArrayList<SipRequest> received_requests = a.getAllReceivedRequests();
-      assertEquals(1, received_requests.size());
-      assertEquals(received_bye, received_requests.get(0));
+      ArrayList<SipRequest> receivedRequests = callA.getAllReceivedRequests();
+      assertEquals(1, receivedRequests.size());
+      assertEquals(receivedBye, receivedRequests.get(0));
 
-      SipResponse received_response = a.getLastReceivedResponse();
-      assertNotNull(received_response);
+      SipResponse receivedResponse = callA.getLastReceivedResponse();
+      assertNotNull(receivedResponse);
 
-      ArrayList<SipResponse> received_responses = a.getAllReceivedResponses();
-      int num_responses = received_responses.size();
-      assertTrue(num_responses >= 2);
-      assertEquals(received_response, received_responses.get(num_responses - 1));
+      ArrayList<SipResponse> receivedResponses = callA.getAllReceivedResponses();
+      int numResponses = receivedResponses.size();
+      assertTrue(numResponses >= 2);
+      assertEquals(receivedResponse, receivedResponses.get(numResponses - 1));
 
-      assertResponseReceived(SipResponse.TRYING, a);
-      assertResponseReceived("Expected RINGING", SipResponse.RINGING, a);
-      assertResponseNotReceived(SipResponse.OK, a);
-      assertResponseNotReceived("Didn't expect OK", SipResponse.OK, a);
+      assertResponseReceived(SipResponse.TRYING, callA);
+      assertResponseReceived("Expected RINGING", SipResponse.RINGING, callA);
+      assertResponseNotReceived(SipResponse.OK, callA);
+      assertResponseNotReceived("Didn't expect OK", SipResponse.OK, callA);
 
       assertResponseReceived(SipResponse.RINGING, SipRequest.INVITE,
-          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber(), a);
+          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber(), callA);
       assertResponseReceived("Expected RINGING", SipResponse.RINGING, SipRequest.INVITE,
-          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber(), a);
+          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber(), callA);
       assertResponseNotReceived(SipResponse.RINGING, SipRequest.INVITE,
-          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber() + 1, a);
+          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber() + 1, callA);
       assertResponseNotReceived("Didn't expect this", SipResponse.RINGING, SipRequest.ACK,
-          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber(), a);
+          ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber(), callA);
 
-      long received_cseq_seqnum = ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber();
+      long receivedCseqSeqnum = ((CSeqHeader) invite.getHeader(CSeqHeader.NAME)).getSeqNumber();
 
-      assertRequestReceived(SipRequest.BYE, a);
-      assertRequestReceived(SipRequest.BYE, received_cseq_seqnum, a);
-      assertRequestReceived("Expected a BYE", SipRequest.BYE, a);
-      assertRequestReceived("Wrong CSEQ sequence number", SipRequest.BYE, received_cseq_seqnum, a);
-      assertRequestNotReceived(SipRequest.INVITE, a);
-      assertRequestNotReceived("Didn't expect a NOTIFY", SipRequest.NOTIFY, a);
-      assertRequestNotReceived(SipRequest.BYE, received_cseq_seqnum + 1, a);
+      assertRequestReceived(SipRequest.BYE, callA);
+      assertRequestReceived(SipRequest.BYE, receivedCseqSeqnum, callA);
+      assertRequestReceived("Expected a BYE", SipRequest.BYE, callA);
+      assertRequestReceived("Wrong CSEQ sequence number", SipRequest.BYE, receivedCseqSeqnum, callA);
+      assertRequestNotReceived(SipRequest.INVITE, callA);
+      assertRequestNotReceived("Didn't expect a NOTIFY", SipRequest.NOTIFY, callA);
+      assertRequestNotReceived(SipRequest.BYE, receivedCseqSeqnum + 1, callA);
       assertRequestNotReceived("Didn't expect a SUBSCRIBE", SipRequest.SUBSCRIBE,
-          received_cseq_seqnum, a);
+          receivedCseqSeqnum, callA);
 
       ub.dispose();
     } catch (Exception e) {
@@ -790,56 +790,56 @@ public class TestNoProxy {
       SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
       ub.setLoopback(true);
 
-      SipCall b = ub.createSipCall(); // incoming call
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall(); // incoming call
+      callB.listenForIncomingCall();
       Thread.sleep(50);
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
       // or assertNotNull(a)
 
-      assertTrue(b.waitForIncomingCall(5000));
-      b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
+      assertTrue(callB.waitForIncomingCall(5000));
+      callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
       Thread.sleep(400);
-      assertNotAnswered("Call leg shouldn't be answered yet", a);
-      assertNotAnswered(b);
+      assertNotAnswered("Call leg shouldn't be answered yet", callA);
+      assertNotAnswered(callB);
 
-      b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+      callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
       Thread.sleep(500);
 
-      assertAnswered("Outgoing call leg not answered", a);
-      assertAnswered(b);
-      assertFalse("Outgoing call leg error status wrong", a.callTimeoutOrError());
+      assertAnswered("Outgoing call leg not answered", callA);
+      assertAnswered(callB);
+      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", a.getAllReceivedResponses().size() == 2);
-      assertTrue("Shouldn't have received anything at the called party side", b
+      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() == 2);
+      assertTrue("Shouldn't have received anything at the called party side", callB
           .getAllReceivedResponses().size() == 0);
 
       // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a);
+      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
       // verify OK was received
-      assertResponseReceived(SipResponse.OK, a);
+      assertResponseReceived(SipResponse.OK, callA);
       // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, a);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, a);
+      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
       // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, a
+      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
           .getLastReceivedResponse().getStatusCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
-      a.listenForDisconnect();
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+      callA.listenForDisconnect();
       Thread.sleep(100);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(3000);
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
-      a.respondToDisconnect();
+      callA.waitForDisconnect(3000);
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
+      callA.respondToDisconnect();
 
       ub.dispose();
     } catch (Exception e) {
@@ -860,55 +860,55 @@ public class TestNoProxy {
       SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
       ub.setLoopback(true);
 
-      SipCall b = ub.createSipCall(); // incoming call
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall(); // incoming call
+      callB.listenForIncomingCall();
       Thread.sleep(50);
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+      assertTrue(callB.waitForIncomingCall(5000));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
       Thread.sleep(100);
-      assertNotAnswered("Call leg shouldn't be answered yet", a);
-      assertNotAnswered(b);
+      assertNotAnswered("Call leg shouldn't be answered yet", callA);
+      assertNotAnswered(callB);
 
-      assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+      assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
       Thread.sleep(100);
 
-      assertAnswered("Outgoing call leg not answered", a);
-      assertAnswered(b);
-      assertFalse("Outgoing call leg error status wrong", a.callTimeoutOrError());
+      assertAnswered("Outgoing call leg not answered", callA);
+      assertAnswered(callB);
+      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", a.getAllReceivedResponses().size() == 2);
-      assertTrue("Shouldn't have received anything at the called party side", b
+      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() == 2);
+      assertTrue("Shouldn't have received anything at the called party side", callB
           .getAllReceivedResponses().size() == 0);
 
       // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a);
+      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
       // verify OK was received
-      assertResponseReceived(SipResponse.OK, a);
+      assertResponseReceived(SipResponse.OK, callA);
       // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, a);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, a);
+      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
       // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, a
+      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
           .getLastReceivedResponse().getStatusCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
-      b.listenForDisconnect();
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+      callB.listenForDisconnect();
       Thread.sleep(100);
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.waitForDisconnect(3000);
-      assertLastOperationSuccess("b wait disc - " + b.format(), b);
-      b.respondToDisconnect();
+      callB.waitForDisconnect(3000);
+      assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+      callB.respondToDisconnect();
 
       ub.dispose();
     } catch (Exception e) {
@@ -927,22 +927,22 @@ public class TestNoProxy {
           SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
           ub.setLoopback(true);
 
-          SipCall b = ub.createSipCall();
+          SipCall callB = ub.createSipCall();
 
-          b.listenForIncomingCall();
-          b.waitForIncomingCall(5000);
-          b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
+          callB.listenForIncomingCall();
+          callB.waitForIncomingCall(5000);
+          callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
           Thread.sleep(600);
-          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+          callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
 
-          assertAnswered(b);
-          assertTrue("Shouldn't have received anything at the called party side", b
+          assertAnswered(callB);
+          assertTrue("Shouldn't have received anything at the called party side", callB
               .getAllReceivedResponses().size() == 0);
 
-          b.listenForDisconnect();
-          b.waitForDisconnect(30000);
-          assertLastOperationSuccess("b wait disc - " + b.format(), b);
-          b.respondToDisconnect();
+          callB.listenForDisconnect();
+          callB.waitForDisconnect(30000);
+          assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+          callB.respondToDisconnect();
 
           Thread.sleep(1000);
           ub.dispose();
@@ -955,25 +955,25 @@ public class TestNoProxy {
     }
 
     try {
-      PhoneB b = new PhoneB();
-      b.start();
+      PhoneB phoneB = new PhoneB();
+      phoneB.start();
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", SipResponse.OK, 5000, ua.getStackAddress() + ':'
               + myPort + '/' + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertAnswered("Outgoing call leg not answered", a);
+      assertAnswered("Outgoing call leg not answered", callA);
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
       Thread.sleep(2000);
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.join();
+      phoneB.join();
     } catch (Exception e) {
       fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
     }
@@ -989,30 +989,30 @@ public class TestNoProxy {
           SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
           ub.setLoopback(true);
 
-          SipCall b = ub.createSipCall();
+          SipCall callB = ub.createSipCall();
 
-          b.listenForIncomingCall();
-          b.waitForIncomingCall(5000);
+          callB.listenForIncomingCall();
+          callB.waitForIncomingCall(5000);
 
-          assertHeaderContains(b.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-          assertHeaderContains(b.getLastReceivedRequest(), ContentTypeHeader.NAME,
+          assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+          assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME,
               "applicationn/texxt");
-          assertHeaderContains(b.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-          assertHeaderContains(b.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
-          assertBodyContains(b.getLastReceivedRequest(), "my body");
+          assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+          assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
+          assertBodyContains(callB.getLastReceivedRequest(), "my body");
 
-          b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
+          callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
           Thread.sleep(600);
-          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+          callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
 
-          assertAnswered(b);
-          assertTrue("Shouldn't have received anything at the called party side", b
+          assertAnswered(callB);
+          assertTrue("Shouldn't have received anything at the called party side", callB
               .getAllReceivedResponses().size() == 0);
 
-          b.listenForDisconnect();
-          b.waitForDisconnect(30000);
-          assertLastOperationSuccess("b wait disc - " + b.format(), b);
-          b.respondToDisconnect();
+          callB.listenForDisconnect();
+          callB.waitForDisconnect(30000);
+          assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+          callB.respondToDisconnect();
 
           Thread.sleep(1000);
           ub.dispose();
@@ -1025,41 +1025,41 @@ public class TestNoProxy {
     }
 
     try {
-      PhoneB b = new PhoneB();
-      b.start();
+      PhoneB phoneB = new PhoneB();
+      phoneB.start();
 
       // set up outbound INVITE contents
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
-      addnl_hdrs.add(ua.getParent().getHeaderFactory()
+      ArrayList<Header> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
+      addnlHeaders.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<>();
-      URI bogus_contact =
+      ArrayList<Header> replaceHeaders = new ArrayList<>();
+      URI bogusContact =
           ua.getParent().getAddressFactory()
               .createURI("sip:doodah@" + ua.getStackAddress() + ':' + myPort);
-      Address bogus_addr = ua.getParent().getAddressFactory().createAddress(bogus_contact);
-      replace_hdrs.add(ua.getParent().getHeaderFactory().createContactHeader(bogus_addr)); // verify
+      Address bogusAddr = ua.getParent().getAddressFactory().createAddress(bogusContact);
+      replaceHeaders.add(ua.getParent().getHeaderFactory().createContactHeader(bogusAddr)); // verify
                                                                                            // replacement
-      replace_hdrs.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
+      replaceHeaders.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
 
-      SipCall a =
+      SipCall phoneA =
           ua.makeCall("sip:becky@nist.gov", SipResponse.OK, 5000, ua.getStackAddress() + ':'
-              + myPort + '/' + testProtocol, addnl_hdrs, replace_hdrs, "my body");
+              + myPort + '/' + testProtocol, addnlHeaders, replaceHeaders, "my body");
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertAnswered("Outgoing call leg not answered", a);
+      assertAnswered("Outgoing call leg not answered", phoneA);
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      phoneA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + phoneA.format(), phoneA);
 
       Thread.sleep(2000);
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      phoneA.disconnect();
+      assertLastOperationSuccess("a disc - " + phoneA.format(), phoneA);
 
-      b.join();
+      phoneB.join();
     } catch (Exception e) {
       fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
     }
@@ -1075,30 +1075,30 @@ public class TestNoProxy {
           SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
           ub.setLoopback(true);
 
-          SipCall b = ub.createSipCall();
+          SipCall callB = ub.createSipCall();
 
-          b.listenForIncomingCall();
-          b.waitForIncomingCall(5000);
+          callB.listenForIncomingCall();
+          callB.waitForIncomingCall(5000);
 
-          assertHeaderContains(b.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-          assertHeaderContains(b.getLastReceivedRequest(), ContentTypeHeader.NAME,
+          assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+          assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME,
               "applicationn/texxt");
-          assertHeaderContains(b.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-          assertHeaderContains(b.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
-          assertBodyContains(b.getLastReceivedRequest(), "my body");
+          assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+          assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
+          assertBodyContains(callB.getLastReceivedRequest(), "my body");
 
-          b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
+          callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0);
           Thread.sleep(600);
-          b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+          callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
 
-          assertAnswered(b);
-          assertTrue("Shouldn't have received anything at the called party side", b
+          assertAnswered(callB);
+          assertTrue("Shouldn't have received anything at the called party side", callB
               .getAllReceivedResponses().size() == 0);
 
-          b.listenForDisconnect();
-          b.waitForDisconnect(30000);
-          assertLastOperationSuccess("b wait disc - " + b.format(), b);
-          b.respondToDisconnect();
+          callB.listenForDisconnect();
+          callB.waitForDisconnect(30000);
+          assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+          callB.respondToDisconnect();
 
           Thread.sleep(1000);
           ub.dispose();
@@ -1111,36 +1111,36 @@ public class TestNoProxy {
     }
 
     try {
-      PhoneB b = new PhoneB();
-      b.start();
+      PhoneB phoneB = new PhoneB();
+      phoneB.start();
 
       // set up outbound INVITE contents
 
-      ArrayList<String> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(new String("Priority: 5"));
+      ArrayList<String> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<>();
-      replace_hdrs.add(new String("Contact: <sip:doodah@" + ua.getStackAddress() + ':' + myPort
+      ArrayList<String> replaceHeaders = new ArrayList<>();
+      replaceHeaders.add(new String("Contact: <sip:doodah@" + ua.getStackAddress() + ':' + myPort
           + '>'));
-      replace_hdrs.add(new String("Max-Forwards: 62"));
+      replaceHeaders.add(new String("Max-Forwards: 62"));
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", SipResponse.OK, 5000, ua.getStackAddress() + ':'
-              + myPort + '/' + testProtocol, "my body", "applicationn", "texxt", addnl_hdrs,
-              replace_hdrs);
+              + myPort + '/' + testProtocol, "my body", "applicationn", "texxt", addnlHeaders,
+              replaceHeaders);
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertAnswered("Outgoing call leg not answered", a);
+      assertAnswered("Outgoing call leg not answered", callA);
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
       Thread.sleep(2000);
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.join();
+      phoneB.join();
     } catch (Exception e) {
       fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
     }
@@ -1155,78 +1155,78 @@ public class TestNoProxy {
       SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
       ub.setLoopback(true);
 
-      SipCall b = ub.createSipCall(); // incoming call
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall(); // incoming call
+      callB.listenForIncomingCall();
       Thread.sleep(50);
 
       // set up outbound INVITE contents
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
-      addnl_hdrs.add(ua.getParent().getHeaderFactory()
+      ArrayList<Header> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
+      addnlHeaders.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<>();
-      URI bogus_contact =
+      ArrayList<Header> replaceHeaders = new ArrayList<>();
+      URI bogusContact =
           ua.getParent().getAddressFactory()
               .createURI("sip:doodah@" + ua.getStackAddress() + ':' + myPort);
-      Address bogus_addr = ua.getParent().getAddressFactory().createAddress(bogus_contact);
-      replace_hdrs.add(ua.getParent().getHeaderFactory().createContactHeader(bogus_addr)); // verify
+      Address bogusAddr = ua.getParent().getAddressFactory().createAddress(bogusContact);
+      replaceHeaders.add(ua.getParent().getHeaderFactory().createContactHeader(bogusAddr)); // verify
                                                                                            // replacement
-      replace_hdrs.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
+      replaceHeaders.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
-              + testProtocol, addnl_hdrs, replace_hdrs, "my body");
+              + testProtocol, addnlHeaders, replaceHeaders, "my body");
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
+      assertTrue(callB.waitForIncomingCall(5000));
 
-      assertHeaderContains(b.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-      assertHeaderContains(b.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
-      assertHeaderContains(b.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(b.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
-      assertBodyContains(b.getLastReceivedRequest(), "my body");
+      assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+      assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
+      assertBodyContains(callB.getLastReceivedRequest(), "my body");
 
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
       Thread.sleep(100);
-      assertNotAnswered("Call leg shouldn't be answered yet", a);
-      assertNotAnswered(b);
+      assertNotAnswered("Call leg shouldn't be answered yet", callA);
+      assertNotAnswered(callB);
 
-      assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+      assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
       Thread.sleep(100);
 
-      assertAnswered("Outgoing call leg not answered", a);
-      assertAnswered(b);
-      assertFalse("Outgoing call leg error status wrong", a.callTimeoutOrError());
+      assertAnswered("Outgoing call leg not answered", callA);
+      assertAnswered(callB);
+      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", a.getAllReceivedResponses().size() == 2);
-      assertTrue("Shouldn't have received anything at the called party side", b
+      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() == 2);
+      assertTrue("Shouldn't have received anything at the called party side", callB
           .getAllReceivedResponses().size() == 0);
 
       // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a);
+      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
       // verify OK was received
-      assertResponseReceived(SipResponse.OK, a);
+      assertResponseReceived(SipResponse.OK, callA);
       // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, a);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, a);
+      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
       // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, a
+      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
           .getLastReceivedResponse().getStatusCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
-      b.listenForDisconnect();
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+      callB.listenForDisconnect();
       Thread.sleep(100);
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.waitForDisconnect(3000);
-      assertLastOperationSuccess("b wait disc - " + b.format(), b);
-      b.respondToDisconnect();
+      callB.waitForDisconnect(3000);
+      assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+      callB.respondToDisconnect();
 
       ub.dispose();
     } catch (Exception e) {
@@ -1244,73 +1244,73 @@ public class TestNoProxy {
       SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
       ub.setLoopback(true);
 
-      SipCall b = ub.createSipCall(); // incoming call
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall(); // incoming call
+      callB.listenForIncomingCall();
       Thread.sleep(50);
 
       // set up outbound INVITE contents
 
-      ArrayList<String> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(new String("Priority: 5"));
+      ArrayList<String> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<>();
-      replace_hdrs.add(new String("Contact: <sip:doodah@" + ua.getStackAddress() + ':' + myPort
+      ArrayList<String> replaceHeaders = new ArrayList<>();
+      replaceHeaders.add(new String("Contact: <sip:doodah@" + ua.getStackAddress() + ':' + myPort
           + '>'));
-      replace_hdrs.add(new String("Max-Forwards: 62"));
+      replaceHeaders.add(new String("Max-Forwards: 62"));
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
-              + testProtocol, "my body", "applicationn", "texxt", addnl_hdrs, replace_hdrs);
+              + testProtocol, "my body", "applicationn", "texxt", addnlHeaders, replaceHeaders);
 
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
+      assertTrue(callB.waitForIncomingCall(5000));
 
-      assertHeaderContains(b.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-      assertHeaderContains(b.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
-      assertHeaderContains(b.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(b.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
-      assertBodyContains(b.getLastReceivedRequest(), "my body");
+      assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+      assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
+      assertBodyContains(callB.getLastReceivedRequest(), "my body");
 
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 0));
       Thread.sleep(100);
-      assertNotAnswered("Call leg shouldn't be answered yet", a);
-      assertNotAnswered(b);
+      assertNotAnswered("Call leg shouldn't be answered yet", callA);
+      assertNotAnswered(callB);
 
-      assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+      assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
       Thread.sleep(100);
 
-      assertAnswered("Outgoing call leg not answered", a);
-      assertAnswered(b);
-      assertFalse("Outgoing call leg error status wrong", a.callTimeoutOrError());
+      assertAnswered("Outgoing call leg not answered", callA);
+      assertAnswered(callB);
+      assertFalse("Outgoing call leg error status wrong", callA.callTimeoutOrError());
 
-      assertTrue("Wrong number of responses received", a.getAllReceivedResponses().size() == 2);
-      assertTrue("Shouldn't have received anything at the called party side", b
+      assertTrue("Wrong number of responses received", callA.getAllReceivedResponses().size() == 2);
+      assertTrue("Shouldn't have received anything at the called party side", callB
           .getAllReceivedResponses().size() == 0);
 
       // verify RINGING was received
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a);
+      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
       // verify OK was received
-      assertResponseReceived(SipResponse.OK, a);
+      assertResponseReceived(SipResponse.OK, callA);
       // check negative
-      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, a);
-      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, a);
+      assertResponseNotReceived("Unexpected response", SipResponse.NOT_FOUND, callA);
+      assertResponseNotReceived(SipResponse.ADDRESS_INCOMPLETE, callA);
 
       // verify getLastReceivedResponse() method
-      assertEquals("Last response received wasn't answer", SipResponse.OK, a
+      assertEquals("Last response received wasn't answer", SipResponse.OK, callA
           .getLastReceivedResponse().getStatusCode());
 
-      a.sendInviteOkAck();
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
-      b.listenForDisconnect();
+      callA.sendInviteOkAck();
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
+      callB.listenForDisconnect();
       Thread.sleep(100);
 
-      a.disconnect();
-      assertLastOperationSuccess("a disc - " + a.format(), a);
+      callA.disconnect();
+      assertLastOperationSuccess("a disc - " + callA.format(), callA);
 
-      b.waitForDisconnect(3000);
-      assertLastOperationSuccess("b wait disc - " + b.format(), b);
-      b.respondToDisconnect();
+      callB.waitForDisconnect(3000);
+      assertLastOperationSuccess("b wait disc - " + callB.format(), callB);
+      callB.respondToDisconnect();
 
       ub.dispose();
     } catch (Exception e) {
@@ -1334,64 +1334,64 @@ public class TestNoProxy {
       ub.listenRequestMessage();
       Thread.sleep(100);
 
-      AddressFactory addr_factory = ua.getParent().getAddressFactory();
-      HeaderFactory hdr_factory = ua.getParent().getHeaderFactory();
+      AddressFactory addrFactory = ua.getParent().getAddressFactory();
+      HeaderFactory headerFactory = ua.getParent().getHeaderFactory();
 
       Request invite =
           ua.getParent().getMessageFactory()
               .createRequest("INVITE sip:becky@nist.gov SIP/2.0\r\n\r\n");
 
       invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
-      invite.addHeader(hdr_factory.createCSeqHeader((long) 1, Request.INVITE));
-      invite.addHeader(hdr_factory.createFromHeader(ua.getAddress(), ua.generateNewTag()));
+      invite.addHeader(headerFactory.createCSeqHeader((long) 1, Request.INVITE));
+      invite.addHeader(headerFactory.createFromHeader(ua.getAddress(), ua.generateNewTag()));
 
-      Address to_address = addr_factory.createAddress(addr_factory.createURI("sip:becky@nist.gov"));
-      invite.addHeader(hdr_factory.createToHeader(to_address, null));
+      Address to = addrFactory.createAddress(addrFactory.createURI("sip:becky@nist.gov"));
+      invite.addHeader(headerFactory.createToHeader(to, null));
 
-      Address contact_address =
-          addr_factory.createAddress("sip:amit@" + ua.getStackAddress() + ':' + myPort);
-      invite.addHeader(hdr_factory.createContactHeader(contact_address));
+      Address contactAddress =
+          addrFactory.createAddress("sip:amit@" + ua.getStackAddress() + ':' + myPort);
+      invite.addHeader(headerFactory.createContactHeader(contactAddress));
 
-      invite.addHeader(hdr_factory.createMaxForwardsHeader(5));
-      ArrayList<ViaHeader> via_headers = ua.getViaHeaders();
-      invite.addHeader((ViaHeader) via_headers.get(0));
+      invite.addHeader(headerFactory.createMaxForwardsHeader(5));
+      ArrayList<ViaHeader> viaHeaders = ua.getViaHeaders();
+      invite.addHeader((ViaHeader) viaHeaders.get(0));
 
-      Address route_address =
-          addr_factory.createAddress("sip:becky@" + ub.getStackAddress() + ':' + myPort + '/'
+      Address routeAddress =
+          addrFactory.createAddress("sip:becky@" + ub.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
-      invite.addHeader(hdr_factory.createRouteHeader(route_address));
+      invite.addHeader(headerFactory.createRouteHeader(routeAddress));
 
       SipTransaction trans = ua.sendRequestWithTransaction(invite, false, null);
       assertNotNull(ua.format(), trans);
       // call sent
 
-      RequestEvent inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      RequestEvent incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
       Response response =
-          ub.getParent().getMessageFactory().createResponse(Response.TRYING, inc_req.getRequest());
-      SipTransaction transb = ub.sendReply(inc_req, response);
+          ub.getParent().getMessageFactory().createResponse(Response.TRYING, incReq.getRequest());
+      SipTransaction transb = ub.sendReply(incReq, response);
       assertNotNull(ub.format(), transb);
       // trying response sent
 
       Thread.sleep(500);
 
-      URI callee_contact =
+      URI calleeContact =
           ub.getParent().getAddressFactory()
               .createURI("sip:becky@" + ub.getStackAddress() + ':' + myPort);
-      Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
+      Address contact = ub.getParent().getAddressFactory().createAddress(calleeContact);
 
-      String to_tag = ub.generateNewTag();
+      String toTag = ub.generateNewTag();
 
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1);
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1);
       assertLastOperationSuccess(ub.format(), ub);
       // ringing response sent
 
       Thread.sleep(500);
 
       response =
-          ub.getParent().getMessageFactory().createResponse(Response.OK, inc_req.getRequest());
+          ub.getParent().getMessageFactory().createResponse(Response.OK, incReq.getRequest());
       response.addHeader(ub.getParent().getHeaderFactory().createContactHeader(contact));
 
       ub.sendReply(transb, response);
@@ -1400,33 +1400,33 @@ public class TestNoProxy {
 
       Thread.sleep(500);
 
-      EventObject response_event = ua.waitResponse(trans, 10000);
+      EventObject responseEvent = ua.waitResponse(trans, 10000);
       // wait for trying
 
-      assertNotNull(ua.format(), response_event);
-      assertFalse("Operation timed out", response_event instanceof TimeoutEvent);
+      assertNotNull(ua.format(), responseEvent);
+      assertFalse("Operation timed out", responseEvent instanceof TimeoutEvent);
 
-      assertEquals("Should have received TRYING", Response.TRYING, ((ResponseEvent) response_event)
+      assertEquals("Should have received TRYING", Response.TRYING, ((ResponseEvent) responseEvent)
           .getResponse().getStatusCode());
       // trying received
 
-      response_event = ua.waitResponse(trans, 10000);
+      responseEvent = ua.waitResponse(trans, 10000);
       // wait for ringing
 
-      assertNotNull(ua.format(), response_event);
-      assertFalse("Operation timed out", response_event instanceof TimeoutEvent);
+      assertNotNull(ua.format(), responseEvent);
+      assertFalse("Operation timed out", responseEvent instanceof TimeoutEvent);
 
       assertEquals("Should have received RINGING", Response.RINGING,
-          ((ResponseEvent) response_event).getResponse().getStatusCode());
+          ((ResponseEvent) responseEvent).getResponse().getStatusCode());
       // ringing received
 
-      response_event = ua.waitResponse(trans, 10000);
+      responseEvent = ua.waitResponse(trans, 10000);
       // wait for answer
 
-      assertNotNull(ua.format(), response_event);
-      assertFalse("Operation timed out", response_event instanceof TimeoutEvent);
+      assertNotNull(ua.format(), responseEvent);
+      assertFalse("Operation timed out", responseEvent instanceof TimeoutEvent);
 
-      assertEquals("Should have received OK", Response.OK, ((ResponseEvent) response_event)
+      assertEquals("Should have received OK", Response.OK, ((ResponseEvent) responseEvent)
           .getResponse().getStatusCode());
       // answer received
 
@@ -1449,37 +1449,37 @@ public class TestNoProxy {
       ub.setLoopback(true);
 
       // establish a call
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall();
+      callB.listenForIncomingCall();
       Thread.sleep(20);
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
-      assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600));
+      assertTrue(callB.waitForIncomingCall(5000));
+      assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600));
       Thread.sleep(200);
-      assertResponseReceived(SipResponse.OK, a);
-      assertTrue(a.sendInviteOkAck());
+      assertResponseReceived(SipResponse.OK, callA);
+      assertTrue(callA.sendInviteOkAck());
       Thread.sleep(300);
 
       // send request - test reinvite with no specific parameters
 
-      a.listenForReinvite();
-      SipTransaction siptrans_b = b.sendReinvite(null, null, (String) null, null, null);
-      assertNotNull(siptrans_b);
-      SipTransaction siptrans_a = a.waitForReinvite(1000);
-      assertNotNull(siptrans_a);
+      callA.listenForReinvite();
+      SipTransaction siptransB = callB.sendReinvite(null, null, (String) null, null, null);
+      assertNotNull(siptransB);
+      SipTransaction siptransA = callA.waitForReinvite(1000);
+      assertNotNull(siptransA);
 
-      SipMessage req = a.getLastReceivedRequest();
-      String b_orig_contact_uri =
+      SipMessage req = callA.getLastReceivedRequest();
+      String origContactUriB =
           ((ContactHeader) req.getMessage().getHeader(ContactHeader.NAME)).getAddress().getURI()
               .toString();
 
       // check contact info
-      assertEquals(ub.getContactInfo().getURI(), b_orig_contact_uri);
+      assertEquals(ub.getContactInfo().getURI(), origContactUriB);
       assertHeaderNotContains(req, ContactHeader.NAME, "My DisplayName");
 
       // check body
@@ -1495,27 +1495,27 @@ public class TestNoProxy {
 
       // send response - test new contact only
 
-      String a_orig_contact_uri = ua.getContactInfo().getURI();
-      String a_contact_no_lr =
-          a_orig_contact_uri.substring(0, a_orig_contact_uri.lastIndexOf("lr") - 1);
-      assertTrue(a.respondToReinvite(siptrans_a, SipResponse.OK, "ok reinvite response", -1,
-          a_contact_no_lr, null, null, (String) null, null));
+      String origContactUriA = ua.getContactInfo().getURI();
+      String contactNoLrA =
+          origContactUriA.substring(0, origContactUriA.lastIndexOf("lr") - 1);
+      assertTrue(callA.respondToReinvite(siptransA, SipResponse.OK, "ok reinvite response", -1,
+          contactNoLrA, null, null, (String) null, null));
 
-      assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
-      while (b.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
-        assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
+      assertTrue(callB.waitReinviteResponse(siptransB, 2000));
+      while (callB.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
+        assertTrue(callB.waitReinviteResponse(siptransB, 2000));
       }
 
       // check response code
-      SipResponse response = b.getLastReceivedResponse();
+      SipResponse response = callB.getLastReceivedResponse();
       assertEquals(Response.OK, response.getStatusCode());
       assertEquals("ok reinvite response", response.getReasonPhrase());
 
       // check contact info
-      assertEquals(ua.getContactInfo().getURI(), a_contact_no_lr); // changed
-      assertFalse(a_orig_contact_uri.equals(a_contact_no_lr));
+      assertEquals(ua.getContactInfo().getURI(), contactNoLrA); // changed
+      assertFalse(origContactUriA.equals(contactNoLrA));
       assertHeaderNotContains(response, ContactHeader.NAME, ";lr");
-      assertHeaderContains(response, ContactHeader.NAME, a_contact_no_lr);
+      assertHeaderContains(response, ContactHeader.NAME, contactNoLrA);
       assertHeaderNotContains(response, ContactHeader.NAME, "My DisplayName");
 
       // check body
@@ -1530,28 +1530,28 @@ public class TestNoProxy {
       assertHeaderContains(response, ContentLengthHeader.NAME, "0");
 
       // send ACK
-      assertTrue(b.sendReinviteOkAck(siptrans_b));
-      assertTrue(a.waitForAck(1000));
+      assertTrue(callB.sendReinviteOkAck(siptransB));
+      assertTrue(callA.waitForAck(1000));
       Thread.sleep(100); //
 
       // send request - test contact and body
 
-      a.listenForReinvite();
-      String b_contact_no_lr =
-          b_orig_contact_uri.substring(0, b_orig_contact_uri.lastIndexOf("lr") - 1);
-      siptrans_b =
-          b.sendReinvite(b_contact_no_lr, "My DisplayName", "my reinvite", "app", "subapp");
-      assertNotNull(siptrans_b);
-      siptrans_a = a.waitForReinvite(1000);
-      assertNotNull(siptrans_a);
+      callA.listenForReinvite();
+      String contactNoLrB =
+          origContactUriB.substring(0, origContactUriB.lastIndexOf("lr") - 1);
+      siptransB =
+          callB.sendReinvite(contactNoLrB, "My DisplayName", "my reinvite", "app", "subapp");
+      assertNotNull(siptransB);
+      siptransA = callA.waitForReinvite(1000);
+      assertNotNull(siptransA);
 
-      req = a.getLastReceivedRequest();
+      req = callA.getLastReceivedRequest();
 
       // check contact info
-      assertEquals(ub.getContactInfo().getURI(), b_contact_no_lr); // changed
-      assertFalse(b_orig_contact_uri.equals(b_contact_no_lr));
+      assertEquals(ub.getContactInfo().getURI(), contactNoLrB); // changed
+      assertFalse(origContactUriB.equals(contactNoLrB));
       assertHeaderNotContains(req, ContactHeader.NAME, ";lr");
-      assertHeaderContains(req, ContactHeader.NAME, b_contact_no_lr);
+      assertHeaderContains(req, ContactHeader.NAME, contactNoLrB);
       assertHeaderContains(req, ContactHeader.NAME, "My DisplayName");
 
       // check body
@@ -1567,30 +1567,30 @@ public class TestNoProxy {
 
       // send response - test body only
 
-      assertTrue(a.respondToReinvite(siptrans_a, SipResponse.OK, "ok reinvite response", -1, null,
+      assertTrue(callA.respondToReinvite(siptransA, SipResponse.OK, "ok reinvite response", -1, null,
           null, "DooDah", "application", "text"));
 
-      assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
-      while (b.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
-        assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
+      assertTrue(callB.waitReinviteResponse(siptransB, 2000));
+      while (callB.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
+        assertTrue(callB.waitReinviteResponse(siptransB, 2000));
       }
 
       // check response code
-      response = b.getLastReceivedResponse();
+      response = callB.getLastReceivedResponse();
       assertEquals(Response.OK, response.getStatusCode());
       assertEquals("ok reinvite response", response.getReasonPhrase());
 
       // check contact info
       assertHeaderNotContains(response, ContactHeader.NAME, ";lr");
-      assertHeaderContains(response, ContactHeader.NAME, a_contact_no_lr);
+      assertHeaderContains(response, ContactHeader.NAME, contactNoLrA);
       assertHeaderNotContains(response, ContactHeader.NAME, "My DisplayName");
 
       // check body
       assertHeaderPresent(response, ContentTypeHeader.NAME);
-      ContentTypeHeader ct_hdr =
+      ContentTypeHeader ctHeader =
           (ContentTypeHeader) response.getMessage().getHeader(ContentTypeHeader.NAME);
-      assertEquals("application", ct_hdr.getContentType());
-      assertEquals("text", ct_hdr.getContentSubType());
+      assertEquals("application", ctHeader.getContentType());
+      assertEquals("text", ctHeader.getContentSubType());
       assertBodyContains(response, "DooDah");
 
       // check additional headers
@@ -1602,55 +1602,55 @@ public class TestNoProxy {
 
       // send ACK
       // with JSIP additional, replacement headers, and body
-      ArrayList<Header> addnl_hdrs = new ArrayList<>(2);
-      ReasonHeader reason_hdr =
+      ArrayList<Header> addnlHeaders = new ArrayList<>(2);
+      ReasonHeader reasonHeader =
           ub.getParent().getHeaderFactory().createReasonHeader("SIP", 44, "dummy");
-      addnl_hdrs.add(reason_hdr);
-      ct_hdr = ub.getParent().getHeaderFactory().createContentTypeHeader("mytype", "mysubtype");
-      addnl_hdrs.add(ct_hdr);
+      addnlHeaders.add(reasonHeader);
+      ctHeader = ub.getParent().getHeaderFactory().createContentTypeHeader("mytype", "mysubtype");
+      addnlHeaders.add(ctHeader);
 
-      ArrayList<Header> replace_hdrs = new ArrayList<>(2);
-      MaxForwardsHeader hdr = ub.getParent().getHeaderFactory().createMaxForwardsHeader(29);
-      replace_hdrs.add(hdr);
-      PriorityHeader pri_hdr =
+      ArrayList<Header> replaceHeaders = new ArrayList<>(2);
+      MaxForwardsHeader header = ub.getParent().getHeaderFactory().createMaxForwardsHeader(29);
+      replaceHeaders.add(header);
+      PriorityHeader priHeader =
           ub.getParent().getHeaderFactory().createPriorityHeader(PriorityHeader.URGENT);
-      replace_hdrs.add(pri_hdr);
+      replaceHeaders.add(priHeader);
 
-      assertTrue(b.sendReinviteOkAck(siptrans_b, addnl_hdrs, replace_hdrs, "ack body"));
-      assertTrue(a.waitForAck(1000));
-      SipRequest req_ack = a.getLastReceivedRequest();
-      assertHeaderContains(req_ack, ReasonHeader.NAME, "dummy");
-      assertHeaderContains(req_ack, MaxForwardsHeader.NAME, "29");
-      assertHeaderContains(req_ack, PriorityHeader.NAME, "gent");
-      assertHeaderContains(req_ack, ContentTypeHeader.NAME, "mysubtype");
-      assertBodyContains(req_ack, "ack body");
+      assertTrue(callB.sendReinviteOkAck(siptransB, addnlHeaders, replaceHeaders, "ack body"));
+      assertTrue(callA.waitForAck(1000));
+      SipRequest reqAck = callA.getLastReceivedRequest();
+      assertHeaderContains(reqAck, ReasonHeader.NAME, "dummy");
+      assertHeaderContains(reqAck, MaxForwardsHeader.NAME, "29");
+      assertHeaderContains(reqAck, PriorityHeader.NAME, "gent");
+      assertHeaderContains(reqAck, ContentTypeHeader.NAME, "mysubtype");
+      assertBodyContains(reqAck, "ack body");
 
       Thread.sleep(100);
 
       // send request - test additional and replace headers (JAIN SIP)
 
-      a.listenForReinvite();
+      callA.listenForReinvite();
 
-      addnl_hdrs = new ArrayList<>(2);
-      pri_hdr = ub.getParent().getHeaderFactory().createPriorityHeader(PriorityHeader.URGENT);
-      reason_hdr = ub.getParent().getHeaderFactory().createReasonHeader("SIP", 41, "I made it up");
-      addnl_hdrs.add(pri_hdr);
-      addnl_hdrs.add(reason_hdr);
+      addnlHeaders = new ArrayList<>(2);
+      priHeader = ub.getParent().getHeaderFactory().createPriorityHeader(PriorityHeader.URGENT);
+      reasonHeader = ub.getParent().getHeaderFactory().createReasonHeader("SIP", 41, "I made it up");
+      addnlHeaders.add(priHeader);
+      addnlHeaders.add(reasonHeader);
 
-      replace_hdrs = new ArrayList<>(1);
-      hdr = ub.getParent().getHeaderFactory().createMaxForwardsHeader(21);
-      replace_hdrs.add(hdr);
+      replaceHeaders = new ArrayList<>(1);
+      header = ub.getParent().getHeaderFactory().createMaxForwardsHeader(21);
+      replaceHeaders.add(header);
 
-      siptrans_b = b.sendReinvite(null, null, addnl_hdrs, replace_hdrs, "no body");
-      assertNotNull(siptrans_b);
-      siptrans_a = a.waitForReinvite(1000);
-      assertNotNull(siptrans_a);
+      siptransB = callB.sendReinvite(null, null, addnlHeaders, replaceHeaders, "no body");
+      assertNotNull(siptransB);
+      siptransA = callA.waitForReinvite(1000);
+      assertNotNull(siptransA);
 
-      req = a.getLastReceivedRequest();
+      req = callA.getLastReceivedRequest();
 
       // check contact info
       assertHeaderNotContains(req, ContactHeader.NAME, ";lr");
-      assertHeaderContains(req, ContactHeader.NAME, b_contact_no_lr);
+      assertHeaderContains(req, ContactHeader.NAME, contactNoLrB);
       assertHeaderContains(req, ContactHeader.NAME, "My DisplayName");
 
       // check body
@@ -1666,40 +1666,40 @@ public class TestNoProxy {
 
       // test everything
 
-      ArrayList<String> addnl_str_hdrs = new ArrayList<>();
-      ArrayList<String> replace_str_hdrs = new ArrayList<>();;
-      addnl_str_hdrs.add("Priority: Normal");
-      addnl_str_hdrs.add("Reason: SIP; cause=42; text=\"I made it up\"");
+      ArrayList<String> addnlStrHeaders = new ArrayList<>();
+      ArrayList<String> replaceStrHeaders = new ArrayList<>();;
+      addnlStrHeaders.add("Priority: Normal");
+      addnlStrHeaders.add("Reason: SIP; cause=42; text=\"I made it up\"");
 
       // TODO, find another header to replace, stack corrects this one
-      // replace_hdrs.add("Content-Length: 4");
+      // replaceHeaders.add("Content-Length: 4");
 
-      assertTrue(a.respondToReinvite(siptrans_a, SipResponse.OK, "ok reinvite last response", -1,
-          a_orig_contact_uri, "Original info", "DooDahDay", "applicationn", "sdp", addnl_str_hdrs,
-          replace_str_hdrs));
+      assertTrue(callA.respondToReinvite(siptransA, SipResponse.OK, "ok reinvite last response", -1,
+          origContactUriA, "Original info", "DooDahDay", "applicationn", "sdp", addnlStrHeaders,
+          replaceStrHeaders));
 
-      assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
-      while (b.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
-        assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
+      assertTrue(callB.waitReinviteResponse(siptransB, 2000));
+      while (callB.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
+        assertTrue(callB.waitReinviteResponse(siptransB, 2000));
       }
 
       // check response code
-      response = b.getLastReceivedResponse();
+      response = callB.getLastReceivedResponse();
       assertEquals(Response.OK, response.getStatusCode());
       assertEquals("ok reinvite last response", response.getReasonPhrase());
 
       // check contact info
-      assertEquals(ua.getContactInfo().getURI(), a_orig_contact_uri); // changed
-      assertFalse(a_orig_contact_uri.equals(a_contact_no_lr));
+      assertEquals(ua.getContactInfo().getURI(), origContactUriA); // changed
+      assertFalse(origContactUriA.equals(contactNoLrA));
       assertHeaderContains(response, ContactHeader.NAME, ";lr");
-      assertHeaderContains(response, ContactHeader.NAME, a_orig_contact_uri);
+      assertHeaderContains(response, ContactHeader.NAME, origContactUriA);
       assertHeaderContains(response, ContactHeader.NAME, "Original info");
 
       // check body
       assertHeaderPresent(response, ContentTypeHeader.NAME);
-      ct_hdr = (ContentTypeHeader) response.getMessage().getHeader(ContentTypeHeader.NAME);
-      assertEquals("applicationn", ct_hdr.getContentType());
-      assertEquals("sdp", ct_hdr.getContentSubType());
+      ctHeader = (ContentTypeHeader) response.getMessage().getHeader(ContentTypeHeader.NAME);
+      assertEquals("applicationn", ctHeader.getContentType());
+      assertEquals("sdp", ctHeader.getContentSubType());
       assertBodyContains(response, "DooD");
 
       // check additional headers
@@ -1710,21 +1710,21 @@ public class TestNoProxy {
       // assertHeaderContains(response, ContentLengthHeader.NAME, "4");
 
       // send ACK
-      assertTrue(b.sendReinviteOkAck(siptrans_b));
-      assertTrue(a.waitForAck(1000));
+      assertTrue(callB.sendReinviteOkAck(siptransB));
+      assertTrue(callA.waitForAck(1000));
       Thread.sleep(100); //
 
       // done, finish up
-      a.listenForDisconnect();
+      callA.listenForDisconnect();
       Thread.sleep(100);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(5000);
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(5000);
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-      a.respondToDisconnect();
+      callA.respondToDisconnect();
 
       Thread.sleep(100);
       ub.dispose();
@@ -1744,19 +1744,19 @@ public class TestNoProxy {
       ub.listenRequestMessage();
       Thread.sleep(100);
 
-      SipCall a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      SipCall callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      RequestEvent inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      RequestEvent incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
       Response response =
-          ub.getParent().getMessageFactory().createResponse(Response.TRYING, inc_req.getRequest());
-      SipTransaction transb = ub.sendReply(inc_req, response); // sendReply(RequestEvent)
+          ub.getParent().getMessageFactory().createResponse(Response.TRYING, incReq.getRequest());
+      SipTransaction transb = ub.sendReply(incReq, response); // sendReply(RequestEvent)
       assertNotNull(ub.format(), transb);
       // initial trying response sent
 
@@ -1764,33 +1764,33 @@ public class TestNoProxy {
 
       // receive it on the 'a' side
 
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait 1st response - " + a.format(), a);
-      assertEquals("Unexpected 1st response received", Response.TRYING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait 1st response - " + callA.format(), callA);
+      assertEquals("Unexpected 1st response received", Response.TRYING, callA.getReturnCode());
 
       // (a) send reply with additional JSIP Headers but no body
 
-      URI callee_contact =
+      URI calleeContact =
           ub.getParent().getAddressFactory()
               .createURI("sip:becky@" + ub.getStackAddress() + ':' + myPort);
-      Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
-      String to_tag = ub.generateNewTag();
-      ArrayList<Header> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12));
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createContentTypeHeader("app", "subtype"));
+      Address contact = ub.getParent().getAddressFactory().createAddress(calleeContact);
+      String toTag = ub.generateNewTag();
+      ArrayList<Header> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12));
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createContentTypeHeader("app", "subtype"));
       // no body - should receive msg with body length 0 and with content
       // type header
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, null, null);
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, addnlHeaders, null, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      SipMessage resp = a.getLastReceivedResponse();
+      SipMessage resp = callA.getLastReceivedResponse();
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "app");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -1799,19 +1799,19 @@ public class TestNoProxy {
 
       // (b) send reply with additional JSIP Header (ContentTypeHeader)
       // and body
-      addnl_hdrs.clear();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createContentTypeHeader("bapp", "subtype"));
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, null, "my body");
+      addnlHeaders.clear();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createContentTypeHeader("bapp", "subtype"));
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, addnlHeaders, null, "my body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "bapp");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -1819,43 +1819,43 @@ public class TestNoProxy {
 
       // (c) send reply with other additional JSIP Header (not
       // ContentTypeHeader) and body
-      addnl_hdrs.clear();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11));
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, null, "my body");
+      addnlHeaders.clear();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11));
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, addnlHeaders, null, "my body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "11");
       assertBodyNotPresent(resp);
 
       // (d) send reply with replace JSIP Header (test replacement),
       // ignored body
-      ArrayList<Header> replace_hdrs = new ArrayList<>();
-      URI bogus_contact =
+      ArrayList<Header> replaceHeaders = new ArrayList<>();
+      URI bogusContact =
           ub.getParent().getAddressFactory()
               .createURI("sip:doodah@" + ub.getStackAddress() + ':' + myPort);
-      Address bogus_addr = ub.getParent().getAddressFactory().createAddress(bogus_contact);
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createContactHeader(bogus_addr));
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, null, replace_hdrs,
+      Address bogusAddr = ub.getParent().getAddressFactory().createAddress(bogusContact);
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createContactHeader(bogusAddr));
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, null, replaceHeaders,
           "my body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "doodah");
@@ -1863,48 +1863,48 @@ public class TestNoProxy {
       assertHeaderNotPresent(resp, MaxForwardsHeader.NAME);
 
       // (e) send reply with replace JSIP Header (test addition)
-      replace_hdrs.clear();
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(50));
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, null, replace_hdrs, null);
+      replaceHeaders.clear();
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(50));
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, null, replaceHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "becky");
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "50");
 
       // (f) send reply with all - additional,replace JSIP Headers & body
-      addnl_hdrs.clear();
-      replace_hdrs.clear();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(bogus_addr, "mytag")); // verify
+      addnlHeaders.clear();
+      replaceHeaders.clear();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createToHeader(bogusAddr, "mytag")); // verify
                                                                                              // ignored
-      addnl_hdrs.add(ub.getParent().getHeaderFactory()
+      addnlHeaders.add(ub.getParent().getHeaderFactory()
           .createContentTypeHeader("application", "text"));// for
       // body
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createContactHeader(bogus_addr)); // verify
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createContactHeader(bogusAddr)); // verify
                                                                                            // replacement
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(60)); // verify
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(60)); // verify
                                                                                        // addition
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, replace_hdrs,
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, addnlHeaders, replaceHeaders,
           "my new body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, ToHeader.NAME, "doodah");
       assertHeaderNotContains(resp, ToHeader.NAME, "mytag");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "application");
@@ -1918,22 +1918,22 @@ public class TestNoProxy {
       // (a') send reply with additional String Headers & content type
       // info but no body
 
-      ArrayList<String> addnl_str_hdrs = new ArrayList<>();
-      addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12).toString());
+      ArrayList<String> addnlStrHeaders = new ArrayList<>();
+      addnlStrHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12).toString());
       // no body - should receive msg with body length 0 and with content
       // type header
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, null, "app", "subtype",
-          addnl_str_hdrs, null);
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, null, "app", "subtype",
+          addnlStrHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "app");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -1942,19 +1942,19 @@ public class TestNoProxy {
 
       // (b') send reply with ContentTypeHeader info
       // and body
-      addnl_str_hdrs.clear();
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, "my body", "bapp",
+      addnlStrHeaders.clear();
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, "my body", "bapp",
           "subtype", null, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "bapp");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -1962,40 +1962,40 @@ public class TestNoProxy {
 
       // (c') send reply with other additional String Header (not
       // ContentType info) and body
-      addnl_str_hdrs.clear();
-      addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11).toString());
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, "my body", null, null,
-          addnl_str_hdrs, null);
+      addnlStrHeaders.clear();
+      addnlStrHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11).toString());
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, "my body", null, null,
+          addnlStrHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "11");
       assertBodyNotPresent(resp);
 
       // (d') send reply with replace String Header (test replacement),
       // ignored body
-      ArrayList<String> replace_str_hdrs = new ArrayList<>();
-      replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, "my body", null, null,
-          null, replace_str_hdrs);
+      ArrayList<String> replaceStrHeaders = new ArrayList<>();
+      replaceStrHeaders.add("Contact: <sip:doodah@192.168.1.101:5061>");
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, "my body", null, null,
+          null, replaceStrHeaders);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "doodah");
@@ -2003,21 +2003,21 @@ public class TestNoProxy {
       assertHeaderNotPresent(resp, MaxForwardsHeader.NAME);
 
       // (e') send reply with replace String Header (test addition)
-      replace_str_hdrs.clear();
-      replace_str_hdrs
+      replaceStrHeaders.clear();
+      replaceStrHeaders
           .add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(50).toString());
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, null, null, null, null,
-          replace_str_hdrs);
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, null, null, null, null,
+          replaceStrHeaders);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "becky");
@@ -2025,25 +2025,25 @@ public class TestNoProxy {
 
       // (f') send reply with all - additional,replace String Headers,
       // CTinfo & body
-      addnl_str_hdrs.clear();
-      replace_str_hdrs.clear();
-      replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
+      addnlStrHeaders.clear();
+      replaceStrHeaders.clear();
+      replaceStrHeaders.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
       // replacement
-      replace_str_hdrs
+      replaceStrHeaders
           .add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(60).toString()); // verify
       // addition
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, "my new body",
-          "application", "text", replace_str_hdrs, replace_str_hdrs);
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, "my new body",
+          "application", "text", replaceStrHeaders, replaceStrHeaders);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, ToHeader.NAME, "doodah");
       assertHeaderNotContains(resp, ToHeader.NAME, "mytag");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "application");
@@ -2054,69 +2054,69 @@ public class TestNoProxy {
 
       // (g') send reply with bad String headers
 
-      replace_str_hdrs.clear();
-      replace_str_hdrs.add("Max-Forwards");
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, null, null, null, null,
-          replace_str_hdrs);
+      replaceStrHeaders.clear();
+      replaceStrHeaders.add("Max-Forwards");
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, null, null, null, null,
+          replaceStrHeaders);
       assertLastOperationFail(ub);
       assertTrue(ub.format().indexOf("no HCOLON") != -1);
 
       // (h') send reply with partial content type parms and body, no
-      // addnl hdrs
+      // addnl headers
 
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, "my body", null, "subtype",
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, "my body", null, "subtype",
           null, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
 
       // (i') send reply with partial content type parms and body, other
-      // addnl hdrs
+      // addnl headers
 
-      addnl_str_hdrs.clear();
-      addnl_str_hdrs.add("Max-Forwards: 66");
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, "my body", "app", null,
-          addnl_str_hdrs, null);
+      addnlStrHeaders.clear();
+      addnlStrHeaders.add("Max-Forwards: 66");
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, "my body", "app", null,
+          addnlStrHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "66");
 
       // (j') send reply with nothing
 
-      ub.sendReply(transb, Response.RINGING, null, to_tag, contact, -1, null, null, null, null,
+      ub.sendReply(transb, Response.RINGING, null, toTag, contact, -1, null, null, null, null,
           null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
-      assertHeaderContains(resp, ToHeader.NAME, to_tag);
+      assertHeaderContains(resp, ToHeader.NAME, toTag);
 
       ub.dispose();
     } catch (Exception e) {
@@ -2144,64 +2144,64 @@ public class TestNoProxy {
       ub.listenRequestMessage();
       Thread.sleep(100);
 
-      SipCall a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      SipCall callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      RequestEvent inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      RequestEvent incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
       Response response =
-          ub.getParent().getMessageFactory().createResponse(Response.TRYING, inc_req.getRequest());
-      SipTransaction transb = ub.sendReply(inc_req, response); // sendReply(RequestEvent)
+          ub.getParent().getMessageFactory().createResponse(Response.TRYING, incReq.getRequest());
+      SipTransaction transb = ub.sendReply(incReq, response); // sendReply(RequestEvent)
       assertNotNull(ub.format(), transb);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
 
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait 1st response - " + a.format(), a);
-      assertEquals("Unexpected 1st response received", Response.TRYING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait 1st response - " + callA.format(), callA);
+      assertEquals("Unexpected 1st response received", Response.TRYING, callA.getReturnCode());
 
       // (a) send reply with additional JSIP Headers but no body
 
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
       URI callee_contact =
           ub.getParent().getAddressFactory()
               .createURI("sip:becky@" + ub.getStackAddress() + ':' + myPort);
       Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
-      String to_tag = ub.generateNewTag();
-      ArrayList<Header> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12));
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createContentTypeHeader("app", "subtype"));
+      String toTag = ub.generateNewTag();
+      ArrayList<Header> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12));
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createContentTypeHeader("app", "subtype"));
       // no body - should receive msg with body length 0 and with content
       // type header
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, null, null);
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, addnlHeaders, null, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      SipMessage resp = a.getLastReceivedResponse();
+      SipMessage resp = callA.getLastReceivedResponse();
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "app");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -2210,32 +2210,32 @@ public class TestNoProxy {
 
       // (b) send reply with additional JSIP Header (ContentTypeHeader)
       // and body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      addnl_hdrs.clear();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createContentTypeHeader("bapp", "subtype"));
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, null,
+      addnlHeaders.clear();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createContentTypeHeader("bapp", "subtype"));
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, addnlHeaders, null,
           "my body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "bapp");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -2243,68 +2243,68 @@ public class TestNoProxy {
 
       // (c) send reply with other additional JSIP Header (not
       // ContentTypeHeader) and body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      addnl_hdrs.clear();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11));
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, null,
+      addnlHeaders.clear();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11));
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, addnlHeaders, null,
           "my body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "11");
       assertBodyNotPresent(resp);
 
       // (d) send reply with replace JSIP Header (test replacement),
       // ignored body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      ArrayList<Header> replace_hdrs = new ArrayList<>();
-      URI bogus_contact =
+      ArrayList<Header> replaceHeaders = new ArrayList<>();
+      URI bogusContact =
           ub.getParent().getAddressFactory()
               .createURI("sip:doodah@" + ub.getStackAddress() + ':' + myPort);
-      Address bogus_addr = ub.getParent().getAddressFactory().createAddress(bogus_contact);
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createContactHeader(bogus_addr));
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, null, replace_hdrs,
+      Address bogusAddr = ub.getParent().getAddressFactory().createAddress(bogusContact);
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createContactHeader(bogusAddr));
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, null, replaceHeaders,
           "my body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "doodah");
@@ -2312,72 +2312,72 @@ public class TestNoProxy {
       assertHeaderNotPresent(resp, MaxForwardsHeader.NAME);
 
       // (e) send reply with replace JSIP Header (test addition)
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      replace_hdrs.clear();
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(50));
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, null, replace_hdrs, null);
+      replaceHeaders.clear();
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(50));
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, null, replaceHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "becky");
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "50");
 
       // (f) send reply with all - additional,replace JSIP Headers & body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      addnl_hdrs.clear();
-      replace_hdrs.clear();
-      addnl_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(bogus_addr, "mytag")); // verify
+      addnlHeaders.clear();
+      replaceHeaders.clear();
+      addnlHeaders.add(ub.getParent().getHeaderFactory().createToHeader(bogusAddr, "mytag")); // verify
                                                                                              // ignored
-      addnl_hdrs.add(ub.getParent().getHeaderFactory()
+      addnlHeaders.add(ub.getParent().getHeaderFactory()
           .createContentTypeHeader("application", "text"));// for
       // body
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createContactHeader(bogus_addr)); // verify
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createContactHeader(bogusAddr)); // verify
                                                                                            // replacement
-      replace_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(60)); // verify
+      replaceHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(60)); // verify
                                                                                        // addition
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, addnl_hdrs, replace_hdrs,
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, addnlHeaders, replaceHeaders,
           "my new body");
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, ToHeader.NAME, "doodah");
       assertHeaderNotContains(resp, ToHeader.NAME, "mytag");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "application");
@@ -2390,34 +2390,34 @@ public class TestNoProxy {
 
       // (a') send reply with additional String Headers & content type
       // info but no body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      ArrayList<String> addnl_str_hdrs = new ArrayList<>();
-      addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12).toString());
+      ArrayList<String> addnlStrHeaders = new ArrayList<>();
+      addnlStrHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(12).toString());
       // no body - should receive msg with body length 0 and with content
       // type header
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, null, "app", "subtype",
-          addnl_str_hdrs, null);
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, null, "app", "subtype",
+          addnlStrHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "app");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -2426,31 +2426,31 @@ public class TestNoProxy {
 
       // (b') send reply with ContentTypeHeader info
       // and body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      addnl_hdrs.clear();
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, "my body", "bapp",
+      addnlHeaders.clear();
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, "my body", "bapp",
           "subtype", null, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, MaxForwardsHeader.NAME, "12");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "bapp");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "subtype");
@@ -2458,64 +2458,64 @@ public class TestNoProxy {
 
       // (c') send reply with other additional String Header (not
       // ContentType info) and body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      addnl_str_hdrs.clear();
-      addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11).toString());
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, "my body", null, null,
-          addnl_str_hdrs, null);
+      addnlStrHeaders.clear();
+      addnlStrHeaders.add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(11).toString());
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, "my body", null, null,
+          addnlStrHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "11");
       assertBodyNotPresent(resp);
 
       // (d') send reply with replace String Header (test replacement),
       // ignored body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      ArrayList<String> replace_str_hdrs = new ArrayList<>();
-      replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>");
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, "my body", null, null,
-          null, replace_str_hdrs);
+      ArrayList<String> replaceStrHeaders = new ArrayList<>();
+      replaceStrHeaders.add("Contact: <sip:doodah@192.168.1.101:5061>");
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, "my body", null, null,
+          null, replaceStrHeaders);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "doodah");
@@ -2523,33 +2523,33 @@ public class TestNoProxy {
       assertHeaderNotPresent(resp, MaxForwardsHeader.NAME);
 
       // (e') send reply with replace String Header (test addition)
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      replace_str_hdrs.clear();
-      replace_str_hdrs
+      replaceStrHeaders.clear();
+      replaceStrHeaders
           .add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(50).toString());
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, null, null, null, null,
-          replace_str_hdrs);
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, null, null, null, null,
+          replaceStrHeaders);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, ContactHeader.NAME, "becky");
@@ -2557,40 +2557,40 @@ public class TestNoProxy {
 
       // (f') send reply with all - additional,replace String Headers,
       // CTinfo & body
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      addnl_str_hdrs.clear();
-      replace_str_hdrs.clear();
-      addnl_str_hdrs.add(ub.getParent().getHeaderFactory().createToHeader(bogus_addr, "mytag")
+      addnlStrHeaders.clear();
+      replaceStrHeaders.clear();
+      addnlStrHeaders.add(ub.getParent().getHeaderFactory().createToHeader(bogusAddr, "mytag")
           .toString()); // verify
       // ignored
-      replace_str_hdrs.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
+      replaceStrHeaders.add("Contact: <sip:doodah@192.168.1.101:5061>"); // verify
       // replacement
-      replace_str_hdrs
+      replaceStrHeaders
           .add(ub.getParent().getHeaderFactory().createMaxForwardsHeader(60).toString()); // verify
       // addition
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, "my new body",
-          "application", "text", addnl_str_hdrs, replace_str_hdrs);
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, "my new body",
+          "application", "text", addnlStrHeaders, replaceStrHeaders);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotContains(resp, ToHeader.NAME, "doodah");
       assertHeaderNotContains(resp, ToHeader.NAME, "mytag");
       assertHeaderContains(resp, ContentTypeHeader.NAME, "application");
@@ -2600,100 +2600,100 @@ public class TestNoProxy {
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "60");
 
       // (g') send reply with bad String headers
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      replace_str_hdrs.clear();
-      replace_str_hdrs.add("Max-Forwards");
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, null, null, null, null,
-          replace_str_hdrs);
+      replaceStrHeaders.clear();
+      replaceStrHeaders.add("Max-Forwards");
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, null, null, null, null,
+          replaceStrHeaders);
       assertLastOperationFail(ub);
       assertTrue(ub.format().indexOf("no HCOLON") != -1);
 
       // (h') send reply with partial content type parms and body, no
-      // addnl hdrs
-      a.dispose(); // recreate the call, can only call
+      // addnl Headers
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, "my body", null,
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, "my body", null,
           "subtype", null, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
 
       // (i') send reply with partial content type parms and body, other
-      // addnl hdrs
-      a.dispose(); // recreate the call, can only call
+      // addnl Headers
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      addnl_str_hdrs.clear();
-      addnl_str_hdrs.add("Max-Forwards: 66");
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, "my body", "app", null,
-          addnl_str_hdrs, null);
+      addnlStrHeaders.clear();
+      addnlStrHeaders.add("Max-Forwards: 66");
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, "my body", "app", null,
+          addnlStrHeaders, null);
       assertLastOperationSuccess(ub.format(), ub);
 
       Thread.sleep(100);
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
       assertHeaderContains(resp, MaxForwardsHeader.NAME, "66");
 
       // (j') send reply with nothing
-      a.dispose(); // recreate the call, can only call
+      callA.dispose(); // recreate the call, can only call
       // sendReply(RequestEvent,..) once for the same request.
-      a = ua.createSipCall();
-      a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+      callA = ua.createSipCall();
+      callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
           + testProtocol);
-      assertLastOperationSuccess(a.format(), a);
+      assertLastOperationSuccess(callA.format(), callA);
       // call sent
 
-      inc_req = ub.waitRequest(30000);
-      assertNotNull(ub.format(), inc_req);
+      incReq = ub.waitRequest(30000);
+      assertNotNull(ub.format(), incReq);
       // call received
 
-      ub.sendReply(inc_req, Response.RINGING, null, to_tag, contact, -1, null, null, null, null,
+      ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, null, null, null, null,
           null);
       assertLastOperationSuccess(ub.format(), ub);
 
@@ -2701,14 +2701,14 @@ public class TestNoProxy {
       System.out.println("about to wait for RINGING");
 
       // receive it on the 'a' side
-      a.waitOutgoingCallResponse(10000);
-      assertLastOperationSuccess("a wait response - " + a.format(), a);
-      assertEquals("Unexpected response received", Response.RINGING, a.getReturnCode());
+      callA.waitOutgoingCallResponse(10000);
+      assertLastOperationSuccess("a wait response - " + callA.format(), callA);
+      assertEquals("Unexpected response received", Response.RINGING, callA.getReturnCode());
       // check parms in reply
-      resp = a.getLastReceivedResponse();
+      resp = callA.getLastReceivedResponse();
       assertHeaderNotPresent(resp, ContentTypeHeader.NAME);
       assertBodyNotPresent(resp);
-      assertHeaderContains(resp, ToHeader.NAME, to_tag);
+      assertHeaderContains(resp, ToHeader.NAME, toTag);
 
       ub.dispose();
     } catch (Exception e) {
@@ -2727,55 +2727,55 @@ public class TestNoProxy {
       ub.setLoopback(true);
 
       // establish a call
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall();
+      callB.listenForIncomingCall();
       Thread.sleep(500);
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+      assertTrue(callB.waitForIncomingCall(5000));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
       Thread.sleep(200);
-      assertResponseReceived(SipResponse.RINGING, a);
+      assertResponseReceived(SipResponse.RINGING, callA);
       Thread.sleep(300);
 
       // Initiate the Cancel
-      b.listenForCancel();
+      callB.listenForCancel();
       Thread.sleep(500);
-      SipTransaction cancel = a.sendCancel();
+      SipTransaction cancel = callA.sendCancel();
       assertNotNull(cancel);
 
       // Respond to the Cancel
-      SipTransaction trans1 = b.waitForCancel(2000);
-      b.stopListeningForRequests();
+      SipTransaction trans1 = callB.waitForCancel(2000);
+      callB.stopListeningForRequests();
       assertNotNull(trans1);
-      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
-      assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
-      a.waitForCancelResponse(cancel, 5000);
+      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
+      assertTrue(callB.respondToCancel(trans1, 200, "0K", -1));
+      callA.waitForCancelResponse(cancel, 5000);
       Thread.sleep(500);
-      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, callA);
       Thread.sleep(500);
 
       // close the INVITE transaction
       assertTrue("487 NOT SENT",
-          b.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+          callB.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
       Thread.sleep(500);
       assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
-          SipResponse.REQUEST_TERMINATED, a);
+          SipResponse.REQUEST_TERMINATED, callA);
 
       // done, finish up
-      a.listenForDisconnect();
+      callA.listenForDisconnect();
       Thread.sleep(100);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(5000);
-      a.respondToDisconnect();
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(5000);
+      callA.respondToDisconnect();
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
       Thread.sleep(100);
       ub.dispose();
@@ -2793,41 +2793,41 @@ public class TestNoProxy {
     ub.setLoopback(true);
 
     // establish a call
-    SipCall b = ub.createSipCall();
-    b.listenForIncomingCall();
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
     Thread.sleep(100);
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/' + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.TRYING, "Trying", -1));
-    assertLastOperationSuccess("b send TRYING - " + b.format(), b);
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.TRYING, "Trying", -1));
+    assertLastOperationSuccess("b send TRYING - " + callB.format(), callB);
     Thread.sleep(400);
-    assertResponseReceived(SipResponse.TRYING, a);
+    assertResponseReceived(SipResponse.TRYING, callA);
     Thread.sleep(100);
 
     // Initiate the Cancel
-    b.listenForCancel();
-    SipTransaction cancel = a.sendCancel();
+    callB.listenForCancel();
+    SipTransaction cancel = callA.sendCancel();
     assertNotNull(cancel);
 
     // Respond to the Cancel
-    SipTransaction trans1 = b.waitForCancel(1000);
-    b.stopListeningForRequests();
+    SipTransaction trans1 = callB.waitForCancel(1000);
+    callB.stopListeningForRequests();
     assertNotNull(trans1);
-    assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
-    assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
-    a.waitForCancelResponse(cancel, 2000);
-    assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+    assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
+    assertTrue(callB.respondToCancel(trans1, 200, "0K", -1));
+    callA.waitForCancelResponse(cancel, 2000);
+    assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, callA);
     Thread.sleep(100);
 
     // close the INVITE transaction
     assertTrue("487 NOT SENT",
-        b.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+        callB.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
     Thread.sleep(300);
     assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
-        SipResponse.REQUEST_TERMINATED, a);
+        SipResponse.REQUEST_TERMINATED, callA);
 
     // done, finish up
     ub.dispose();
@@ -2837,10 +2837,10 @@ public class TestNoProxy {
   public void testCancelBeforeInvite() throws Exception {
     SipStack.trace("testCancelBeforeInvite");
 
-    SipCall a = ua.createSipCall();
-    SipTransaction cancel = a.sendCancel();
+    SipCall callA = ua.createSipCall();
+    SipTransaction cancel = callA.sendCancel();
     assertNull(cancel);
-    assertEquals(SipSession.INVALID_OPERATION, a.getReturnCode());
+    assertEquals(SipSession.INVALID_OPERATION, callA.getReturnCode());
   }
 
   @Test
@@ -2851,19 +2851,19 @@ public class TestNoProxy {
     ub.setLoopback(true);
 
     // send INVITE
-    SipCall b = ub.createSipCall();
-    b.listenForIncomingCall();
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
     Thread.sleep(100);
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/' + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
-    assertTrue(b.waitForIncomingCall(1000));
+    assertTrue(callB.waitForIncomingCall(1000));
 
     // Initiate the Cancel
-    SipTransaction cancel = a.sendCancel();
+    SipTransaction cancel = callA.sendCancel();
     assertNull(cancel);
-    assertEquals(SipSession.INVALID_OPERATION, a.getReturnCode());
+    assertEquals(SipSession.INVALID_OPERATION, callA.getReturnCode());
 
     // done, finish up
     ub.dispose();
@@ -2874,24 +2874,24 @@ public class TestNoProxy {
     SipPhone ub = sipStack.createSipPhone("sip:becky@nist.gov");
     ub.setLoopback(true);
 
-    SipCall b = ub.createSipCall();
-    b.listenForIncomingCall();
+    SipCall callB = ub.createSipCall();
+    callB.listenForIncomingCall();
     Thread.sleep(50);
 
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/' + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
-    assertTrue(b.waitForIncomingCall(1000));
-    assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
+    assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
     Thread.sleep(500);
 
-    assertAnswered("Outgoing call leg not answered", a);
+    assertAnswered("Outgoing call leg not answered", callA);
 
     // Initiate the Cancel
-    SipTransaction cancel = a.sendCancel();
+    SipTransaction cancel = callA.sendCancel();
     assertNull(cancel);
-    assertEquals(SipSession.INVALID_OPERATION, a.getReturnCode());
+    assertEquals(SipSession.INVALID_OPERATION, callA.getReturnCode());
 
     // done, finish up
     ub.dispose();
@@ -2906,63 +2906,63 @@ public class TestNoProxy {
       ub.setLoopback(true);
 
       // establish a call
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall();
+      callB.listenForIncomingCall();
       Thread.sleep(500);
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
-      assertTrue(b.waitForIncomingCall(5000));
-      b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1);
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+      assertTrue(callB.waitForIncomingCall(5000));
+      callB.sendIncomingCallResponse(Response.RINGING, "Ringing", -1);
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
       Thread.sleep(200);
-      assertResponseReceived(SipResponse.RINGING, a);
+      assertResponseReceived(SipResponse.RINGING, callA);
       Thread.sleep(300);
 
       // Initiate the Cancel
-      b.listenForCancel();
+      callB.listenForCancel();
       Thread.sleep(500);
-      SipTransaction cancel = a.sendCancel();
+      SipTransaction cancel = callA.sendCancel();
 
       // Take the call and assert Cancel received
-      SipTransaction trans1 = b.waitForCancel(2000);
-      a.waitOutgoingCallResponse(500);
-      assertTrue("200 OK FOR INVITE NOT SENT", b.sendIncomingCallResponse(Response.OK, "OK", -1));
+      SipTransaction trans1 = callB.waitForCancel(2000);
+      callA.waitOutgoingCallResponse(500);
+      assertTrue("200 OK FOR INVITE NOT SENT", callB.sendIncomingCallResponse(Response.OK, "OK", -1));
       assertNotNull(trans1);
-      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
       Thread.sleep(500);
-      assertResponseReceived("200 OK FOR INVITE NOT RECEIVED", Response.OK, a);
+      assertResponseReceived("200 OK FOR INVITE NOT RECEIVED", Response.OK, callA);
 
       // Respond to the 200 OK INVITE and Verify ACK
-      b.listenForAck();
-      assertTrue("OK ACK NOT SENT", a.sendInviteOkAck());
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+      callB.listenForAck();
+      assertTrue("OK ACK NOT SENT", callA.sendInviteOkAck());
+      assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
       Thread.sleep(500);
-      assertTrue("ACK NOT RECEIVED", b.waitForAck(5000));
-      assertRequestReceived("ACK NOT RECEIVED", Request.ACK, b);
+      assertTrue("ACK NOT RECEIVED", callB.waitForAck(5000));
+      assertRequestReceived("ACK NOT RECEIVED", Request.ACK, callB);
 
       // Respond To Cancel ( Send 481 CALL_OR_TRANSACTION_DOES_NOT_EXIST
       // TO THE CANCEL )
       Thread.sleep(500);
-      a.waitForCancelResponse(cancel, 2000);
-      assertTrue("481 NOT SENT", b.respondToCancel(trans1,
+      callA.waitForCancelResponse(cancel, 2000);
+      assertTrue("481 NOT SENT", callB.respondToCancel(trans1,
           SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST, "Request Terminated", -1));
       Thread.sleep(500);
-      assertTrue(a.waitForCancelResponse(cancel, 500));
+      assertTrue(callA.waitForCancelResponse(cancel, 500));
       assertResponseReceived("481 Call/Transaction Does Not Exist NOT RECEIVED",
-          SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST, a);
+          SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST, callA);
       Thread.sleep(500);
 
       // Disconnect AND Verify BYE
       // Send 200 OK TO THE BYE
       Thread.sleep(500);
-      b.listenForDisconnect();
-      assertTrue("BYE NOT SENT", a.disconnect());
-      b.waitForDisconnect(1000);
-      assertRequestReceived("BYE NOT RECEIVED", Request.BYE, b);
-      assertTrue("DISCONNECT OK", b.respondToDisconnect());
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.listenForDisconnect();
+      assertTrue("BYE NOT SENT", callA.disconnect());
+      callB.waitForDisconnect(1000);
+      assertRequestReceived("BYE NOT RECEIVED", Request.BYE, callB);
+      assertTrue("DISCONNECT OK", callB.respondToDisconnect());
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
       Thread.sleep(100);
       ub.dispose();
@@ -2980,81 +2980,81 @@ public class TestNoProxy {
       ub.setLoopback(true);
 
       // establish a call
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall();
+      callB.listenForIncomingCall();
       Thread.sleep(500);
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+      assertTrue(callB.waitForIncomingCall(5000));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
       Thread.sleep(200);
-      assertResponseReceived(SipResponse.RINGING, a);
+      assertResponseReceived(SipResponse.RINGING, callA);
       Thread.sleep(300);
 
       // Initiate a Cancel with extra Jain SIP parameters
-      b.listenForCancel();
+      callB.listenForCancel();
       Thread.sleep(200);
 
-      ArrayList<Header> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
-      addnl_hdrs.add(ua.getParent().getHeaderFactory()
+      ArrayList<Header> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(ua.getParent().getHeaderFactory().createPriorityHeader("5"));
+      addnlHeaders.add(ua.getParent().getHeaderFactory()
           .createContentTypeHeader("applicationn", "texxt"));
 
-      ArrayList<Header> replace_hdrs = new ArrayList<>();
-      URI bogus_contact =
+      ArrayList<Header> replaceHeaders = new ArrayList<>();
+      URI bogusContact =
           ua.getParent().getAddressFactory()
               .createURI("sip:doodah@" + ua.getStackAddress() + ':' + myPort);
-      Address bogus_addr = ua.getParent().getAddressFactory().createAddress(bogus_contact);
-      replace_hdrs.add(ua.getParent().getHeaderFactory().createContactHeader(bogus_addr)); // verify
+      Address bogusAddr = ua.getParent().getAddressFactory().createAddress(bogusContact);
+      replaceHeaders.add(ua.getParent().getHeaderFactory().createContactHeader(bogusAddr)); // verify
                                                                                            // replacement
-      replace_hdrs.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
-      SipTransaction cancel = a.sendCancel(addnl_hdrs, replace_hdrs, "my cancel body");
+      replaceHeaders.add(ua.getParent().getHeaderFactory().createMaxForwardsHeader(62));
+      SipTransaction cancel = callA.sendCancel(addnlHeaders, replaceHeaders, "my cancel body");
       assertNotNull(cancel);
 
       // Verify the received Cancel
-      SipTransaction trans1 = b.waitForCancel(2000);
+      SipTransaction trans1 = callB.waitForCancel(2000);
       assertNotNull(trans1);
-      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
-      assertHeaderContains(b.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-      assertHeaderContains(b.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
-      assertHeaderContains(b.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(b.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
-      assertBodyContains(b.getLastReceivedRequest(), "my cancel body");
+      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
+      assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+      assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
+      assertBodyContains(callB.getLastReceivedRequest(), "my cancel body");
 
       // finish off the sequence
-      assertTrue(b.respondToCancel(trans1, 200, "0K", -1, addnl_hdrs, replace_hdrs,
+      assertTrue(callB.respondToCancel(trans1, 200, "0K", -1, addnlHeaders, replaceHeaders,
           "my cancel response body"));
-      a.waitForCancelResponse(cancel, 5000);
-      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
-      assertHeaderContains(a.getLastReceivedResponse(), PriorityHeader.NAME, "5");
-      assertHeaderContains(a.getLastReceivedResponse(), ContentTypeHeader.NAME,
+      callA.waitForCancelResponse(cancel, 5000);
+      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, callA);
+      assertHeaderContains(callA.getLastReceivedResponse(), PriorityHeader.NAME, "5");
+      assertHeaderContains(callA.getLastReceivedResponse(), ContentTypeHeader.NAME,
           "applicationn/texxt");
-      assertHeaderContains(a.getLastReceivedResponse(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(a.getLastReceivedResponse(), MaxForwardsHeader.NAME, "62");
-      assertBodyContains(a.getLastReceivedResponse(), "my cancel response body");
+      assertHeaderContains(callA.getLastReceivedResponse(), ContactHeader.NAME, "doodah");
+      assertHeaderContains(callA.getLastReceivedResponse(), MaxForwardsHeader.NAME, "62");
+      assertBodyContains(callA.getLastReceivedResponse(), "my cancel response body");
       Thread.sleep(100);
 
       // close the INVITE transaction
       assertTrue("487 NOT SENT",
-          b.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+          callB.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
       Thread.sleep(200);
       assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
-          SipResponse.REQUEST_TERMINATED, a);
+          SipResponse.REQUEST_TERMINATED, callA);
 
       // done, finish up
-      a.listenForDisconnect();
+      callA.listenForDisconnect();
       Thread.sleep(100);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(5000);
-      a.respondToDisconnect();
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(5000);
+      callA.respondToDisconnect();
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
       Thread.sleep(100);
       ub.dispose();
@@ -3072,79 +3072,79 @@ public class TestNoProxy {
       ub.setLoopback(true);
 
       // establish a call
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall();
+      callB.listenForIncomingCall();
       Thread.sleep(500);
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+      assertTrue(callB.waitForIncomingCall(5000));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
       Thread.sleep(200);
-      assertResponseReceived(SipResponse.RINGING, a);
+      assertResponseReceived(SipResponse.RINGING, callA);
       Thread.sleep(300);
 
       // Initiate a Cancel with extra Jain SIP headers as strings
-      b.listenForCancel();
+      callB.listenForCancel();
       Thread.sleep(200);
 
-      ArrayList<String> addnl_hdrs = new ArrayList<>();
-      addnl_hdrs.add(new String("Priority: 5"));
+      ArrayList<String> addnlHeaders = new ArrayList<>();
+      addnlHeaders.add(new String("Priority: 5"));
 
-      ArrayList<String> replace_hdrs = new ArrayList<>();
-      replace_hdrs.add(new String("Contact: <sip:doodah@" + ua.getStackAddress() + ':' + myPort
+      ArrayList<String> replaceHeaders = new ArrayList<>();
+      replaceHeaders.add(new String("Contact: <sip:doodah@" + ua.getStackAddress() + ':' + myPort
           + '>'));
-      replace_hdrs.add(new String("Max-Forwards: 62"));
+      replaceHeaders.add(new String("Max-Forwards: 62"));
 
       SipTransaction cancel =
-          a.sendCancel("my other cancel body", "applicationn", "texxt", addnl_hdrs, replace_hdrs);
+          callA.sendCancel("my other cancel body", "applicationn", "texxt", addnlHeaders, replaceHeaders);
       assertNotNull(cancel);
 
       // Verify the received Cancel
-      SipTransaction trans1 = b.waitForCancel(2000);
+      SipTransaction trans1 = callB.waitForCancel(2000);
       assertNotNull(trans1);
-      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
+      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
 
-      assertHeaderContains(b.getLastReceivedRequest(), PriorityHeader.NAME, "5");
-      assertHeaderContains(b.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
-      assertHeaderContains(b.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(b.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
-      assertBodyContains(b.getLastReceivedRequest(), "my other cancel body");
+      assertHeaderContains(callB.getLastReceivedRequest(), PriorityHeader.NAME, "5");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContentTypeHeader.NAME, "applicationn/texxt");
+      assertHeaderContains(callB.getLastReceivedRequest(), ContactHeader.NAME, "doodah");
+      assertHeaderContains(callB.getLastReceivedRequest(), MaxForwardsHeader.NAME, "62");
+      assertBodyContains(callB.getLastReceivedRequest(), "my other cancel body");
 
       // finish off the sequence
-      assertTrue(b.respondToCancel(trans1, 200, "0K", -1, "my other cancel response body",
-          "applicationn", "texxt", addnl_hdrs, replace_hdrs));
-      a.waitForCancelResponse(cancel, 5000);
-      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+      assertTrue(callB.respondToCancel(trans1, 200, "0K", -1, "my other cancel response body",
+          "applicationn", "texxt", addnlHeaders, replaceHeaders));
+      callA.waitForCancelResponse(cancel, 5000);
+      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, callA);
 
-      assertHeaderContains(a.getLastReceivedResponse(), PriorityHeader.NAME, "5");
-      assertHeaderContains(a.getLastReceivedResponse(), ContentTypeHeader.NAME,
+      assertHeaderContains(callA.getLastReceivedResponse(), PriorityHeader.NAME, "5");
+      assertHeaderContains(callA.getLastReceivedResponse(), ContentTypeHeader.NAME,
           "applicationn/texxt");
-      assertHeaderContains(a.getLastReceivedResponse(), ContactHeader.NAME, "doodah");
-      assertHeaderContains(a.getLastReceivedResponse(), MaxForwardsHeader.NAME, "62");
-      assertBodyContains(a.getLastReceivedResponse(), "my other cancel response body");
+      assertHeaderContains(callA.getLastReceivedResponse(), ContactHeader.NAME, "doodah");
+      assertHeaderContains(callA.getLastReceivedResponse(), MaxForwardsHeader.NAME, "62");
+      assertBodyContains(callA.getLastReceivedResponse(), "my other cancel response body");
       Thread.sleep(200);
 
       // close the INVITE transaction
       assertTrue("487 NOT SENT",
-          b.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+          callB.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
       Thread.sleep(200);
       assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
-          SipResponse.REQUEST_TERMINATED, a);
+          SipResponse.REQUEST_TERMINATED, callA);
 
       // done, finish up
-      a.listenForDisconnect();
+      callA.listenForDisconnect();
       Thread.sleep(100);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(5000);
-      a.respondToDisconnect();
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(5000);
+      callA.respondToDisconnect();
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
       Thread.sleep(100);
       ub.dispose();
@@ -3163,65 +3163,65 @@ public class TestNoProxy {
       ub.setLoopback(true);
 
       // establish a call
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall();
+      callB.listenForIncomingCall();
       Thread.sleep(20);
 
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
 
-      ClientTransaction aTransaction = a.getLastTransaction().getClientTransaction();
-      Dialog aDialog = aTransaction.getDialog();
+      ClientTransaction transactionA = callA.getLastTransaction().getClientTransaction();
+      Dialog dialogA = transactionA.getDialog();
 
-      assertTrue(b.waitForIncomingCall(5000));
+      assertTrue(callB.waitForIncomingCall(5000));
       // verify RequestEvent is accessible
-      SipRequest request = b.getLastReceivedRequest();
+      SipRequest request = callB.getLastReceivedRequest();
       assertNotNull(request);
       assertNotNull(request.getRequestEvent());
       assertEquals(request.getRequestEvent().getRequest(), request.getMessage());
       assertTrue(request.isInvite());
-      ServerTransaction bTransaction = b.getLastTransaction().getServerTransaction();
-      Dialog bDialog = bTransaction.getDialog();
+      ServerTransaction transactionB = callB.getLastTransaction().getServerTransaction();
+      Dialog dialogB = transactionB.getDialog();
 
-      assertTrue(b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600));
+      assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600));
       Thread.sleep(200);
-      assertTrue(a.waitForAnswer(200));
+      assertTrue(callA.waitForAnswer(200));
       // verify ResponseEvent is accessible
-      SipResponse response = a.getLastReceivedResponse();
+      SipResponse response = callA.getLastReceivedResponse();
       assertNotNull(response);
       assertNotNull(response.getResponseEvent());
       assertEquals(response.getResponseEvent().getResponse(), response.getMessage());
-      assertAnswered(a);
-      assertEquals(aTransaction, response.getResponseEvent().getClientTransaction());
-      assertEquals(aDialog, response.getResponseEvent().getDialog());
+      assertAnswered(callA);
+      assertEquals(transactionA, response.getResponseEvent().getClientTransaction());
+      assertEquals(dialogA, response.getResponseEvent().getDialog());
 
-      assertTrue(a.sendInviteOkAck());
+      assertTrue(callA.sendInviteOkAck());
       Thread.sleep(300);
-      assertTrue(b.waitForAck(1000));
+      assertTrue(callB.waitForAck(1000));
       // check RequestEvent
-      request = b.getLastReceivedRequest();
+      request = callB.getLastReceivedRequest();
       assertNotNull(request);
       assertNotNull(request.getRequestEvent());
       assertEquals(request.getRequestEvent().getRequest(), request.getMessage());
       assertTrue(request.isAck());
-      assertEquals(bDialog, request.getRequestEvent().getServerTransaction().getDialog());
+      assertEquals(dialogB, request.getRequestEvent().getServerTransaction().getDialog());
 
-      a.listenForReinvite();
-      SipTransaction siptrans_b = b.sendReinvite(null, null, "my reinvite", "app", "subapp");
-      assertNotNull(siptrans_b);
-      assertEquals(bDialog, siptrans_b.getClientTransaction().getDialog());
-      SipTransaction siptrans_a = a.waitForReinvite(1000);
-      assertNotNull(siptrans_a);
+      callA.listenForReinvite();
+      SipTransaction siptransB = callB.sendReinvite(null, null, "my reinvite", "app", "subapp");
+      assertNotNull(siptransB);
+      assertEquals(dialogB, siptransB.getClientTransaction().getDialog());
+      SipTransaction siptransA = callA.waitForReinvite(1000);
+      assertNotNull(siptransA);
       // verify RequestEvent
-      request = a.getLastReceivedRequest();
+      request = callA.getLastReceivedRequest();
       assertNotNull(request);
       assertNotNull(request.getRequestEvent());
       assertEquals(request.getRequestEvent().getRequest(), request.getMessage());
       assertTrue(request.isInvite());
-      assertEquals(aDialog, siptrans_a.getServerTransaction().getDialog());
-      assertEquals(aDialog, request.getRequestEvent().getDialog());
+      assertEquals(dialogA, siptransA.getServerTransaction().getDialog());
+      assertEquals(dialogA, request.getRequestEvent().getDialog());
 
       // spot check request message received
       URI receivedContactUri =
@@ -3233,53 +3233,53 @@ public class TestNoProxy {
       assertBodyContains(request, "my reinvite");
 
       // send response
-      assertTrue(a.respondToReinvite(siptrans_a, SipResponse.OK, "ok reinvite response", -1, null,
+      assertTrue(callA.respondToReinvite(siptransA, SipResponse.OK, "ok reinvite response", -1, null,
           null, null, (String) null, null));
 
-      assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
-      while (b.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
-        assertTrue(b.waitReinviteResponse(siptrans_b, 2000));
+      assertTrue(callB.waitReinviteResponse(siptransB, 2000));
+      while (callB.getLastReceivedResponse().getStatusCode() == Response.TRYING) {
+        assertTrue(callB.waitReinviteResponse(siptransB, 2000));
       }
       // verify ResponseEvent
-      response = b.getLastReceivedResponse();
+      response = callB.getLastReceivedResponse();
       assertNotNull(response);
       assertNotNull(response.getResponseEvent());
       assertEquals(response.getResponseEvent().getResponse(), response.getMessage());
       assertEquals("ok reinvite response", response.getReasonPhrase());
-      assertEquals(siptrans_b.getClientTransaction(), response.getResponseEvent()
+      assertEquals(siptransB.getClientTransaction(), response.getResponseEvent()
           .getClientTransaction());
 
       // send ACK
-      assertTrue(b.sendReinviteOkAck(siptrans_b));
-      assertTrue(a.waitForAck(1000));
+      assertTrue(callB.sendReinviteOkAck(siptransB));
+      assertTrue(callA.waitForAck(1000));
       Thread.sleep(100);
 
       // verify RequestEvent
-      request = a.getLastReceivedRequest();
+      request = callA.getLastReceivedRequest();
       assertNotNull(request);
       assertNotNull(request.getRequestEvent());
       assertEquals(request.getRequestEvent().getRequest(), request.getMessage());
       assertTrue(request.isAck());
 
       // done, finish up
-      a.listenForDisconnect();
+      callA.listenForDisconnect();
       Thread.sleep(100);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
-      assertEquals(bDialog, b.getLastTransaction().getClientTransaction().getDialog());
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
+      assertEquals(dialogB, callB.getLastTransaction().getClientTransaction().getDialog());
 
-      a.waitForDisconnect(5000);
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(5000);
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
       // verify RequestEvent
-      request = a.getLastReceivedRequest();
+      request = callA.getLastReceivedRequest();
       assertNotNull(request);
       assertNotNull(request.getRequestEvent());
       assertEquals(request.getRequestEvent().getRequest(), request.getMessage());
       assertTrue(request.isBye());
 
-      a.respondToDisconnect();
+      callA.respondToDisconnect();
 
       Thread.sleep(100);
       ub.dispose();
@@ -3298,77 +3298,77 @@ public class TestNoProxy {
       ub.setLoopback(true);
 
       // establish a call
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
+      SipCall callB = ub.createSipCall();
+      callB.listenForIncomingCall();
       Thread.sleep(500);
-      SipCall a =
+      SipCall callA =
           ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
               + testProtocol);
       assertLastOperationSuccess(ua.format(), ua);
-      Dialog aDialog = a.getLastTransaction().getClientTransaction().getDialog();
-      ClientTransaction aTransaction = a.getLastTransaction().getClientTransaction();
+      Dialog dialogA = callA.getLastTransaction().getClientTransaction().getDialog();
+      ClientTransaction transactionA = callA.getLastTransaction().getClientTransaction();
 
-      assertTrue(b.waitForIncomingCall(5000));
-      Dialog bDialog = b.getLastTransaction().getServerTransaction().getDialog();
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
-      assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+      assertTrue(callB.waitForIncomingCall(5000));
+      Dialog dialogB = callB.getLastTransaction().getServerTransaction().getDialog();
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "Ringing", -1));
+      assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
       Thread.sleep(200);
-      assertResponseReceived(SipResponse.RINGING, a);
+      assertResponseReceived(SipResponse.RINGING, callA);
       Thread.sleep(300);
 
       // Initiate the Cancel
-      b.listenForCancel();
+      callB.listenForCancel();
       Thread.sleep(500);
-      SipTransaction cancel = a.sendCancel();
+      SipTransaction cancel = callA.sendCancel();
       assertNotNull(cancel);
-      assertEquals(aDialog, cancel.getClientTransaction().getDialog());
+      assertEquals(dialogA, cancel.getClientTransaction().getDialog());
 
       // Receive/Respond to the Cancel
-      SipTransaction trans1 = b.waitForCancel(2000);
-      b.stopListeningForRequests();
+      SipTransaction trans1 = callB.waitForCancel(2000);
+      callB.stopListeningForRequests();
       assertNotNull(trans1);
-      assertEquals(bDialog, trans1.getServerTransaction().getDialog());
-      assertEquals(trans1.getRequest(), b.getLastReceivedRequest().getMessage());
-      assertEquals(trans1.getServerTransaction(), b.getLastReceivedRequest().getRequestEvent()
+      assertEquals(dialogB, trans1.getServerTransaction().getDialog());
+      assertEquals(trans1.getRequest(), callB.getLastReceivedRequest().getMessage());
+      assertEquals(trans1.getServerTransaction(), callB.getLastReceivedRequest().getRequestEvent()
           .getServerTransaction());
-      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, b);
-      assertTrue(b.respondToCancel(trans1, 200, "0K", -1));
+      assertRequestReceived("CANCEL NOT RECEIVED", SipRequest.CANCEL, callB);
+      assertTrue(callB.respondToCancel(trans1, 200, "0K", -1));
 
-      assertTrue(a.waitForCancelResponse(cancel, 5000));
+      assertTrue(callA.waitForCancelResponse(cancel, 5000));
       Thread.sleep(500);
       SipResponse response =
-          a.getAllReceivedResponses().get(a.getAllReceivedResponses().size() - 1);
+          callA.getAllReceivedResponses().get(callA.getAllReceivedResponses().size() - 1);
       assertNotNull(response);
       assertNotNull(response.getResponseEvent());
       assertEquals(response.getResponseEvent().getResponse(), response.getMessage());
-      assertEquals(cancel.getClientTransaction(), a.getLastReceivedResponse().getResponseEvent()
+      assertEquals(cancel.getClientTransaction(), callA.getLastReceivedResponse().getResponseEvent()
           .getClientTransaction());
-      assertEquals(aDialog, cancel.getClientTransaction().getDialog());
-      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, a);
+      assertEquals(dialogA, cancel.getClientTransaction().getDialog());
+      assertResponseReceived("200 OK NOT RECEIVED", SipResponse.OK, callA);
       Thread.sleep(500);
 
       // close the INVITE transaction
       assertTrue("487 NOT SENT",
-          b.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
+          callB.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0));
       Thread.sleep(500);
       assertResponseReceived("487 Request Not Terminated NOT RECEIVED",
-          SipResponse.REQUEST_TERMINATED, a);
-      response = a.getLastReceivedResponse();
+          SipResponse.REQUEST_TERMINATED, callA);
+      response = callA.getLastReceivedResponse();
       assertNotNull(response);
       assertNotNull(response.getResponseEvent());
       assertEquals(response.getResponseEvent().getResponse(), response.getMessage());
-      assertEquals(aTransaction, response.getResponseEvent().getClientTransaction());
+      assertEquals(transactionA, response.getResponseEvent().getClientTransaction());
 
       // done, finish up
-      a.listenForDisconnect();
+      callA.listenForDisconnect();
       Thread.sleep(100);
 
-      b.disconnect();
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+      callB.disconnect();
+      assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-      a.waitForDisconnect(5000);
-      a.respondToDisconnect();
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+      callA.waitForDisconnect(5000);
+      callA.respondToDisconnect();
+      assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
       Thread.sleep(100);
       ub.dispose();
@@ -3392,28 +3392,28 @@ public class TestNoProxy {
     ub.listenRequestMessage();
     Thread.sleep(100);
 
-    SipCall a = ua.createSipCall();
-    a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
+    SipCall callA = ua.createSipCall();
+    callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/'
         + testProtocol);
-    assertLastOperationSuccess(a.format(), a);
+    assertLastOperationSuccess(callA.format(), callA);
 
-    RequestEvent inc_req = ub.waitRequest(5000);
-    assertNotNull(ub.format(), inc_req);
+    RequestEvent incReq = ub.waitRequest(5000);
+    assertNotNull(ub.format(), incReq);
 
     Response response =
-        ub.getParent().getMessageFactory().createResponse(Response.TRYING, inc_req.getRequest());
-    SipTransaction transb = ub.sendReply(inc_req, response);
+        ub.getParent().getMessageFactory().createResponse(Response.TRYING, incReq.getRequest());
+    SipTransaction transb = ub.sendReply(incReq, response);
     assertNotNull(ub.format(), transb);
     // trying response sent
 
-    URI callee_contact =
+    URI calleeContact =
         ub.getParent().getAddressFactory()
             .createURI("sip:becky@" + ub.getStackAddress() + ':' + myPort);
-    Address contact = ub.getParent().getAddressFactory().createAddress(callee_contact);
+    Address contact = ub.getParent().getAddressFactory().createAddress(calleeContact);
 
-    String to_tag = ub.generateNewTag();
+    String toTag = ub.generateNewTag();
 
-    ub.sendReply(transb, Response.OK, null, to_tag, contact, -1);
+    ub.sendReply(transb, Response.OK, null, toTag, contact, -1);
     assertLastOperationSuccess(ub.format(), ub);
     // OK sent
 
@@ -3421,15 +3421,15 @@ public class TestNoProxy {
 
     // receive it on the 'a' side
 
-    assertTrue(a.waitOutgoingCallResponse(1000));
-    ResponseEvent event = a.getLastReceivedResponse().getResponseEvent();
+    assertTrue(callA.waitOutgoingCallResponse(1000));
+    ResponseEvent event = callA.getLastReceivedResponse().getResponseEvent();
     assertEquals("Unexpected 1st response received", Response.TRYING, event.getResponse()
         .getStatusCode());
     ClientTransaction ct = event.getClientTransaction();
     assertEquals(TransactionState._TERMINATED, ct.getState().getValue());
 
-    assertTrue(a.waitOutgoingCallResponse(2000));
-    event = a.getLastReceivedResponse().getResponseEvent();
+    assertTrue(callA.waitOutgoingCallResponse(2000));
+    event = callA.getLastReceivedResponse().getResponseEvent();
     assertEquals("Unexpected 2nd response received", Response.OK, event.getResponse()
         .getStatusCode());
     ct = event.getClientTransaction();
@@ -3446,7 +3446,7 @@ public class TestNoProxy {
     SipCall callee = ub.createSipCall();
     callee.listenForIncomingCall();
 
-    SipCall a =
+    SipCall callA =
         ua.makeCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort + '/' + testProtocol);
     assertLastOperationSuccess(ua.format(), ua);
 
@@ -3463,7 +3463,7 @@ public class TestNoProxy {
     callee.listenForCancel();
 
     Thread.sleep(500);
-    SipTransaction callingCancelTrans = a.sendCancel();
+    SipTransaction callingCancelTrans = callA.sendCancel();
     assertNotNull(callingCancelTrans);
 
     SipTransaction calleeCancelTrans = callee.waitForCancel(1000);
@@ -3477,9 +3477,9 @@ public class TestNoProxy {
     Thread.sleep(200);
 
     // see if caller got the cancel OK
-    assertTrue(a.waitForCancelResponse(callingCancelTrans, 1000));
-    assertEquals(200, a.getLastReceivedResponse().getStatusCode());
-    assertHeaderContains(a.getLastReceivedResponse(), CSeqHeader.NAME, "CANCEL");
+    assertTrue(callA.waitForCancelResponse(callingCancelTrans, 1000));
+    assertEquals(200, callA.getLastReceivedResponse().getStatusCode());
+    assertHeaderContains(callA.getLastReceivedResponse(), CSeqHeader.NAME, "CANCEL");
 
     // let callee respond to original INVITE transaction
     callee.sendIncomingCallResponse(SipResponse.REQUEST_TERMINATED, "Request Terminated", 0, null,
@@ -3489,7 +3489,7 @@ public class TestNoProxy {
     Thread.sleep(500);
 
     // see if caller got the 487
-    assertEquals(SipResponse.REQUEST_TERMINATED, a.getLastReceivedResponse().getStatusCode());
+    assertEquals(SipResponse.REQUEST_TERMINATED, callA.getLastReceivedResponse().getStatusCode());
 
     // stack sends ACK, give it some time
     Thread.sleep(200);
@@ -3510,29 +3510,29 @@ public class TestNoProxy {
 
       ua.addUpdateCredential(new Credential("nist.gov", "amit", "a1b2c3d4"));
 
-      SipCall a = ua.createSipCall();
-      SipCall b = ub.createSipCall();
+      SipCall callA = ua.createSipCall();
+      SipCall callB = ub.createSipCall();
 
-      b.listenForIncomingCall();
+      callB.listenForIncomingCall();
       Thread.sleep(10);
 
-      assertTrue(a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort
+      assertTrue(callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort
           + '/' + testProtocol));
-      assertTrue(b.waitForIncomingCall(10000));
+      assertTrue(callB.waitForIncomingCall(10000));
 
       WWWAuthenticateHeader auth_header =
-          AuthUtil.getAuthenticationHeader(b.getLastReceivedRequest(), b.getHeaderFactory(),
+          AuthUtil.getAuthenticationHeader(callB.getLastReceivedRequest(), callB.getHeaderFactory(),
               "nist.gov");
       ArrayList<Header> addnl = new ArrayList<>();
       addnl.add(auth_header);
 
-      assertTrue(b.sendIncomingCallResponse(Response.PROXY_AUTHENTICATION_REQUIRED, null, -1,
+      assertTrue(callB.sendIncomingCallResponse(Response.PROXY_AUTHENTICATION_REQUIRED, null, -1,
           addnl, null, null));
       Thread.sleep(1000);
 
-      assertTrue(a.waitForAuthorisation(5000));
-      assertTrue(b.waitForIncomingCall(5000));
-      assertHeaderPresent(b.getLastReceivedRequest(), ProxyAuthorizationHeader.NAME);
+      assertTrue(callA.waitForAuthorisation(5000));
+      assertTrue(callB.waitForIncomingCall(5000));
+      assertHeaderPresent(callB.getLastReceivedRequest(), ProxyAuthorizationHeader.NAME);
 
       ub.dispose();
     } catch (Exception e) {
@@ -3548,21 +3548,21 @@ public class TestNoProxy {
 
       ua.addUpdateCredential(new Credential("nist.gov", "amit", "a1b2c3d4"));
 
-      SipCall a = ua.createSipCall();
-      SipCall b = ub.createSipCall();
+      SipCall callA = ua.createSipCall();
+      SipCall callB = ub.createSipCall();
 
-      b.listenForIncomingCall();
+      callB.listenForIncomingCall();
       Thread.sleep(10);
 
-      assertTrue(a.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort
+      assertTrue(callA.initiateOutgoingCall("sip:becky@nist.gov", ua.getStackAddress() + ':' + myPort
           + '/' + testProtocol));
-      assertTrue(b.waitForIncomingCall(10000));
+      assertTrue(callB.waitForIncomingCall(10000));
 
-      assertTrue(b.sendIncomingCallResponse(Response.RINGING, "RINGING", -1));
+      assertTrue(callB.sendIncomingCallResponse(Response.RINGING, "RINGING", -1));
       Thread.sleep(1000);
 
-      assertFalse(a.waitForAuthorisation(5000));
-      assertResponseReceived(Response.RINGING, a);
+      assertFalse(callA.waitForAuthorisation(5000));
+      assertResponseReceived(Response.RINGING, callA);
 
       ub.dispose();
     } catch (Exception e) {
