@@ -32,6 +32,7 @@ import javax.sip.message.Request;
  * This class is the static equivalent of SipTestCase. It is intended for use with JUnit 4 or for
  * when the test class must extend something other than SipTestCase.
  * 
+ * <p>
  * These methods can be used directly: <code>SipAssert.assertAnswered(...)</code>, or they can be
  * referenced through static import:
  * 
@@ -41,6 +42,7 @@ import javax.sip.message.Request;
  *    assertAnswered(...);
  * </pre>
  * 
+ * <p>
  * See SipTestCase for further details on writing a SipUnit test class.
  * 
  * @author Becky McElroy

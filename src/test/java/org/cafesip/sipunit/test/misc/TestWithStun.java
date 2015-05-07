@@ -40,13 +40,16 @@ import org.cafesip.sipunit.SipTestCase;
  * are running via this test class behind your firewall, registering with the public sip server and
  * communicating with each other through the public sip server.)
  * 
+ * <p>
  * Thanks to manchi for notes on STUN support and for the example code which is used here
  * (getPublicAddress()).
  * 
+ * <p>
  * At a public SIP server you'll need 2 accounts for this test, one for ua (user 'a' in this test)
  * and another for ub (user 'b'). Replace in this file occurences of your-publicserver-account1 and
  * your-publicserver-account2 (and their passwords) with the 2 accounts at the public server.
  * 
+ * <p>
  * Also edit the defaultProperties below and substitute your values for:
  * 
  * <pre>
@@ -58,6 +61,7 @@ import org.cafesip.sipunit.SipTestCase;
  * - sipunit.proxy.port (the SIP port used by your public SIP server if not the default 5060)
  * </pre>
  * 
+ * <p>
  * This class uses Stun4j, the OpenSource Java Solution for NAT and Firewall Traversal. It is
  * distributable under the LGPL license. See the terms of license at gnu.org or open the sipunit
  * license file at docs/license/index.html with your browser.

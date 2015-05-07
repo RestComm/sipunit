@@ -154,6 +154,9 @@ public class TestWithProxyAuthentication {
 
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -175,6 +178,9 @@ public class TestWithProxyAuthentication {
     }
   }
 
+  /**
+   * Release the sipStack and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     ua.dispose();
@@ -1395,7 +1401,6 @@ public class TestWithProxyAuthentication {
       assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
 
       // send response - test new contact only
-      // _____________________________________________
 
       String b_orig_contact_uri = ub.getContactInfo().getURI();
       String b_contact_no_lr =
@@ -1437,7 +1442,6 @@ public class TestWithProxyAuthentication {
       Thread.sleep(100); //
 
       // send request - test new contact and display name
-      // _____________________________________________
 
       b.listenForReinvite();
       String a_contact_no_lr =
@@ -1469,7 +1473,6 @@ public class TestWithProxyAuthentication {
       assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
 
       // send response - test body only
-      // _____________________________________________
 
       assertTrue(b.respondToReinvite(siptrans_b, SipResponse.OK, "ok reinvite response", -1, null,
           null, "DooDah", "application", "text"));
@@ -1510,7 +1513,6 @@ public class TestWithProxyAuthentication {
       Thread.sleep(100);
 
       // send request - test additional & replace headers (String)
-      // _____________________________________________
 
       b.listenForReinvite();
 
@@ -1548,7 +1550,6 @@ public class TestWithProxyAuthentication {
       assertHeaderContains(req, MaxForwardsHeader.NAME, "22");
 
       // test everything
-      // _____________________________________________
 
       ArrayList<Header> addnl_hdr_hdrs = new ArrayList<>();
       PriorityHeader pri_hdr =

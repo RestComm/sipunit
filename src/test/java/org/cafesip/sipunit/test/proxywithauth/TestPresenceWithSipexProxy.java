@@ -131,6 +131,9 @@ public class TestPresenceWithSipexProxy {
 
   }
 
+  /**
+   * Initialize the sipStack and both user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -162,6 +165,9 @@ public class TestPresenceWithSipexProxy {
     ub = null;
   }
 
+  /**
+   * Release the sipStack and both user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     ua.dispose();

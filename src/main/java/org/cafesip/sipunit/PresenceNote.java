@@ -19,6 +19,7 @@ package org.cafesip.sipunit;
 /**
  * This class represents a single Note element received in a NOTIFY SIP message.
  * 
+ * <p>
  * Notes are optional. Zero or more notes may be received at the top level of the NOTIFY message,
  * pertaining to the presentity (buddy, watchee). Independently, zero or more notes may be received
  * at the tuple (active device) level, pertaining to that particular device.

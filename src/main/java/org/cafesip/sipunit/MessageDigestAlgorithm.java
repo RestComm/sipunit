@@ -27,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * FOR INTERNAL USE, but available to test programs if needed. The class takes standard Http
  * Authentication details and returns a response according to the MD5 algorithm.
+ * 
  * <p>
  * This class was copied from the Sip Communicator project (package
  * net.java.sip.communicator.sip.security, its author is Emil Ivov) and slightly modified here (to
@@ -40,6 +41,7 @@ public class MessageDigestAlgorithm {
 
   /**
    * Calculates a response an http authentication response in accordance with rfc2617.
+   * 
    * <p>
    * This method was copied from the Sip Communicator project (package
    * net.java.sip.communicator.sip.security, its author is Emil Ivov) and slightly modified here (to
@@ -109,7 +111,7 @@ public class MessageDigestAlgorithm {
   }
 
   /**
-   * Defined in rfc 2617 as H(data) = MD5(data);
+   * Defined in rfc 2617 as H(data) = MD5(data); .
    * 
    * @param data data
    * @return MD5(data)
@@ -126,7 +128,7 @@ public class MessageDigestAlgorithm {
   }
 
   /**
-   * Defined in rfc 2617 as KD(secret, data) = H(concat(secret, ":", data))
+   * Defined in rfc 2617 as KD(secret, data) = H(concat(secret, ":", data)) .
    * 
    * @param data data
    * @param secret secret
@@ -138,9 +140,6 @@ public class MessageDigestAlgorithm {
 
   // the following code was copied from the NIST-SIP instant
   // messenger (its author is Olivier Deruelle). Thanks for making it public!
-  /**
-   * to hex converter
-   */
   private static final char[] toHex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
       'c', 'd', 'e', 'f'};
 

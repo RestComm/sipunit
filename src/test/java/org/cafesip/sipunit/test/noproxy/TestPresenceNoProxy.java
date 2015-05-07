@@ -57,6 +57,7 @@ import org.junit.Test;
  * This class tests SipUnit presence functionality. Focus is on the "subscriber" side using
  * PresenceNotifySender (test UA) as the far end.
  * 
+ * <p>
  * Tests in this class do not require a proxy/registrar server. Messaging between UACs is direct
  * (within the localhost).
  * 
@@ -108,9 +109,11 @@ public class TestPresenceNoProxy {
     }
 
     testProtocol = properties.getProperty("sipunit.test.protocol");
-
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -131,6 +134,9 @@ public class TestPresenceNoProxy {
     }
   }
 
+  /**
+   * Release the sipStack and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     if (ua != null) {

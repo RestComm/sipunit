@@ -40,10 +40,12 @@ import org.junit.Test;
 /**
  * This class tests some SipUnit API methods.
  * 
+ * <p>
  * Tests in this class require that a Proxy/registrar server be running with authentication turned
  * off. Defaults: proxy host = 192.168.112.1, port = 5060, protocol = udp; user amit password
  * a1b2c3d4 and user becky password a1b2c3d4 defined at the proxy.
  * 
+ * <p>
  * For the Proxy/registrar, I used cafesip.org's SipExchange.
  */
 
@@ -109,6 +111,9 @@ public class ExampleTestWithProxyNoAuth {
     myUrl = "sip:amit@" + properties.getProperty("sipunit.test.domain");
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     sipStack = new SipStack(testProtocol, myPort, properties);
@@ -119,6 +124,9 @@ public class ExampleTestWithProxyNoAuth {
             proxyPort, myUrl);
   }
 
+  /**
+   * Release the sipStack and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     ua.dispose();

@@ -37,9 +37,11 @@ import org.junit.Test;
  * test except for the IP_ADDRESS property used on the SipStack(s) - it will be ignored by this
  * particular test.
  * 
+ * <p>
  * Thanks to Venkita S. for contributing the changes to SipSession and SipStack needed to make this
  * work.
  * 
+ * <p>
  * Tests in this class do not require a proxy/registrar server. Messaging between UACs is direct.
  * 
  * @author Becky McElroy
@@ -124,6 +126,9 @@ public class TestTwoOrMoreSipStacksNoProxy {
 
   }
 
+  /**
+   * Initialize the sipStack 1 & 2 and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -145,6 +150,9 @@ public class TestTwoOrMoreSipStacksNoProxy {
     }
   }
 
+  /**
+   * Release the sipStack 1 & 2 and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     if (ua != null) {

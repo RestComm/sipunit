@@ -40,8 +40,10 @@ import org.junit.Test;
 /**
  * This class tests SipUnit API MESSAGE methods.
  * 
+ * <p>
  * Tests in this class do not require a proxy/registrar server. Messaging between UACs is direct.
  * 
+ * <p>
  * Also tests that MESSAGE request goes through an established dialog.
  * 
  * @author <a href="mailto:gvagenas@gmail.com">George Vagenas</a>
@@ -126,6 +128,9 @@ public class TestMessageNoProxy {
 
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -147,6 +152,9 @@ public class TestMessageNoProxy {
     }
   }
 
+  /**
+   * Release the sipStack and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     if (ua != null) {
@@ -492,5 +500,4 @@ public class TestMessageNoProxy {
       fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
     }
   }
-
 }

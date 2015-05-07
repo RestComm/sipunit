@@ -147,6 +147,9 @@ public class TestReferWithSipexProxy {
 
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -178,6 +181,9 @@ public class TestReferWithSipexProxy {
     ub = null;
   }
 
+  /**
+   * Release the sipStack and both user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     ua.dispose();

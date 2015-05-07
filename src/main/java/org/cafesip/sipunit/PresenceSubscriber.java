@@ -46,10 +46,12 @@ import org.cafesip.sipunit.presenceparser.pidf.Tuple;
  * incoming NOTIFY message validation, details of any received responses and requests if needed by
  * the test program, and the current or last known presence status/information (tuples/devices,
  * notes, etc.) for this subscription.
+ * 
  * <p>
  * Please read the SipUnit User Guide, Event Subscription section for the NOTIFY-receiving side (at
  * least the operation overview part) for information on how to use the methods of this class and
  * its superclass.
+ * 
  * <p>
  * As in the case of other objects like SipPhone, SipCall, etc., operation-invoking methods of this
  * class return an object or true if successful. In case of an error or caller-specified timeout, a
@@ -268,13 +270,16 @@ public class PresenceSubscriber extends EventSubscriber {
    * response status codes include any of the following: provisional (status / 100 == 1),
    * UNAUTHORIZED, PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED. Any other status code, or a
    * response timeout or any other error, is considered fatal to this refresh operation.
+   * 
    * <p>
    * This method blocks until one of the above outcomes is reached.
+   * 
    * <p>
    * If this method returns true, it means a positive response was received. You can find out about
    * the response by calling this object's getReturnCode() and/or getCurrentResponse() or
    * getLastReceivedResponse() methods. Your next step will be to call the processResponse() method
    * to proceed with the refresh sequence. See the processResponse() javadoc for more details.
+   * 
    * <p>
    * If this method returns false, it means this refresh operation has failed. Call the usual
    * SipUnit failed-operation methods to find out what happened (ie, getErrorMessage(),
@@ -363,6 +368,7 @@ public class PresenceSubscriber extends EventSubscriber {
    * This method is the same as refreshBuddy(duration, eventId, timeout) except that instead of
    * creating the SUBSCRIBE request from parameters passed in, the given request message parameter
    * is used for sending out the SUBSCRIBE message.
+   * 
    * <p>
    * The Request parameter passed into this method should come from calling createSubscribeMessage()
    * - see that javadoc. The subscription duration is reset to the passed in Request's expiry value.
@@ -391,6 +397,7 @@ public class PresenceSubscriber extends EventSubscriber {
    * buddy list and PresenceSubscriber objects for individual fetch operations that have been done).
    * A retired buddy's PresenceSubscriber object continues to be valid and accessible via
    * SipPhone.getBuddyInfo().
+   * 
    * <p>
    * If the subscription is active when this method is called, this method creates a SUBSCRIBE
    * request message based on the parameters passed in, sends out the request, and waits for a
@@ -399,8 +406,10 @@ public class PresenceSubscriber extends EventSubscriber {
    * provisional (status / 100 == 1), UNAUTHORIZED, PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED.
    * Any other status code, or a response timeout or any other error, is considered fatal to the
    * unsubscribe operation.
+   * 
    * <p>
    * This method blocks until one of the above outcomes is reached.
+   * 
    * <p>
    * If this method returns true, it means a positive response was received or the unsubscribe
    * sequence was not required. In order for you to know which is the case (and whether or not to
@@ -410,6 +419,7 @@ public class PresenceSubscriber extends EventSubscriber {
    * getCurrentResponse() or getLastReceivedResponse() methods. Your next step will be to call the
    * processResponse() method to proceed with the unsubscribe sequence. See the processResponse()
    * javadoc for more details.
+   * 
    * <p>
    * If this method returns false, it means the unsubscribe operation was required and it failed.
    * Call the usual SipUnit failed-operation methods to find out what happened (ie,
@@ -455,6 +465,7 @@ public class PresenceSubscriber extends EventSubscriber {
    * This method is the same as removeBuddy(eventId, timeout) except that instead of creating the
    * SUBSCRIBE request from parameters passed in, the given request message parameter is used for
    * sending out the SUBSCRIBE message if the subscription is active.
+   * 
    * <p>
    * The Request parameter passed into this method should come from calling createSubscribeMessage()
    * - see that javadoc. The event "id" in the given request will be used subsequently for error

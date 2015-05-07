@@ -26,6 +26,7 @@ import java.util.List;
  * known about the presence of the presentity and include all active devices for that presentity
  * (ie, partial information is not allowed in a NOTIFY message).
  * 
+ * <p>
  * See RFC 3863 if you need more information.
  * 
  * @author Becky McElroy

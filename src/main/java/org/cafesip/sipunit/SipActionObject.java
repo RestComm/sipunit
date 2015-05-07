@@ -28,7 +28,7 @@ package org.cafesip.sipunit;
 public interface SipActionObject {
 
   /**
-   * This method returns the status code of the current or last operation performed. It returns
+   * Gets the status code of the current or last operation performed. It returns
    * either the SIP response code received from the network (defined in SipResponse, along with the
    * corresponding textual equivalent) or a SipUnit internal status/return code (defined in
    * SipSession, along with the corresponding textual equivalent). SipUnit internal codes are in a

@@ -28,6 +28,7 @@ import javax.sip.message.Request;
  * create this object using the RequestEvent/request object returned by a waitXyz() method (such as
  * SipSession.waitRequest()) when using the low-level SipUnit API.
  * 
+ * <p>
  * A test program may call this object's getMessage() method to get the underlying
  * javax.sip.message.Message object or call getRequestEvent() to get the associated
  * javax.sip.RequestEvent which provides access to related JAIN-SIP objects such ServerTransaction,
@@ -38,7 +39,7 @@ import javax.sip.message.Request;
  */
 public class SipRequest extends SipMessage {
 
-  /** ******* Request methods ********** */
+  // ******* Request methods ********** */
 
   public static final String INVITE = Request.INVITE;
 
@@ -86,6 +87,7 @@ public class SipRequest extends SipMessage {
    * the request event information so that the test program can get JAIN-SIP objects from it, if
    * needed - ServerTransaction, Dialog, etc.
    * 
+   * <p>
    * This constructor may also be used by a test program in lieu of the other constructor.
    * 
    * @param event

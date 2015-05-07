@@ -88,6 +88,7 @@ import org.junit.Test;
 /**
  * This class tests SipUnit Aua.getStackAddress()PI methods.
  * 
+ * <p>
  * Tests in this class do not require a proxy/registrar server. Messaging between UACs is direct.
  * 
  * @author Becky McElroy
@@ -139,6 +140,9 @@ public class TestNoProxyTLS {
     testProtocol = properties.getProperty("sipunit.test.protocol");
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -159,6 +163,9 @@ public class TestNoProxyTLS {
     }
   }
 
+  /**
+   * Release the sipStack and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     if (ua != null) {
@@ -398,7 +405,6 @@ public class TestNoProxyTLS {
     } catch (Exception e) {
       fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
     }
-
   }
 
   /**
@@ -622,9 +628,7 @@ public class TestNoProxyTLS {
 
       SipRequest req = new SipRequest(inc_req.getRequest());
 
-      /*******************************************************************
-       * Incoming request - header/body asserts
-       ******************************************************************/
+      // Incoming request - header/body asserts
 
       assertHeaderPresent(req, "Max-Forwards");
       assertHeaderNotPresent(req, "Max-Forwardss");
@@ -632,8 +636,6 @@ public class TestNoProxyTLS {
       assertHeaderContains(req, "Max-Forwards", "70");
       assertBodyNotPresent(req);
       assertBodyNotContains(req, "e");
-
-      /** ************************************************************* */
 
       // send TRYING
       Response response =
@@ -675,9 +677,7 @@ public class TestNoProxyTLS {
         assertLastOperationSuccess("a wait nth response - " + a.format(), a);
       }
 
-      /*******************************************************************
-       * Incoming response - header/body asserts
-       ******************************************************************/
+      // Incoming response - header/body asserts
 
       assertBodyPresent(a.getLastReceivedResponse());
       assertBodyContains(a.getLastReceivedResponse(), "his is a test body");
@@ -687,8 +687,6 @@ public class TestNoProxyTLS {
       assertHeaderNotPresent(resp, "Contacts");
       assertHeaderNotContains(resp, "Contact", "amit");
       assertHeaderContains(resp, "Contact", "becky");
-
-      /** **************************************************************** */
 
       // ub needs to send BYE, so SipCall gets a request and can verify
       // higher
@@ -724,9 +722,7 @@ public class TestNoProxyTLS {
       assertTrue(ub.sendUnidirectionalRequest(bye, false));
       assertTrue(a.waitForDisconnect(2000));
 
-      /*******************************************************************
-       * MessageListener level - methods, request/response assertions
-       ******************************************************************/
+      // MessageListener level - methods, request/response assertions
 
       SipRequest received_bye = a.getLastReceivedRequest();
       assertNotNull(received_bye);
@@ -768,8 +764,6 @@ public class TestNoProxyTLS {
       assertRequestNotReceived(SipRequest.BYE, received_cseq_seqnum + 1, a);
       assertRequestNotReceived("Didn't expect a SUBSCRIBE", SipRequest.SUBSCRIBE,
           received_cseq_seqnum, a);
-
-      /** ************************************************************* */
 
       ub.dispose();
     } catch (Exception e) {
@@ -1478,7 +1472,6 @@ public class TestNoProxyTLS {
       Thread.sleep(300);
 
       // send request - test reinvite with no specific parameters
-      // _____________________________________________
 
       a.listenForReinvite();
       SipTransaction siptrans_b = b.sendReinvite(null, null, (String) null, null, null);
@@ -1507,7 +1500,6 @@ public class TestNoProxyTLS {
       assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
 
       // send response - test new contact only
-      // _____________________________________________
 
       String a_orig_contact_uri = ua.getContactInfo().getURI();
       String a_contact_no_lr =
@@ -1549,7 +1541,6 @@ public class TestNoProxyTLS {
       Thread.sleep(100); //
 
       // send request - test contact and body
-      // _____________________________________________
 
       a.listenForReinvite();
       String b_contact_no_lr =
@@ -1581,7 +1572,6 @@ public class TestNoProxyTLS {
       assertHeaderContains(req, MaxForwardsHeader.NAME, "70");
 
       // send response - test body only
-      // _____________________________________________
 
       assertTrue(a.respondToReinvite(siptrans_a, SipResponse.OK, "ok reinvite response", -1, null,
           null, "DooDah", "application", "text"));
@@ -1644,7 +1634,6 @@ public class TestNoProxyTLS {
       Thread.sleep(100);
 
       // send request - test additional and replace headers (JAIN SIP)
-      // _____________________________________________
 
       a.listenForReinvite();
 
@@ -1682,7 +1671,6 @@ public class TestNoProxyTLS {
       assertHeaderContains(req, MaxForwardsHeader.NAME, "21");
 
       // test everything
-      // _____________________________________________
 
       ArrayList<String> addnl_str_hdrs = new ArrayList<>();
       ArrayList<String> replace_str_hdrs = new ArrayList<>();
