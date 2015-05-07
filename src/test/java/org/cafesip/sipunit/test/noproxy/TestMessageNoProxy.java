@@ -22,12 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
-import java.util.Properties;
-
-import javax.sip.DialogState;
-import javax.sip.message.Response;
-
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipResponse;
@@ -35,6 +29,12 @@ import org.cafesip.sipunit.SipStack;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.Properties;
+
+import javax.sip.DialogState;
+import javax.sip.message.Response;
 
 /**
  * This class tests SipUnit API MESSAGE methods.
