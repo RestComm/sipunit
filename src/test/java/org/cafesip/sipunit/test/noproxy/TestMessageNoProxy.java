@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.List;
 import java.util.Properties;
@@ -125,7 +124,6 @@ public class TestMessageNoProxy {
     if (prop != null) {
       sipunitTrace = prop.trim().equalsIgnoreCase("true") || prop.trim().equalsIgnoreCase("on");
     }
-
   }
 
   /**
@@ -133,23 +131,13 @@ public class TestMessageNoProxy {
    */
   @Before
   public void setUp() throws Exception {
-    try {
-      sipStack1 = new SipStack(testProtocol, port1, properties1);
-      sipStack2 = new SipStack(testProtocol, port2, properties2);
+    sipStack1 = new SipStack(testProtocol, port1, properties1);
+    sipStack2 = new SipStack(testProtocol, port2, properties2);
 
-      SipStack.setTraceEnabled(sipunitTrace);
-    } catch (Exception ex) {
-      fail("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    SipStack.setTraceEnabled(sipunitTrace);
 
-    try {
-      ua = sipStack1.createSipPhone("sip:amit@nist.gov");
-      ua.setLoopback(true);
-    } catch (Exception ex) {
-      fail("Exception creating SipPhone: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    ua = sipStack1.createSipPhone("sip:amit@nist.gov");
+    ua.setLoopback(true);
   }
 
   /**
@@ -174,231 +162,219 @@ public class TestMessageNoProxy {
   }
 
   @Test
-  public void testMessageBothSides() {
-    try {
-      SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
-      ub.setLoopback(true);
+  public void testMessageBothSides() throws Exception {
+    SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
+    ub.setLoopback(true);
 
-      SipCall callA = ua.createSipCall();
-      SipCall callB = ub.createSipCall();
+    SipCall callA = ua.createSipCall();
+    SipCall callB = ub.createSipCall();
 
-      /*
-       * callA send MESSAGE to callB
-       */
-      callB.listenForMessage();
+    /*
+     * callA send MESSAGE to callB
+     */
+    callB.listenForMessage();
 
-      callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
-          + ";lr/" + testProtocol, "Hello Becky");
+    callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
+        + ";lr/" + testProtocol, "Hello Becky");
 
-      assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
+    assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
 
 
-      assertTrue(callB.waitForMessage(4000));
-      List<String> msgsFromA = callB.getAllReceivedMessagesContent();
+    assertTrue(callB.waitForMessage(4000));
+    List<String> msgsFromA = callB.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromA.size() > 0);
-      assertTrue(msgsFromA.get(0).equals("Hello Becky"));
+    assertTrue(msgsFromA.size() > 0);
+    assertTrue(msgsFromA.get(0).equals("Hello Becky"));
 
-      callB.sendMessageResponse(200, "OK", -1);
+    callB.sendMessageResponse(200, "OK", -1);
 
-      // The dialog should be null
-      assertNull(callB.getDialog());
+    // The dialog should be null
+    assertNull(callB.getDialog());
 
-      assertTrue(callA.waitOutgoingMessageResponse(4000));
-      assertEquals(Response.OK, callA.getLastReceivedResponse().getStatusCode());
+    assertTrue(callA.waitOutgoingMessageResponse(4000));
+    assertEquals(Response.OK, callA.getLastReceivedResponse().getStatusCode());
 
-      /*
-       * callB send MESSAGE to callB
-       */
-      callA.listenForMessage();
+    /*
+     * callB send MESSAGE to callB
+     */
+    callA.listenForMessage();
 
-      callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
-          + ";lr/" + testProtocol, "Hello Amit");
+    callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
+        + ";lr/" + testProtocol, "Hello Amit");
 
-      assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
+    assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
 
-      assertTrue(callA.waitForMessage(4000));
-      List<String> msgsFromB = callA.getAllReceivedMessagesContent();
+    assertTrue(callA.waitForMessage(4000));
+    List<String> msgsFromB = callA.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromB.size() > 0);
-      assertTrue(msgsFromB.get(0).equals("Hello Amit"));
+    assertTrue(msgsFromB.size() > 0);
+    assertTrue(msgsFromB.get(0).equals("Hello Amit"));
 
-      callA.sendMessageResponse(200, "OK", -1);
+    callA.sendMessageResponse(200, "OK", -1);
 
-      // The dialog should be null
-      assertNull(callA.getDialog());
+    // The dialog should be null
+    assertNull(callA.getDialog());
 
-      assertTrue(callB.waitOutgoingMessageResponse(4000));
-      assertEquals(Response.OK, callB.getLastReceivedResponse().getStatusCode());
+    assertTrue(callB.waitOutgoingMessageResponse(4000));
+    assertEquals(Response.OK, callB.getLastReceivedResponse().getStatusCode());
 
-      ub.dispose();
-    } catch (Exception e) {
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    ub.dispose();
   }
 
   // Send MESSAGE replies with body
   @Test
-  public void testMessageBothSidesWithResponseBody() {
-    try {
-      SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
-      ub.setLoopback(true);
+  public void testMessageBothSidesWithResponseBody() throws Exception {
+    SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
+    ub.setLoopback(true);
 
-      SipCall callA = ua.createSipCall();
-      SipCall callB = ub.createSipCall();
+    SipCall callA = ua.createSipCall();
+    SipCall callB = ub.createSipCall();
 
-      /*
-       * callA send MESSAGE to callB
-       */
-      callB.listenForMessage();
+    /*
+     * callA send MESSAGE to callB
+     */
+    callB.listenForMessage();
 
-      callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
-          + ";lr/" + testProtocol, "Hello Becky");
+    callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
+        + ";lr/" + testProtocol, "Hello Becky");
 
-      assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
+    assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
 
 
-      assertTrue(callB.waitForMessage(4000));
-      List<String> msgsFromA = callB.getAllReceivedMessagesContent();
+    assertTrue(callB.waitForMessage(4000));
+    List<String> msgsFromA = callB.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromA.size() > 0);
-      assertTrue(msgsFromA.get(0).equals("Hello Becky"));
+    assertTrue(msgsFromA.size() > 0);
+    assertTrue(msgsFromA.get(0).equals("Hello Becky"));
 
-      // Send reply with a MESSAGE BODY
-      callB.sendMessageResponse(200, "OK", -1, "Hello Amit");
+    // Send reply with a MESSAGE BODY
+    callB.sendMessageResponse(200, "OK", -1, "Hello Amit");
 
-      // The dialog should be null
-      assertNull(callB.getDialog());
+    // The dialog should be null
+    assertNull(callB.getDialog());
 
-      assertTrue(callA.waitOutgoingMessageResponse(4000));
-      SipResponse responseA = callA.getLastReceivedResponse();
-      assertEquals(Response.OK, responseA.getStatusCode());
-      assertEquals("Hello Amit", new String(responseA.getRawContent()));
-      /*
-       * callB send MESSAGE to callB
-       */
-      callA.listenForMessage();
+    assertTrue(callA.waitOutgoingMessageResponse(4000));
+    SipResponse responseA = callA.getLastReceivedResponse();
+    assertEquals(Response.OK, responseA.getStatusCode());
+    assertEquals("Hello Amit", new String(responseA.getRawContent()));
+    /*
+     * callB send MESSAGE to callB
+     */
+    callA.listenForMessage();
 
-      callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
-          + ";lr/" + testProtocol, "Hello Amit");
+    callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
+        + ";lr/" + testProtocol, "Hello Amit");
 
-      assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
+    assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
 
-      assertTrue(callA.waitForMessage(4000));
-      List<String> msgsFromB = callA.getAllReceivedMessagesContent();
+    assertTrue(callA.waitForMessage(4000));
+    List<String> msgsFromB = callA.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromB.size() > 0);
-      assertTrue(msgsFromB.get(0).equals("Hello Amit"));
+    assertTrue(msgsFromB.size() > 0);
+    assertTrue(msgsFromB.get(0).equals("Hello Amit"));
 
-      // Send reply with a MESSAGE BODY
-      callA.sendMessageResponse(200, "OK", -1, "Hello Again Becky");
+    // Send reply with a MESSAGE BODY
+    callA.sendMessageResponse(200, "OK", -1, "Hello Again Becky");
 
-      // The dialog should be null
-      assertNull(callA.getDialog());
+    // The dialog should be null
+    assertNull(callA.getDialog());
 
-      assertTrue(callB.waitOutgoingMessageResponse(4000));
-      SipResponse responseB = callB.getLastReceivedResponse();
-      assertEquals(Response.OK, responseB.getStatusCode());
-      assertEquals("Hello Again Becky", new String(responseB.getRawContent()));
+    assertTrue(callB.waitOutgoingMessageResponse(4000));
+    SipResponse responseB = callB.getLastReceivedResponse();
+    assertEquals(Response.OK, responseB.getStatusCode());
+    assertEquals("Hello Again Becky", new String(responseB.getRawContent()));
 
-      ub.dispose();
-    } catch (Exception e) {
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    ub.dispose();
   }
 
   /*
    * Initiate an outgoing call so we have an established dialog and send messages using it
    */
   @Test
-  public void testMessageBothSidesWithinDialog() {
-    try {
-      SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
-      ub.setLoopback(true);
+  public void testMessageBothSidesWithinDialog() throws Exception {
+    SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
+    ub.setLoopback(true);
 
-      SipCall callA = ua.createSipCall();
-      SipCall callB = ub.createSipCall();
+    SipCall callA = ua.createSipCall();
+    SipCall callB = ub.createSipCall();
 
-      // Initiate a call from A to B and check that we have a CONFIRMED dialog
+    // Initiate a call from A to B and check that we have a CONFIRMED dialog
 
-      callB.listenForIncomingCall();
+    callB.listenForIncomingCall();
 
-      callA.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
-          + testProtocol);
-      assertLastOperationSuccess("a initiate OutgoingCall - " + callA.format(), callA);
+    callA.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
+        + testProtocol);
+    assertLastOperationSuccess("a initiate OutgoingCall - " + callA.format(), callA);
 
-      assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.waitForIncomingCall(1000));
 
-      assertTrue(callB.sendIncomingCallResponse(100, "TRYING", -1));
-      assertTrue(callB.sendIncomingCallResponse(180, "RINGING", -1));
+    assertTrue(callB.sendIncomingCallResponse(100, "TRYING", -1));
+    assertTrue(callB.sendIncomingCallResponse(180, "RINGING", -1));
 
-      assertTrue(callA.waitOutgoingCallResponse());
+    assertTrue(callA.waitOutgoingCallResponse());
 
-      assertTrue(callB.sendIncomingCallResponse(200, "OK", -1));
+    assertTrue(callB.sendIncomingCallResponse(200, "OK", -1));
 
-      assertTrue(callA.sendInviteOkAck());
+    assertTrue(callA.sendInviteOkAck());
 
-      assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
-      assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
+    assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
+    assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
 
-      /*
-       * callA send MESSAGE to callB
-       */
-      callB.listenForMessage();
+    /*
+     * callA send MESSAGE to callB
+     */
+    callB.listenForMessage();
 
-      callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
-          + ";lr/" + testProtocol, "Hello Becky");
+    callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
+        + ";lr/" + testProtocol, "Hello Becky");
 
-      assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
+    assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
 
 
-      assertTrue(callB.waitForMessage(4000));
-      List<String> msgsFromA = callB.getAllReceivedMessagesContent();
+    assertTrue(callB.waitForMessage(4000));
+    List<String> msgsFromA = callB.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromA.size() > 0);
-      assertTrue(msgsFromA.get(0).equals("Hello Becky"));
+    assertTrue(msgsFromA.size() > 0);
+    assertTrue(msgsFromA.get(0).equals("Hello Becky"));
 
-      callB.sendMessageResponse(200, "OK", -1);
+    callB.sendMessageResponse(200, "OK", -1);
 
-      // Check we are inside a dialog
-      assertNotNull(callB.getDialog());
-      assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
+    // Check we are inside a dialog
+    assertNotNull(callB.getDialog());
+    assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
 
-      assertTrue(callA.waitOutgoingMessageResponse(4000));
-      assertEquals(Response.OK, callA.getLastReceivedResponse().getStatusCode());
+    assertTrue(callA.waitOutgoingMessageResponse(4000));
+    assertEquals(Response.OK, callA.getLastReceivedResponse().getStatusCode());
 
-      /*
-       * callB send MESSAGE to callB
-       */
-      callA.listenForMessage();
+    /*
+     * callB send MESSAGE to callB
+     */
+    callA.listenForMessage();
 
-      callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
-          + ";lr/" + testProtocol, "Hello Amit");
+    callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
+        + ";lr/" + testProtocol, "Hello Amit");
 
-      assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
+    assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
 
-      assertTrue(callA.waitForMessage(4000));
-      List<String> msgsFromB = callA.getAllReceivedMessagesContent();
+    assertTrue(callA.waitForMessage(4000));
+    List<String> msgsFromB = callA.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromB.size() > 0);
-      assertTrue(msgsFromB.get(0).equals("Hello Amit"));
+    assertTrue(msgsFromB.size() > 0);
+    assertTrue(msgsFromB.get(0).equals("Hello Amit"));
 
-      callA.sendMessageResponse(200, "OK", -1);
+    callA.sendMessageResponse(200, "OK", -1);
 
-      // Check we are inside a dialog
-      assertNotNull(callA.getDialog());
-      assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
+    // Check we are inside a dialog
+    assertNotNull(callA.getDialog());
+    assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
 
-      assertTrue(callB.waitOutgoingMessageResponse(4000));
-      assertEquals(Response.OK, callB.getLastReceivedResponse().getStatusCode());
+    assertTrue(callB.waitOutgoingMessageResponse(4000));
+    assertEquals(Response.OK, callB.getLastReceivedResponse().getStatusCode());
 
-      // Should be able to disconnect the previously created call
-      assertTrue(callA.disconnect());
+    // Should be able to disconnect the previously created call
+    assertTrue(callA.disconnect());
 
-      ub.dispose();
-    } catch (Exception e) {
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    ub.dispose();
   }
 
   /*
@@ -406,98 +382,94 @@ public class TestMessageNoProxy {
    * replies contain BODY
    */
   @Test
-  public void testMessageBothSidesWithinDialogWithResponseBody() {
-    try {
-      SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
-      ub.setLoopback(true);
+  public void testMessageBothSidesWithinDialogWithResponseBody() throws Exception {
+    SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
+    ub.setLoopback(true);
 
-      SipCall callA = ua.createSipCall();
-      SipCall callB = ub.createSipCall();
+    SipCall callA = ua.createSipCall();
+    SipCall callB = ub.createSipCall();
 
-      // Initiate a call from A to B and check that we have a CONFIRMED dialog
+    // Initiate a call from A to B and check that we have a CONFIRMED dialog
 
-      callB.listenForIncomingCall();
+    callB.listenForIncomingCall();
 
-      callA.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
-          + testProtocol);
-      assertLastOperationSuccess("a initiate OutgoingCall - " + callA.format(), callA);
+    callA.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
+        + testProtocol);
+    assertLastOperationSuccess("a initiate OutgoingCall - " + callA.format(), callA);
 
-      assertTrue(callB.waitForIncomingCall(1000));
+    assertTrue(callB.waitForIncomingCall(1000));
 
-      assertTrue(callB.sendIncomingCallResponse(100, "TRYING", -1));
-      assertTrue(callB.sendIncomingCallResponse(180, "RINGING", -1));
+    assertTrue(callB.sendIncomingCallResponse(100, "TRYING", -1));
+    assertTrue(callB.sendIncomingCallResponse(180, "RINGING", -1));
 
-      assertTrue(callA.waitOutgoingCallResponse());
+    assertTrue(callA.waitOutgoingCallResponse());
 
-      assertTrue(callB.sendIncomingCallResponse(200, "OK", -1));
+    assertTrue(callB.sendIncomingCallResponse(200, "OK", -1));
 
-      assertTrue(callA.sendInviteOkAck());
+    assertTrue(callA.sendInviteOkAck());
 
-      assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
-      assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
+    assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
+    assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
 
-      /*
-       * callA send MESSAGE to callB
-       */
-      callB.listenForMessage();
+    /*
+     * callA send MESSAGE to callB
+     */
+    callB.listenForMessage();
 
-      callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
-          + ";lr/" + testProtocol, "Hello Becky");
+    callA.initiateOutgoingMessage("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2
+        + ";lr/" + testProtocol, "Hello Becky");
 
-      assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
+    assertLastOperationSuccess("a initiate MESSAGE - " + callA.format(), callA);
 
 
-      assertTrue(callB.waitForMessage(4000));
-      List<String> msgsFromA = callB.getAllReceivedMessagesContent();
+    assertTrue(callB.waitForMessage(4000));
+    List<String> msgsFromA = callB.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromA.size() > 0);
-      assertTrue(msgsFromA.get(0).equals("Hello Becky"));
+    assertTrue(msgsFromA.size() > 0);
+    assertTrue(msgsFromA.get(0).equals("Hello Becky"));
 
-      // Send reply with a MESSAGE BODY
-      callB.sendMessageResponse(200, "OK", -1, "Hello Amit");
+    // Send reply with a MESSAGE BODY
+    callB.sendMessageResponse(200, "OK", -1, "Hello Amit");
 
-      // Check we are inside a dialog
-      assertNotNull(callB.getDialog());
-      assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
+    // Check we are inside a dialog
+    assertNotNull(callB.getDialog());
+    assertEquals(DialogState.CONFIRMED, callB.getDialog().getState());
 
-      assertTrue(callA.waitOutgoingMessageResponse(4000));
-      SipResponse responseA = callA.getLastReceivedResponse();
-      assertEquals(Response.OK, responseA.getStatusCode());
-      assertEquals("Hello Amit", new String(responseA.getRawContent()));
+    assertTrue(callA.waitOutgoingMessageResponse(4000));
+    SipResponse responseA = callA.getLastReceivedResponse();
+    assertEquals(Response.OK, responseA.getStatusCode());
+    assertEquals("Hello Amit", new String(responseA.getRawContent()));
 
-      /*
-       * callB send MESSAGE to callB
-       */
-      callA.listenForMessage();
+    /*
+     * callB send MESSAGE to callB
+     */
+    callA.listenForMessage();
 
-      callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
-          + ";lr/" + testProtocol, "Hello Amit");
+    callB.initiateOutgoingMessage("sip:amit@nist.gov", ua.getStackAddress() + ":" + port1
+        + ";lr/" + testProtocol, "Hello Amit");
 
-      assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
+    assertLastOperationSuccess("b initiate MESSAGE - " + callB.format(), callB);
 
-      assertTrue(callA.waitForMessage(4000));
-      List<String> msgsFromB = callA.getAllReceivedMessagesContent();
+    assertTrue(callA.waitForMessage(4000));
+    List<String> msgsFromB = callA.getAllReceivedMessagesContent();
 
-      assertTrue(msgsFromB.size() > 0);
-      assertTrue(msgsFromB.get(0).equals("Hello Amit"));
+    assertTrue(msgsFromB.size() > 0);
+    assertTrue(msgsFromB.get(0).equals("Hello Amit"));
 
-      callA.sendMessageResponse(200, "OK", -1, "Hello Again Becky");
+    callA.sendMessageResponse(200, "OK", -1, "Hello Again Becky");
 
-      // Check we are inside a dialog
-      assertNotNull(callA.getDialog());
-      assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
+    // Check we are inside a dialog
+    assertNotNull(callA.getDialog());
+    assertEquals(DialogState.CONFIRMED, callA.getDialog().getState());
 
-      assertTrue(callB.waitOutgoingMessageResponse(4000));
-      SipResponse responseB = callB.getLastReceivedResponse();
-      assertEquals(Response.OK, responseB.getStatusCode());
-      assertEquals("Hello Again Becky", new String(responseB.getRawContent()));
+    assertTrue(callB.waitOutgoingMessageResponse(4000));
+    SipResponse responseB = callB.getLastReceivedResponse();
+    assertEquals(Response.OK, responseB.getStatusCode());
+    assertEquals("Hello Again Becky", new String(responseB.getRawContent()));
 
-      // Should be able to disconnect the previously created call
-      assertTrue(callA.disconnect());
+    // Should be able to disconnect the previously created call
+    assertTrue(callA.disconnect());
 
-      ub.dispose();
-    } catch (Exception e) {
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    ub.dispose();
   }
 }
