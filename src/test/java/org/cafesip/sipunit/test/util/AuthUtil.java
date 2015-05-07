@@ -1,10 +1,11 @@
 package org.cafesip.sipunit.test.util;
 
+import org.cafesip.sipunit.SipRequest;
+
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.ProxyAuthenticateHeader;
 import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Request;
-import org.cafesip.sipunit.SipRequest;
 
 public class AuthUtil {
 
