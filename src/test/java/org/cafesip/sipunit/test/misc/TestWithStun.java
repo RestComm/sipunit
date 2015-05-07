@@ -16,24 +16,23 @@
 
 package org.cafesip.sipunit.test.misc;
 
-import java.text.ParseException;
-import java.util.Properties;
-
-import javax.sip.InvalidArgumentException;
-import javax.sip.message.Response;
-
-import net.java.stun4j.StunAddress;
-import net.java.stun4j.StunException;
-import net.java.stun4j.client.NetworkConfigurationDiscoveryProcess;
-import net.java.stun4j.client.StunDiscoveryReport;
-
 import org.cafesip.sipunit.Credential;
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTestCase;
+
 import org.junit.After;
+
+import java.util.Properties;
+
+import javax.sip.message.Response;
+
+import net.java.stun4j.StunAddress;
+import net.java.stun4j.StunException;
+import net.java.stun4j.client.NetworkConfigurationDiscoveryProcess;
+import net.java.stun4j.client.StunDiscoveryReport;
 
 /**
  * This class tests SipUnit with Stun. It uses a STUN server to find out the public IP address and
