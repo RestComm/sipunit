@@ -24,6 +24,21 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import org.cafesip.sipunit.PresenceDeviceInfo;
+import org.cafesip.sipunit.PresenceNote;
+import org.cafesip.sipunit.PresenceNotifySender;
+import org.cafesip.sipunit.PresenceSubscriber;
+import org.cafesip.sipunit.SipPhone;
+import org.cafesip.sipunit.SipRequest;
+import org.cafesip.sipunit.SipResponse;
+import org.cafesip.sipunit.SipSession;
+import org.cafesip.sipunit.SipStack;
+import org.cafesip.sipunit.SipTransaction;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -39,19 +54,6 @@ import javax.sip.header.EventHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-import org.cafesip.sipunit.PresenceDeviceInfo;
-import org.cafesip.sipunit.PresenceNote;
-import org.cafesip.sipunit.PresenceNotifySender;
-import org.cafesip.sipunit.PresenceSubscriber;
-import org.cafesip.sipunit.SipPhone;
-import org.cafesip.sipunit.SipRequest;
-import org.cafesip.sipunit.SipResponse;
-import org.cafesip.sipunit.SipSession;
-import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTransaction;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * This class tests SipUnit presence functionality. Focus is on the "subscriber" side using
