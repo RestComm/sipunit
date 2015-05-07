@@ -39,6 +39,22 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+
+import org.cafesip.sipunit.Credential;
+import org.cafesip.sipunit.SipCall;
+import org.cafesip.sipunit.SipMessage;
+import org.cafesip.sipunit.SipPhone;
+import org.cafesip.sipunit.SipRequest;
+import org.cafesip.sipunit.SipResponse;
+import org.cafesip.sipunit.SipSession;
+import org.cafesip.sipunit.SipStack;
+import org.cafesip.sipunit.SipTransaction;
+import org.cafesip.sipunit.test.util.AuthUtil;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EventObject;
@@ -71,21 +87,6 @@ import javax.sip.header.ViaHeader;
 import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.cafesip.sipunit.Credential;
-import org.cafesip.sipunit.SipCall;
-import org.cafesip.sipunit.SipMessage;
-import org.cafesip.sipunit.SipPhone;
-import org.cafesip.sipunit.SipRequest;
-import org.cafesip.sipunit.SipResponse;
-import org.cafesip.sipunit.SipSession;
-import org.cafesip.sipunit.SipStack;
-import org.cafesip.sipunit.SipTransaction;
-import org.cafesip.sipunit.test.util.AuthUtil;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 
 /**
  * This class tests SipUnit API methods.
