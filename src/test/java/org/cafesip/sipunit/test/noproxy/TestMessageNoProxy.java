@@ -91,10 +91,10 @@ public class TestMessageNoProxy {
   private Properties properties2 = new Properties(defaultProperties2);
 
   public TestMessageNoProxy() {
-    Properties input_props = new Properties();
-    input_props.putAll(System.getProperties());
+    Properties inputProps = new Properties();
+    inputProps.putAll(System.getProperties());
 
-    String prop = input_props.getProperty("sipunit.testport.1");
+    String prop = inputProps.getProperty("sipunit.testport.1");
     if (prop != null) {
       try {
         port1 = Integer.parseInt(prop);
@@ -105,7 +105,7 @@ public class TestMessageNoProxy {
       }
     }
 
-    prop = input_props.getProperty("sipunit.testport.2");
+    prop = inputProps.getProperty("sipunit.testport.2");
     if (prop != null) {
       try {
         port2 = Integer.parseInt(prop);
@@ -116,12 +116,12 @@ public class TestMessageNoProxy {
       }
     }
 
-    prop = input_props.getProperty("sipunit.test.protocol");
+    prop = inputProps.getProperty("sipunit.test.protocol");
     if (prop != null) {
       testProtocol = prop;
     }
 
-    prop = input_props.getProperty("sipunit.trace");
+    prop = inputProps.getProperty("sipunit.trace");
     if (prop != null) {
       sipunitTrace = prop.trim().equalsIgnoreCase("true") || prop.trim().equalsIgnoreCase("on");
     }
