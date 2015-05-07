@@ -16,8 +16,10 @@
 
 package org.cafesip.sipunit.test.misc;
 
+import java.text.ParseException;
 import java.util.Properties;
 
+import javax.sip.InvalidArgumentException;
 import javax.sip.message.Response;
 
 import net.java.stun4j.StunAddress;
@@ -31,6 +33,7 @@ import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTestCase;
+import org.junit.After;
 
 /**
  * This class tests SipUnit with Stun. It uses a STUN server to find out the public IP address and
@@ -129,7 +132,6 @@ public class TestWithStun extends SipTestCase {
 
     testProtocol = properties.getProperty("sipunit.test.protocol");
     myUrl = "sip:your-publicserver-account1@" + properties.getProperty("sipunit.test.domain");
-
   }
 
   /*
@@ -142,26 +144,16 @@ public class TestWithStun extends SipTestCase {
     // use the stun server to find out my public address
     assertTrue(getPublicAddress());
 
-    try {
-      sipStack = new SipStack(testProtocol, myPort, properties);
-      SipStack.setTraceEnabled(true);
-    } catch (Exception ex) {
-      fail("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    sipStack = new SipStack(testProtocol, myPort, properties);
+    SipStack.setTraceEnabled(true);
 
     SipStack.trace("My public IP address = " + publicIp + ", port = " + publicPort);
 
-    try {
-      ua =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort, myUrl);
+    ua =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort, myUrl);
 
-      ua.setPublicAddress(publicIp, publicPort);
-    } catch (Exception ex) {
-      fail("Exception creating SipPhone: " + ex.getClass().getName() + ": " + ex.getMessage());
-      throw ex;
-    }
+    ua.setPublicAddress(publicIp, publicPort);
   }
 
   public boolean getPublicAddress() {
@@ -208,77 +200,71 @@ public class TestWithStun extends SipTestCase {
     sipStack.dispose();
   }
 
-  public void testCall() {
+  public void testCall() throws Exception {
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"),
         "your-publicserver-account1", "your-publicserver-account1-password"));
 
-    try {
-      SipStack.trace("About to register using credentials ");
+    SipStack.trace("About to register using credentials ");
 
-      ua.register(null, 3600);
+    ua.register(null, 3600);
 
-      assertLastOperationSuccess(
-          "Caller registration using pre-set credentials failed - " + ua.format(), ua);
+    assertLastOperationSuccess(
+        "Caller registration using pre-set credentials failed - " + ua.format(), ua);
 
-      SipPhone ub =
-          sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
-              proxyPort,
-              "sip:your-publicserver-account2@" + properties.getProperty("sipunit.test.domain"));
-      ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"),
-          "your-publicserver-account2", "your-publicserver-account2-password"));
+    SipPhone ub =
+        sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
+            proxyPort,
+            "sip:your-publicserver-account2@" + properties.getProperty("sipunit.test.domain"));
+    ub.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"),
+        "your-publicserver-account2", "your-publicserver-account2-password"));
 
-      // set public address on ub
-      ub.setPublicAddress(publicIp, publicPort);
+    // set public address on ub
+    ub.setPublicAddress(publicIp, publicPort);
 
-      ub.register(null, 9600);
-      assertLastOperationSuccess(
-          "Callee registration using pre-set credentials failed - " + ub.format(), ub);
+    ub.register(null, 9600);
+    assertLastOperationSuccess(
+        "Callee registration using pre-set credentials failed - " + ub.format(), ub);
 
-      SipCall b = ub.createSipCall();
-      b.listenForIncomingCall();
-      Thread.sleep(50);
+    SipCall b = ub.createSipCall();
+    b.listenForIncomingCall();
+    Thread.sleep(50);
 
-      SipCall a =
-          ua.makeCall(
-              "sip:your-publicserver-account2@" + properties.getProperty("sipunit.test.domain"),
-              null);
+    SipCall a =
+        ua.makeCall(
+            "sip:your-publicserver-account2@" + properties.getProperty("sipunit.test.domain"), null);
 
-      assertLastOperationSuccess(ua.format(), ua);
+    assertLastOperationSuccess(ua.format(), ua);
 
-      assertTrue(b.waitForIncomingCall(5000));
+    assertTrue(b.waitForIncomingCall(5000));
 
-      b.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
-      Thread.sleep(1000);
+    b.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
+    Thread.sleep(1000);
 
-      assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a);
+    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, a);
 
-      b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
-      Thread.sleep(1000);
+    b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
+    Thread.sleep(1000);
 
-      assertResponseReceived(SipResponse.OK, a);
+    assertResponseReceived(SipResponse.OK, a);
 
-      assertTrue(a.sendInviteOkAck());
-      assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    assertTrue(a.sendInviteOkAck());
+    assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
 
-      assertTrue(b.waitForAck(1000));
+    assertTrue(b.waitForAck(1000));
 
-      a.listenForDisconnect();
-      Thread.sleep(100);
+    a.listenForDisconnect();
+    Thread.sleep(100);
 
-      assertTrue(b.disconnect());
-      assertLastOperationSuccess("b disc - " + b.format(), b);
+    assertTrue(b.disconnect());
+    assertLastOperationSuccess("b disc - " + b.format(), b);
 
-      // verify extra parameters were received in the message
+    // verify extra parameters were received in the message
 
-      a.waitForDisconnect(1000);
-      assertLastOperationSuccess("a wait disc - " + a.format(), a);
+    a.waitForDisconnect(1000);
+    assertLastOperationSuccess("a wait disc - " + a.format(), a);
 
-      assertTrue(a.respondToDisconnect());
+    assertTrue(a.respondToDisconnect());
 
-      ub.dispose();
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-    }
+    ub.dispose();
   }
 }
