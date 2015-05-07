@@ -51,6 +51,7 @@ import javax.sip.message.Response;
  * The primary purpose of this class is as a test utility, to verify other UA's NOTIFY reception
  * processing.
  * 
+ * <p>
  * When instantiated, an object of this class listens for a SUBSCRIBE message. After the calling
  * program has sent a SUBSCRIBE message to this object's uri, it can call this object's
  * processSubscribe() to receive and process the SUBSCRIBE and send a response. After that, this
@@ -636,12 +637,14 @@ public class PresenceNotifySender implements MessageListener {
    * The waitResponse() method waits for a response to a previously sent transactional request
    * message. Call this method after calling sendStatefulNotify().
    * 
+   * <p>
    * This method blocks until one of the following occurs: 1) A javax.sip.ResponseEvent is received.
    * This is the object returned by this method. 2) A javax.sip.TimeoutEvent is received. This is
    * the object returned by this method. 3) The wait timeout period specified by the parameter to
    * this method expires. Null is returned in this case. 4) An error occurs. Null is returned in
    * this case.
    * 
+   * <p>
    * Note that this method can be called repeatedly upon receipt of provisional response message(s).
    * 
    * @param trans The SipTransaction object associated with the sent request. This is the object
@@ -774,13 +777,16 @@ public class PresenceNotifySender implements MessageListener {
    * This method resends a NOTIFY statefully and with required authorization headers. Call it after
    * you find out that authorization is required by calling method needAuthorization().
    * 
+   * <p>
    * Example testcode usage (this object is "sender"): // get the response, trans is SipTransaction
    * object EventObject event = sender.waitResponse(trans, 2000);
    * assertNotNull(sender.getErrorMessage(), event);
    * 
+   * <p>
    * if (event instanceof TimeoutEvent) { fail("Event Timeout received by far end while waiting for
    * NOTIFY response"); }
    * 
+   * <p>
    * assertTrue("Expected auth challenge", sender .needAuthorization((ResponseEvent) event)); trans
    * = sender.resendWithAuthorization((ResponseEvent) event);
    * assertNotNull(sender.getErrorMessage(), trans); // get the next response event =

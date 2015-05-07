@@ -27,6 +27,7 @@ import javax.sip.message.Request;
  * user program doesn't need to do anything with a SipTransaction if returned by the API other than
  * pass it in to a related, subsequent API call as instructed on a per-operation basis.
  * 
+ * <p>
  * The user program MAY call methods on this object to get related JAIN SIP API objects. One of the
  * methods is getRequest() to get the javax.sip.message.Request object that created this
  * transaction. The others include the getClientTransaction() or getServerTransaction() method -

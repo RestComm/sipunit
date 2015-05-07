@@ -18,12 +18,11 @@ package org.cafesip.sipunit;
 
 /**
  * @author Becky McElroy
- * 
  */
 public class SubscriptionError extends Throwable {
 
   /**
-   * Comment for <code>serialVersionUID</code>
+   * Comment for <code>serialVersionUID</code> .
    */
   private static final long serialVersionUID = 1L;
 

@@ -31,6 +31,7 @@ import javax.sip.message.Response;
  * returned by a waitXyz() method (such as SipSession.waitResponse()) when using the low-level
  * SipUnit API.
  * 
+ * <p>
  * A test program may call this object's getMessage() method to get the underlying
  * javax.sip.message.Message object or call getResponseEvent() to get the associated
  * javax.sip.ResponseEvent which provides access to related JAIN-SIP objects such ClientTransaction,
@@ -41,7 +42,7 @@ import javax.sip.message.Response;
  */
 public class SipResponse extends SipMessage {
 
-  /** ******* Response status codes ********** */
+  // ******* Response status codes ********** */
 
   // PROVISIONAL (1xx)
   public static final int TRYING = 100;
@@ -247,6 +248,7 @@ public class SipResponse extends SipMessage {
    * the response event information so that the test program can get JAIN-SIP objects from it, if
    * needed - ClientTransaction, Dialog, etc.
    * 
+   * <p>
    * This constructor may also be used by a test program in lieu of the other constructor.
    * 
    * @param event

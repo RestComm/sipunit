@@ -62,8 +62,10 @@ import javax.sip.message.Response;
  * (SUBSCRIBE/NOTIFY) operations, call refer, etc. In future, a SipPhone object can have more than
  * one SipCall object associated with it but currently only one is supported. Multiple subscriptions
  * (buddy/presence, refer) are supported per SipPhone object.
+ * 
  * <p>
  * A SipPhone object is created by calling SipStack.createSipPhone().
+ * 
  * <p>
  * Many of the methods in this class return an object or true return value if successful. In case of
  * an error or caller-specified timeout, a null object or a false is returned. The
@@ -138,9 +140,11 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * SipPhone's proxy host, or if no proxy was specified when this SipPhone was created, the
    * Request-URI address information is taken from this SipPhone's URI (address of record). For
    * other Request-URI alternatives, see the register() method that takes parameter requestUri.
+   * 
    * <p>
    * Initially, a REGISTER message is sent without any user name and password. If the server returns
    * an OK, this method returns a true value.
+   * 
    * <p>
    * If any challenge is received in response to sending the REGISTER message (response code
    * UNAUTHORIZED or PROXY_AUTHENTICATION_REQUIRED), the SipPhone's credentials list is checked
@@ -148,6 +152,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * password are used to form the required authorization header for resending the REGISTER message
    * to the server, and the authorization header is saved for later re-use. You can clear out saved
    * authorization headers by calling the unregister() method.
+   *
    * <p>
    * If the challenging realm is not found in the SipPhone credentials list, the user parameter
    * passed to this method is examined. If it is null, this method returns false. If it is not null,
@@ -156,19 +161,24 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * user, password). Also, the authorization created for this registration is not saved for re-use
    * on a later registration. IE, the user/password parameters are for a one-time, single-shot use
    * only.
+   * 
    * <p>
    * After responding to the challenge(s) by resending the REGISTER message, this method returns a
    * true or false value depending on the outcome as indicated by the server.
+   * 
    * <p>
    * If the contact parameter is null, user@hostname is used where hostname is the SipStack's IP
    * address property which defaults to InetAddress.getLocalHost().getHostAddress(), and other
    * SipStack properties also apply. Otherwise, the contact parameter given is used in the
    * Registration message sent to the server.
+   * 
    * <p>
    * If the expiry parameter is 0, the registration request never expires. Otherwise, the duration,
    * given in seconds, is sent to server.
+   * 
    * <p>
    * This method can be called repeatedly to update the expiry or to add new contacts.
+   * 
    * <p>
    * This method determines the contact information for this user agent, whether the registration
    * was successful or not. If successful, the contact information may have been updated by the
@@ -347,6 +357,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * successful or no unregistration was needed, and false otherwise. Any authorization headers
    * required for the last registration are cleared out. If there was no previous registration, this
    * method does not send any messages.
+   * 
    * <p>
    * If the contact parameter is null, user@hostname is unregistered where hostname is obtained by
    * calling InetAddr.getLocalHost(). Otherwise, the contact parameter value is used in the
@@ -486,8 +497,8 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
         // check response
         response_event = waitResponse(trans, timeout);
 
-        if (response_event == null) // user timeout or error
-        {
+        if (response_event == null) {
+          // user timeout or error
           return null;
         }
 
@@ -518,10 +529,12 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * sending/receiving messages. A test program using high level SipUnit doesn't need to call this
    * method.
    * 
+   * <p>
    * This method modifies the given request to include the authorization header(s) required by the
    * given response. It may cache in SipPhone's authorizations list the AuthorizationHeader(s)
    * created here for use later. The modified Request object is returned, or null in case of error
    * or unresolved challenge.
+   * 
    * <p>
    * For each received challenge present in the response message: SipPhone's credentials list is
    * checked first, for the realm entry. If it is not found there, the username parameter passed
@@ -716,16 +729,19 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * INVITE response status code is received. The object returned is a SipCall object representing
    * the outgoing call leg; that is, the UAC originating a call to the network. Then you can take
    * subsequent action on the call by making method calls on the SipCall object.
+   * 
    * <p>
    * Use this method when (1) you want to establish a call without worrying about the details and
    * (2) your test program doesn't need to do anything else (ie, it can be blocked) until the
    * response code parameter passed to this method is received from the network.
+   * 
    * <p>
    * In case the first condition above is false: If you need to see the (intermediate/provisional)
    * response messages as they come in, then use SipPhone.createSipCall() and
    * SipCall.initiateOutgoingCall() instead of this method. If your test program can tolerate being
    * blocked until the desired response is received, you can still use this method and later look
    * back at all the received responses by calling SipCall.getAllReceivedResponses().
+   * 
    * <p>
    * In case the second condition above is false: If your test code is handling both sides of the
    * call, or it has to do other things while this call establishment is in progress, then this
@@ -756,6 +772,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * caller to specify a message body and/or additional message headers to add to or replace in the
    * outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,
@@ -805,6 +822,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * replace in the outbound INVITE message. Use of this method requires knowledge of the JAIN-SIP
    * API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -900,6 +918,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * etc.) are automatically collected and any received authentication challenges are automatically
    * handled as well. The object returned by this method is a SipCall object representing the
    * outgoing call leg; that is, the UAC originating a call to the network.
+   * 
    * <p>
    * After calling this method, you can later call one or more of the following methods on the
    * returned SipCall object to see what happened (each is nonblocking unless otherwise noted):
@@ -912,11 +931,13 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * waitOutgoingCallResponse() - BLOCKING - when your test program is done with its tasks and can
    * be blocked until the next response is received (if you are interested in something other than
    * OK) - use this only if you know that the INVITE transaction is still up.
+   * 
    * <p>
    * Call this method when (1) you want to establish a call without worrying about the details and
    * (2) your test program needs to do other tasks after the INVITE is sent but before a
    * final/expected response is received (ie, the calling program cannot be blocked during call
    * establishment).
+   * 
    * <p>
    * Otherwise: If you need to see or act on any of the (intermediate/provisional) response messages
    * as they come in, use SipPhone.createSipCall() and SipCall.initiateOutgoingCall() instead of
@@ -943,6 +964,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * replace in the outbound INVITE message. Use of this method requires knowledge of the JAIN-SIP
    * API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -1026,7 +1048,6 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   /**
-   * 
    * This method releases all resources associated with this SipPhone. Neither this SipPhone object
    * nor its SipSession base class should be used again after calling the dispose() method.
    * Server/proxy unregistration occurs and SipCall(s) associated with this SipPhone are dropped. No
@@ -1107,7 +1128,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   /**
-   * This method returns the user Address for this SipPhone. This is the same address used in the
+   * Gets the user Address for this SipPhone. This is the same address used in the
    * "from" header field.
    * 
    * @return Returns the javax.sip.address.Address for this SipPhone (UA).
@@ -1117,7 +1138,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   /**
-   * This method returns the request sent at the last successful registration.
+   * Gets the request sent at the last successful registration.
    * 
    * @return Returns the lastRegistrationRequest.
    */
@@ -1297,14 +1318,17 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * tracking the buddy's presence information. Please read the SipUnit User Guide webpage Event
    * Subscription (at least the operation overview part) for information on how to use SipUnit
    * presence capabilities.
+   * 
    * <p>
    * This method creates a SUBSCRIBE request message, sends it out, and waits for a response to be
    * received. It saves the received response and checks for a "proceedable" (positive) status code
    * value. Positive response status codes include any of the following: provisional (status / 100
    * == 1), UNAUTHORIZED, PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED. Any other status code, or
    * a response timeout or any other error, is considered fatal to the subscription.
+   * 
    * <p>
    * This method blocks until one of the above outcomes is reached.
+   * 
    * <p>
    * In the case of a positive response status code, this method returns a PresenceSubscriber object
    * that will represent the buddy for the life of the subscription and puts the PresenceSubscriber
@@ -1315,12 +1339,14 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * details at any given time such as the subscription state, amount of time left on the
    * subscription, termination reason, presence information, details of received responses and
    * requests, etc.
+   * 
    * <p>
    * In the case of a positive response status code (a non-null object is returned), you may find
    * out more about the response that was just received by calling the PresenceSubscriber methods
    * getReturnCode() and getCurrentResponse()/getLastReceivedResponse(). Your next step at this
    * point will be to call the PresenceSubscriber's processResponse() method to proceed with the
    * SUBSCRIBE processing.
+   * 
    * <p>
    * In the case of a fatal outcome, no subscription object is created and null is returned. In this
    * case, call the usual SipUnit failed-operation methods to find out what happened (ie, call this
@@ -1440,6 +1466,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * user's presence status and information. Please read the SipUnit User Guide webpage Event
    * Subscription (at least the operation overview part) for information on how to use SipUnit
    * presence capabilities.
+   * 
    * <p>
    * This method creates a SUBSCRIBE request message with expiry time of 0, sends it out, and waits
    * for a response to be received. It saves the received response and checks for a "proceedable"
@@ -1447,8 +1474,10 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * provisional (status / 100 == 1), UNAUTHORIZED, PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED.
    * Any other status code, or a response timeout or any other error, is considered fatal to the
    * operation.
+   * 
    * <p>
    * This method blocks until one of the above outcomes is reached.
+   * 
    * <p>
    * In the case of a positive response status code, this method returns a PresenceSubscriber object
    * representing the user and puts the object in this SipPhone's retired buddy list. The retired
@@ -1458,12 +1487,14 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * PresenceSubscriber object to proceed through the remainder of the SUBSCRIBE-NOTIFY sequence and
    * to find out details such as the subscription state, termination reason, presence information,
    * details of received responses and requests, etc.
+   * 
    * <p>
    * In the case of a positive response status code (a non-null object is returned), you may find
    * out more about the response that was just received by calling the PresenceSubscriber methods
    * getReturnCode() and getCurrentResponse()/getLastReceivedResponse(). Your next step at this
    * point will be to call the PresenceSubscriber's processResponse() method to proceed with the
    * SUBSCRIBE processing.
+   * 
    * <p>
    * In the case of a fatal outcome, no Subscription object is created and null is returned. In this
    * case, call the usual SipUnit failed-operation methods to find out what happened (ie, call this
@@ -1545,7 +1576,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   /**
-   * This method returns the PresenceSubscriber object representing a buddy or user whose presence
+   * Gets the PresenceSubscriber object representing a buddy or user whose presence
    * information was fetched at some previous point. The returned object contains the most recently
    * obtained presence information for the given user. Status, presence device info, received
    * requests (NOTIFY's) and SUBSCRIBE responses, etc. for this user's subscription can be obtained
@@ -1578,6 +1609,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * are still in the buddy list. A given buddy, or subscription, in this list may be active or not
    * - ie, subscription termination by the far end does not remove a buddy from this list. Buddies
    * are removed from the list only by the test program (by calling removeBuddy()).
+   * 
    * <p>
    * See related methods getBuddyInfo(), getRetiredBuddies().
    * 
@@ -1594,6 +1626,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * test program removes a buddy from the buddy list. The main purpose of this list is so the last
    * known presence status of a user can be obtained anytime. This is required to make the fetch
    * case useful.
+   * 
    * <p>
    * See related methods getBuddyInfo(), getBuddyList().
    * 
@@ -1627,10 +1660,9 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   /**
-   * This method returns the subscription object(s) associated with the given referToUri. The
-   * returned object(s) contains subscription state, received requests (NOTIFY's) and
-   * REFER/SUBSCRIBE responses, etc. for outbound REFER subscription(s) associated with the
-   * referToUri.
+   * Gets the subscription object(s) associated with the given referToUri. The returned object(s)
+   * contains subscription state, received requests (NOTIFY's) and REFER/SUBSCRIBE responses, etc.
+   * for outbound REFER subscription(s) associated with the referToUri.
    * 
    * @param referToUri the referToUri that was previously passed in to SipPhone.refer(). See javadoc
    *        there.
@@ -1653,7 +1685,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   /**
-   * This method returns the subscription object(s) associated with the given dialog ID. The
+   * Gets the subscription object(s) associated with the given dialog ID. The
    * returned object(s) contains subscription state, received requests (NOTIFY's) and
    * REFER/SUBSCRIBE responses, etc. for outbound REFER subscription(s) associated with the dialog.
    * 
@@ -1682,6 +1714,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * lifetime of this SipPhone object. A given subscription in the list may be active or not -
    * subscription termination does not automatically remove a subscription from this list (calling
    * ReferSubscriber.dispose() does that).
+   * 
    * <p>
    * See related method getRefererInfo().
    * 
@@ -1775,8 +1808,10 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * following: provisional (status / 100 == 1), UNAUTHORIZED, PROXY_AUTHENTICATION_REQUIRED, OK and
    * ACCEPTED. Any other status code, or a response timeout or any other error, is considered fatal
    * to the subscription.
+   * 
    * <p>
    * This method blocks until one of the above outcomes is reached.
+   * 
    * <p>
    * In the case of a positive response status code, this method returns a ReferSubscriber object
    * that represents the implicit subscription. You can save the returned object yourself or
@@ -1785,11 +1820,13 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * REFER-NOTIFY sequence as well as for future SUBSCRIBE-NOTIFY sequences on this subscription and
    * also to find out details at any given time such as the subscription state, amount of time left
    * on the subscription, termination reason, details of received responses and requests, etc.
+   * 
    * <p>
    * In the case of a positive response status code (a non-null object is returned), you may find
    * out more about the response that was just received by calling the ReferSubscriber methods
    * getReturnCode() and getCurrentResponse(). Your next step will then be to call the
    * ReferSubscriber's processResponse() method to proceed with the REFER processing.
+   * 
    * <p>
    * In the case of a fatal outcome, no subscription object is created and null is returned. In this
    * case, call the usual SipUnit failed-operation methods to find out what happened (ie, call this
@@ -1832,6 +1869,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * caller to specify a message body and/or additional JAIN-SIP API message headers to add to or
    * replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -1901,6 +1939,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * caller to specify a message body and/or additional message headers to add to or replace in the
    * outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,
@@ -1951,8 +1990,10 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * provisional (status / 100 == 1), UNAUTHORIZED, PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED.
    * Any other status code, or a response timeout or any other error, is considered fatal to the
    * subscription.
+   * 
    * <p>
    * This method blocks until one of the above outcomes is reached.
+   * 
    * <p>
    * In the case of a positive response status code, this method returns a ReferSubscriber object
    * that represents the implicit subscription. You can save the returned object yourself or
@@ -1961,11 +2002,13 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * REFER-NOTIFY sequence as well as for future SUBSCRIBE-NOTIFY sequences on this subscription and
    * also to find out details at any given time such as the subscription state, amount of time left
    * on the subscription, termination reason, details of received responses and requests, etc.
+   * 
    * <p>
    * In the case of a positive response status code (a non-null object is returned), you may find
    * out more about the response that was just received by calling the ReferSubscriber methods
    * getReturnCode() and getCurrentResponse(). Your next step will then be to call the
    * ReferSubscriber's processResponse() method to proceed with the REFER processing.
+   * 
    * <p>
    * In the case of a fatal outcome, no subscription object is created and null is returned. In this
    * case, call the usual SipUnit failed-operation methods to find out what happened (ie, call this
@@ -1999,6 +2042,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * to specify a message body and/or additional JAIN-SIP API message headers to add to or replace
    * in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -2066,6 +2110,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * to specify a message body and/or additional message headers to add to or replace in the
    * outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,

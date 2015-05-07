@@ -25,10 +25,11 @@ import junit.framework.TestCase;
  * program (a) uses the SipUnit API to invoke SIP operations against a test target and (b) uses the
  * assert methods of this class in addition to any of the JUnit Assert methods to verify the results
  * of the test.
+ * 
  * <p>
  * The SipAssert class is a static equivalent of this class that you can alternatively use when you
  * can't or don't want to extend SipTestCase. SipTestCase uses SipAssert to perform the assertions.
- *
+ * 
  * <p>
  * To write a SIP application test class, or program, pre-JUnit 4 style:
  *
@@ -45,7 +46,7 @@ import junit.framework.TestCase;
  * <p>
  * 
  * To write a SIP application test class, or program, JUnit 4 style:
- *
+ * 
  * <ul>
  * <li>1) write a pojo with JUnit 4 annotations (see release notes for JUnit 4.X releases at
  * junit.org for details)</li>
@@ -57,18 +58,20 @@ import junit.framework.TestCase;
  * <li>4) use static imports for the SipAssert methods that your tests will use</li>
  * <li>5) write one or more test methods that use SipUnit objects and SipAssert assertions</li>
  * </ul>
- *
+ * 
  * The code in the SIP application test class creates SipUnit API objects, calls their methods to
  * set up and initiate action toward a SIP test target, and verifies the results involving the test
  * target using the assert methods of this class or SipAssert, along with the standard JUnit assert
  * methods. Messages are only displayed when an assert fails. See below for an example test class.
- *
+ * 
  * <p>
  * 
+ * <p>
  * To execute the test program and run the tests, use the standard JUnit test runners which can run
  * a test suite and collect/output the results. This is commonly done using IDE Junit facilities or
  * via the Ant junit target.
  * </p>
+ * 
  * <p>
  * EXAMPLE SIP APPLICATION TEST CLASS: (see the SipUnit User Guide for more information on how to
  * use the API effectively)

@@ -68,6 +68,7 @@ import org.junit.Test;
  * This class tests SipUnit refer functionality. Currently only the outbound REFER side is
  * supported.
  * 
+ * <p>
  * Tests in this class do not require a proxy/registrar server.
  * 
  * @author Becky McElroy
@@ -112,6 +113,9 @@ public class TestReferNoProxy {
 
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -132,6 +136,9 @@ public class TestReferNoProxy {
     }
   }
 
+  /**
+   * Release the sipStack and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     if (ua != null) {
@@ -294,7 +301,6 @@ public class TestReferNoProxy {
     assertNoSubscriptionErrors(subscription);
 
     // B sends active-state NOTIFY to A, gets OK response
-    // **********************************************************
     // B: send NOTIFY
     Thread.sleep(500);
     String notifyBody = "SIP/2.0 200 OK\n";
@@ -345,7 +351,7 @@ public class TestReferNoProxy {
 
     // terminate the subscription from the referrer side
     // A unsubscribes, gets OK response
-    // **************************************************
+
     // prepare the far end
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Done"));
     Thread.sleep(100);
@@ -385,7 +391,6 @@ public class TestReferNoProxy {
     assertNoSubscriptionErrors(subscription);
 
     // B sends terminated NOTIFY, gets OK response
-    // *********************************************************
     // tell far end to send a NOTIFY
     Thread.sleep(500);
     notifyBody = "SIP/2.0 100 Trying\n";
@@ -615,7 +620,6 @@ public class TestReferNoProxy {
     Thread.sleep(1000);
 
     // B sends in-dialog REFER to A, gets 202 Accepted
-    // ****************************************************************
     // A side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ua);
     referHandler.setDialog(a.getDialog());
@@ -670,7 +674,6 @@ public class TestReferNoProxy {
     assertEquals(0, subscription.getTimeLeft());
 
     // A sends state-active NOTIFY to B, gets OK in response
-    // **************************************************************
     // A side - send a NOTIFY
     Thread.sleep(20);
     Request notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
@@ -726,7 +729,6 @@ public class TestReferNoProxy {
     assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse().getStatusCode());
 
     // A sends another NOTIFY to B, gets OK in response
-    // **************************************************************
     Thread.sleep(800);
     notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);
     notifyRequest =
@@ -772,7 +774,6 @@ public class TestReferNoProxy {
     assertEquals(SipResponse.OK, ((ResponseEvent) obj).getResponse().getStatusCode());
 
     // B refreshes the subscription
-    // **************************************************************
     // prepare A to receive SUBSCRIBE
     assertTrue(referHandler.processSubscribe(2000, SipResponse.OK, "OK"));
     // refresh
@@ -787,7 +788,6 @@ public class TestReferNoProxy {
     assertTrue(subscription.getTimeLeft() <= 10 && subscription.getTimeLeft() > 5);
 
     // A sends subscription-terminating NOTIFY to B, gets OK in response
-    // **************************************************************
     // A side - send a NOTIFY
     Thread.sleep(20);
     notifyRequest = a.getDialog().createRequest(SipRequest.NOTIFY);

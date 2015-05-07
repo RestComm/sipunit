@@ -61,6 +61,7 @@ import javax.sip.message.Response;
  * using the SipPhone and SipCall methods to communicate with other SIP agents, the test program can
  * use methods of this class to send and receive SIP messages. Methods of this class can be accessed
  * via the SipPhone object returned by SipStack.createSipPhone().
+ * 
  * <p>
  * Many of the methods in this class return an object or true return value if successful. In case of
  * an error or caller-specified timeout, a null object or a false is returned. The
@@ -253,7 +254,7 @@ public class SipSession implements SipListener, SipActionObject {
   }
 
   /**
-   * This method returns a newly generated unique tag ID.
+   * Generates a newly generated unique tag ID.
    * 
    * @return A String tag ID
    */
@@ -307,7 +308,7 @@ public class SipSession implements SipListener, SipActionObject {
   }
 
   /**
-   * This method returns the IP address and port currently being used in this Sip agent's contact
+   * Gets the IP address and port currently being used in this Sip agent's contact
    * address, via, and listening point 'sentby' components. Example: 66.32.44.114:5066
    * 
    * @return A String containing address + ':' + port.
@@ -320,6 +321,7 @@ public class SipSession implements SipListener, SipActionObject {
    * This method replaces the host/port values currently being used in this Sip agent's contact
    * address, via, and listening point 'sentby' components with the given host and port parameters.
    * 
+   * <p>
    * Call this method when you are running a SipUnit testcase behind a NAT and need to register with
    * a proxy on the public internet. Before creating the SipStack and SipPhone, you'll need to first
    * obtain the public IP address/port using a mechanism such as the Stun4j API. See the
@@ -698,6 +700,7 @@ public class SipSession implements SipListener, SipActionObject {
    * use this method when a response to a request is expected. A Request object is constructed from
    * the string passed in.
    * 
+   * <p>
    * This method returns when the request message has been sent out. The calling program must
    * subsequently call the waitResponse() method to wait for the result (response, timeout, etc.).
    * 
@@ -726,6 +729,7 @@ public class SipSession implements SipListener, SipActionObject {
    * to add to or replace in the outbound message. Use of this method requires knowledge of the
    * JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add

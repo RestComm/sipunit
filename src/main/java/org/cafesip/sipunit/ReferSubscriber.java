@@ -37,10 +37,12 @@ import javax.sip.message.Response;
  * subscription if still active, termination reason if terminated, errors encountered during
  * received REFER/SUBSCRIBE responses and incoming NOTIFY message validation, and details of any
  * received responses and requests if needed by the test program.
+ * 
  * <p>
  * Please read the SipUnit User Guide, Event Subscription section for the NOTIFY-receiving side (at
  * least the operation overview part) for information on how to use the methods of this class and
  * its superclass.
+ * 
  * <p>
  * As in the case of other objects like SipPhone, SipCall, etc., operation-invoking methods of this
  * class return an object or true if successful. In case of an error or caller-specified timeout, a
@@ -200,13 +202,16 @@ public class ReferSubscriber extends EventSubscriber {
    * codes include any of the following: provisional (status / 100 == 1), UNAUTHORIZED,
    * PROXY_AUTHENTICATION_REQUIRED, OK and ACCEPTED. Any other status code, or a response timeout or
    * any other error, is considered fatal to this refresh operation.
+   * 
    * <p>
    * This method blocks until one of the above outcomes is reached.
+   * 
    * <p>
    * If this method returns true, it means a positive response was received. You can find out about
    * the response by calling this object's getReturnCode() and/or getCurrentResponse() or
    * getLastReceivedResponse() methods. Your next step will be to call the processResponse() method
    * to proceed with the refresh sequence. See the processResponse() javadoc for more details.
+   * 
    * <p>
    * If this method returns false, it means this refresh operation has failed. Call the usual
    * SipUnit failed-operation methods to find out what happened (ie, getErrorMessage(),

@@ -54,8 +54,10 @@ import javax.sip.message.Response;
  * connection from the telephone network to the phone being called. For a SIP call, the outbound leg
  * is the User Agent originating the call and the inbound leg is the User Agent receiving the call.
  * For each call leg, a separate SipCall object must be used.
+ * 
  * <p>
  * A SipCall object is created by calling SipPhone.createSipCall() or SipPhone.makeCall().
+ * 
  * <p>
  * Many of the methods in this class return an object or true return value if successful. In case of
  * an error or caller-specified timeout, a null object or a false is returned. The
@@ -171,6 +173,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * method is called, any received request(s) for this UA are collected. After calling this method,
    * you can call waitForAck() to process the first ACK received since calling this method.
    * 
+   * <p>
    * NOTE: it's not necessary to call this method if a previous listenForXyz() method has been
    * called and request listening has NOT been turned off since (ie, method
    * stopListeningForRequests() hasn't been called).
@@ -231,6 +234,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * RECOMMENDED THAT THE CALLING PROGRAM STOP LISTENING FOR REQUESTS WHILE NONE ARE EXPECTED.
    * Otherwise alot of overhead is used up and wasted.
    * 
+   * <p>
    * If there are any pending requests (received but not processed yet), those are discarded.
    * 
    * @return true unless an error is encountered, in which case false is returned.
@@ -248,6 +252,7 @@ public class SipCall implements SipActionObject, MessageListener {
   /**
    * The waitForDisconnect() method waits for a BYE request addressed to this user agent to be
    * received from the network. Call this method after calling the listenForDisconnect() method.
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) A BYE request message has been
    * received, addressed to this user agent. In this case, a value of true is returned. The
@@ -255,9 +260,11 @@ public class SipCall implements SipActionObject, MessageListener {
    * request. Use the method respondToDisconnect() for responding to the received BYE request. 2)
    * The wait timeout period specified by the parameter to this method expires. false is returned in
    * this case. 3) An error occurs. false is returned in this case.
+   * 
    * <p>
    * Any non-BYE requests received for this user agent are collected while waiting for a BYE message
    * and can be seen by calling getAllReceivedRequests() once this method returns.
+   * 
    * <p>
    * Regardless of the outcome, incoming requests associated with this User Agent will continue to
    * be queued up until the stopListeningForRequests() method is called. IT IS RECOMMENDED THAT THE
@@ -332,6 +339,7 @@ public class SipCall implements SipActionObject, MessageListener {
   /**
    * The waitForIncomingCall() method waits for an INVITE request addressed to this user agent to be
    * received from the network. Call this method after calling the listenForIncomingCall() method.
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) An INVITE message has been received,
    * addressed to this user agent. In this case, a value of true is returned. The
@@ -339,9 +347,11 @@ public class SipCall implements SipActionObject, MessageListener {
    * request. Use the method sendIncomingCallResponse() for responding to the received INVITE. 2)
    * The wait timeout period specified by the parameter to this method expires. False is returned in
    * this case. 3) An error occurs. False is returned in this case.
+   * 
    * <p>
    * Any non-INVITE requests received for this user agent are collected while waiting for an INVITE
    * message and can be seen by calling getAllReceivedRequests() once this method returns.
+   * 
    * <p>
    * Regardless of the outcome, incoming requests associated with this User Agent will continue to
    * be queued up until the stopListeningForRequests() method is called. IT IS RECOMMENDED THAT THE
@@ -429,15 +439,18 @@ public class SipCall implements SipActionObject, MessageListener {
    * from the network. Prior to calling this method, any of the listenForXyz() methods must have
    * already been called to turn on request listening. You can call this method to wait for any kind
    * of ACK (invite, re-invite...).
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) An ACK request message has been
    * received, addressed to this user agent. In this case, a value of true is returned. The
    * getLastReceivedRequest() method can be called to get information about the received ACK
    * request. 2) The wait timeout period specified by the parameter to this method expires. false is
    * returned in this case. 3) An error occurs. false is returned in this case.
+   * 
    * <p>
    * Any non-ACK requests received for this user agent are collected while waiting for an ACK
    * message and can be seen by calling getAllReceivedRequests() once this method returns.
+   * 
    * <p>
    * Regardless of the outcome, incoming requests associated with this User Agent will continue to
    * be queued up until the stopListeningForRequests() method is called. IT IS RECOMMENDED THAT THE
@@ -507,15 +520,18 @@ public class SipCall implements SipActionObject, MessageListener {
    * The waitForMessage() method waits for a MESSAGE request addressed to this user agent to be
    * received from the network. Prior to calling this method, any of the listenForXyz() methods must
    * have already been called to turn on request listening.
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) A MESSAGE request message has been
    * received, addressed to this user agent. In this case, a value of true is returned. The
    * getLastReceivedRequest() method can be called to get information about the received MESSAGE
    * request. 2) The wait timeout period specified by the parameter to this method expires. false is
    * returned in this case. 3) An error occurs. false is returned in this case.
+   * 
    * <p>
    * Any non-MESSAGE requests received for this user agent are collected while waiting for an
    * MESSAGE message and can be seen by calling getAllReceivedRequests() once this method returns.
+   * 
    * <p>
    * Regardless of the outcome, incoming requests associated with this User Agent will continue to
    * be queued up until the stopListeningForRequests() method is called. IT IS RECOMMENDED THAT THE
@@ -624,6 +640,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional JAIN-SIP API message headers to add to or
    * replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. The additionalHeaders parameter
@@ -641,6 +658,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional JAIN-SIP API message headers to add to or
    * replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -702,11 +720,13 @@ public class SipCall implements SipActionObject, MessageListener {
 
   /**
    * This basic method is used to initiate an outgoing MESSAGE.
+   * 
    * <p>
    * This method returns when the request message has been sent out. Your calling program must
    * subsequently call the waitOutgoingMessageResponse() method (one or more times) to get the
    * result(s).
    * 
+   * <p>
    * If a DIALOG exists the method will use it to send the MESSAGE
    * 
    * @param toUri The URI (sip:bob@nist.gov) to which the message should be directed
@@ -724,8 +744,10 @@ public class SipCall implements SipActionObject, MessageListener {
    * This method is the same as the basic initiateOutgoingMessage() method except that it allows the
    * caller to specify a message body.
    * 
+   * <p>
    * If a DIALOG exists the method will use it to send the MESSAGE
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. The additionalHeaders parameter
@@ -870,16 +892,19 @@ public class SipCall implements SipActionObject, MessageListener {
   /**
    * The waitOutgoingMessageResponse() method waits for a response to be received from the network
    * for a sent MESSAGE. Call this method after calling initiateOutgoingMessage().
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) A response message has been received.
    * In this case, a value of true is returned. Call the getLastReceivedResponse() method to get the
    * response details.
+   * 
    * <p>
    * Regardless of the outcome, getReturnCode() can be called after this method returns to get the
    * status code: IE, the SIP response code received from the network (defined in SipResponse, along
    * with the corresponding textual equivalent) or a SipUnit internal status/return code (defined in
    * SipSession, along with the corresponding textual equivalent). SipUnit internal codes are in a
    * specially designated range (SipSession.SIPUNIT_INTERNAL_RETURNCODE_MIN and upward).
+   * 
    * <p>
    * This method can be called repeatedly to get each subsequently received response.
    * 
@@ -959,6 +984,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * the caller to specify a message body and/or additional JAIN-SIP API message headers to add to
    * or replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -1006,6 +1032,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * the caller to specify a message body and/or additional message headers to add to or replace in
    * the outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,
@@ -1053,6 +1080,7 @@ public class SipCall implements SipActionObject, MessageListener {
   /**
    * The waitForReinvite() method waits for a RE-INVITE request addressed to this user agent to be
    * received from the network. Call this method after calling the listenForReinvite() method.
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) An INVITE message has been received on
    * the current dialog. In this case, a non-null SipTransaction object is returned. The
@@ -1061,6 +1089,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * the method respondToReinvite() for sending a response to the received RE-INVITE. 2) The wait
    * timeout period specified by the parameter to this method expires. Null is returned in this
    * case. 3) An error occurs. Null is returned in this case.
+   * 
    * <p>
    * Any non-INVITE requests received for this user agent are collected while waiting for the
    * RE-INVITE message and can be seen by calling getAllReceivedRequests() once this method returns.
@@ -1171,6 +1200,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * to specify additional message headers to add to or replace in the response message without
    * requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * Additional parameters handled by this method include:
    * 
    * @param additionalHeaders ArrayList of String, each element representing a SIP message header to
@@ -1215,9 +1245,11 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify additional JAIN-SIP API message headers to add to or replace in the outbound
    * message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * NOTE: The additionalHeaders parameter passed to this method must contain a ContentTypeHeader in
    * order for a body to be included in the message.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -1311,6 +1343,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional JAIN-SIP API message headers to add to or
    * replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param statusCode The integer status code to use (ie, SipResponse.OK).
@@ -1351,6 +1384,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional message headers to add to or replace in the
    * outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param statusCode The integer status code to use (ie, SipResponse.OK).
@@ -1407,6 +1441,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * worrying about the call establishment details (TRYING, authentication challenge, etc.).
    * Regardless, all received responses are collected, so you will be able to see
    * intermediate/provisional responses received (albeit after the fact, with makeCall()).
+   * 
    * <p>
    * This method returns when the request message has been sent out. Your calling program must
    * subsequently call the waitOutgoingCallResponse() method (one or more times) to get the
@@ -1431,6 +1466,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional JAIN-SIP API message headers to add to or
    * replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -1459,6 +1495,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional message headers to add to or replace in the
    * outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,
@@ -1633,8 +1670,10 @@ public class SipCall implements SipActionObject, MessageListener {
    * a UAC is re-originating a call to the network because a previous origination attempt failed. An
    * example of when this would be used is resending an INVITE after receiving an authentication
    * challenge.
+   * 
    * <p>
    * Knowledge of the JAIN-SIP API is required to use this method.
+   * 
    * <p>
    * This method returns when the request message has been sent out. The calling program must
    * subsequently call the waitOutgoingCallResponse() method (one or more times) to get the
@@ -1806,6 +1845,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * specify additional message headers to add to or replace in the outbound message without
    * requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of String, each element representing a SIP message header to
@@ -1860,6 +1900,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * to specify a message body and/or additional JAIN-SIP API message headers to add to or replace
    * in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -1929,6 +1970,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * to specify a message body and/or additional message headers to add to or replace in the
    * outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,
@@ -1987,6 +2029,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional JAIN-SIP API message headers to add to or
    * replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -2042,6 +2085,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional message headers to add to or replace in the
    * outbound message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,
@@ -2102,18 +2146,21 @@ public class SipCall implements SipActionObject, MessageListener {
    * The waitOutgoingCallResponse() method waits for a response to be received from the network for
    * a sent INVITE. Call this method after calling initiateOutgoingCall() (or SipPhone.makeCall() if
    * you know the transaction is still up).
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) A response message has been received.
    * In this case, a value of true is returned. Call the getLastReceivedResponse() method to get the
    * response details. Use the method sendInviteOkAck() for responding to an OK. 2) A timeout
    * occurs. A false value is returned in this case. 3) An error occurs. False is returned in this
    * case.
+   * 
    * <p>
    * Regardless of the outcome, getReturnCode() can be called after this method returns to get the
    * status code: IE, the SIP response code received from the network (defined in SipResponse, along
    * with the corresponding textual equivalent) or a SipUnit internal status/return code (defined in
    * SipSession, along with the corresponding textual equivalent). SipUnit internal codes are in a
    * specially designated range (SipSession.SIPUNIT_INTERNAL_RETURNCODE_MIN and upward).
+   * 
    * <p>
    * This method can be called repeatedly to get each subsequently received response.
    * 
@@ -2175,18 +2222,21 @@ public class SipCall implements SipActionObject, MessageListener {
   /**
    * The waitReinviteResponse() method waits for a response to be received from the network for a
    * sent RE-INVITE. Call this method after calling sendReinvite().
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) A response message has been received.
    * In this case, a value of true is returned. Call the getLastReceivedResponse() method to get the
    * response details. Use the method sendReinviteOkAck() for responding to an OK. 2) A timeout
    * occurs. A false value is returned in this case. 3) An error occurs. False is returned in this
    * case.
+   * 
    * <p>
    * Regardless of the outcome, getReturnCode() can be called after this method returns to get the
    * status code: IE, the SIP response code received from the network (defined in SipResponse, along
    * with the corresponding textual equivalent) or a SipUnit internal status/error code (defined in
    * SipSession, along with the corresponding textual equivalent). SipUnit internal codes are in a
    * specially designated range (SipSession.SIPUNIT_INTERNAL_RETURNCODE_MIN and upward).
+   * 
    * <p>
    * This method can be called repeatedly to get each subsequently received response for this
    * particular RE-INVITE transaction.
@@ -2249,6 +2299,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * specify a message body and/or additional JAIN-SIP API message headers to add to or replace in
    * the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -2282,9 +2333,9 @@ public class SipCall implements SipActionObject, MessageListener {
       Request bye = dialog.createRequest(Request.BYE);
       parent.addAuthorizations(callId.getCallId(), bye);
 
-      synchronized (this) // needed for asynchronous response -
-      // processEvent()
-      {
+      synchronized (this) {
+        // needed for asynchronous response -
+        // processEvent()
         transaction = parent.sendRequestWithTransaction(bye, false, dialog, this, additionalHeaders,
             replaceHeaders, body);
       }
@@ -2313,6 +2364,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * specify a message body and/or additional message headers to add to or replace in the outbound
    * message without requiring knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param body A String to be used as the body of the message. Parameters contentType,
@@ -2384,7 +2436,7 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method returns the AddressFactory associated with this object. It may be needed by the
+   * Gets the AddressFactory associated with this object. It may be needed by the
    * caller if providing additional or replacement JAIN SIP headers for outbound messages.
    * 
    * @return This SipCall's javax.sip.address.AddressFactory
@@ -2395,7 +2447,7 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method returns the HeaderFactory associated with this object. It will be needed by the
+   * Gets the HeaderFactory associated with this object. It will be needed by the
    * caller if providing additional or replacement JAIN SIP headers for outbound messages.
    * 
    * @return This SipCall's javax.sip.header.HeaderFactory
@@ -2475,8 +2527,9 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method returns the last response received on this call.
+   * Gets the last response received on this call.
    * 
+   * <p>
    * See also SipCall methods getAllReceivedResponses(), findMostRecentResponse(statuscode).
    * 
    * @return A SipResponse object representing the last response message received on this call, or
@@ -2494,8 +2547,9 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method returns the last request received on this call.
+   * Gets the last request received on this call.
    * 
+   * <p>
    * See also SipCall method getAllReceivedRequests().
    * 
    * @return A SipRequest object representing the last request message received on this call, or
@@ -2513,9 +2567,10 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method returns all the responses received on this call, including any that required
+   * Gets all the responses received on this call, including any that required
    * re-initiation of the call (ie, authentication challenge).
    * 
+   * <p>
    * See also SipCall methods getLastReceivedResponse(), findMostRecentResponse(statuscode).
    * 
    * @return ArrayList of zero or more SipResponse objects.
@@ -2525,8 +2580,9 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method returns all the requests received on this call.
+   * Gets all the requests received on this call.
    * 
+   * <p>
    * See also SipCall method getLastReceivedRequest().
    * 
    * @return ArrayList of zero or more SipRequest objects.
@@ -2710,7 +2766,6 @@ public class SipCall implements SipActionObject, MessageListener {
         SipStack.trace(getErrorMessage());
       }
     }
-
   }
 
   private void authorizeResend(Response resp, Request sentmsg) {
@@ -2776,8 +2831,10 @@ public class SipCall implements SipActionObject, MessageListener {
    * The waitForAnswer() method waits for answer(OK) to be received from the network. While waiting,
    * it collects all intermediate responses (which can be viewed later by calling
    * getAllReceivedResponses()) and handles any received authentication challenges.
+   * 
    * <p>
    * Call this method after calling SipPhone.makeCall() or SipCall.initiateOutgoingCall().
+   * 
    * <p>
    * If OK has already been received for this call, this method returns immediately. Otherwise, this
    * method blocks until one of the following occurs: 1) An OK response message is received. In this
@@ -2786,6 +2843,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * occurs. A false value is returned in this case. 3) An error occurs. False is returned in this
    * case. 4) A final response other than OK is received. False is returned in this case. See
    * details below for what to do when false is returned.
+   * 
    * <p>
    * Regardless of the outcome, getReturnCode() can be called after this method returns to get the
    * status code: IE, the SIP response code received from the network (defined in SipResponse, along
@@ -2855,8 +2913,10 @@ public class SipCall implements SipActionObject, MessageListener {
    * The waitForAuthorisation() method waits for answer(401/407) to be received from the network. It
    * ignores provisional responses, but will stop and return false on any progress/ringing response.
    * If an authorisation request is received, a response will be sent and a success returned.
+   * 
    * <p>
    * This method will block until any non-provisional message is received.
+   * 
    * <p>
    * 
    * @param timeout The maximum amount of time to wait for each message, in milliseconds. Use a
@@ -2900,7 +2960,7 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method returns the last received response with status code matching the given parameter.
+   * Finds the last received response with status code matching the given parameter.
    * 
    * @param statusCode Indicates the type of response to return.
    * @return SipResponse object or null, if not found.
@@ -2920,7 +2980,8 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * This method sends a basic CANCEL in a new transaction on the current dialog.
+   * Sends a basic CANCEL in a new transaction on the current dialog.
+   * 
    * <p>
    * This method returns when the request message has been sent out. The calling program must
    * subsequently call the waitForCancelResponse() method (one or more times) to get the
@@ -2940,6 +3001,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * specify a message body and/or additional JAIN-SIP API message headers to add to or replace in
    * the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
@@ -3195,9 +3257,11 @@ public class SipCall implements SipActionObject, MessageListener {
    * caller to specify a message body and/or additional JAIN-SIP API message headers to add to or
    * replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
    * 
+   * <p>
    * NOTE: The additionalHeaders parameter passed to this method must contain a ContentTypeHeader in
    * order for a body to be included in the message.
    * 
+   * <p>
    * The extra parameters supported by this method are:
    * 
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add

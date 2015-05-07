@@ -23,6 +23,7 @@ import java.util.ArrayList;
  * on behalf of a user program. This interface provides a uniform way of retrieving messages
  * received by such SipUnit objects.
  * 
+ * <p>
  * Internally, this interface is used for asynchronous reception of SIP requests, responses, and
  * response timeouts.
  * 
@@ -32,7 +33,7 @@ import java.util.ArrayList;
 public interface MessageListener extends RequestListener {
 
   /**
-   * This method returns all the responses received by this object and can be called directly by a
+   * Gets all the responses received by this object and can be called directly by a
    * test program.
    * 
    * @return ArrayList of zero or more SipResponse objects.
@@ -42,7 +43,7 @@ public interface MessageListener extends RequestListener {
   public ArrayList<SipResponse> getAllReceivedResponses();
 
   /**
-   * This method returns all the requests received by this object and can be called directly by a
+   * Gets all the requests received by this object and can be called directly by a
    * test program.
    * 
    * @return ArrayList of zero or more SipRequest objects.
@@ -52,7 +53,7 @@ public interface MessageListener extends RequestListener {
   public ArrayList<SipRequest> getAllReceivedRequests();
 
   /**
-   * This method returns the last request received by this object and can be called directly by a
+   * Gets the last request received by this object and can be called directly by a
    * test program.
    * 
    * @return A SipRequest object representing the last request message received, or null if none has
@@ -63,7 +64,7 @@ public interface MessageListener extends RequestListener {
   public SipRequest getLastReceivedRequest();
 
   /**
-   * This method returns the last response received by this object and can be called directly by a
+   * Gets the last response received by this object and can be called directly by a
    * test program.
    * 
    * @return A SipResponse object representing the last response message received, or null if none

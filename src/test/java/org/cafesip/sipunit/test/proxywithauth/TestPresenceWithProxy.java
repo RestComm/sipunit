@@ -60,9 +60,11 @@ import org.junit.Test;
  * the far end. All endpoint UAs can run on the localhost. This class contains a subset of tests
  * from TestPresenceNoProxy test class.
  * 
+ * <p>
  * ****** THIS CLASS IS ON HOLD ******** Please run the TestPresenceNoProxy or the
  * TestPresenceWithSipexProxy class to see the SUBSCRIBE/NOTIFY handling for the time being.
  * 
+ * <p>
  * Tests in this class require a proxy server that will authenticate using DIGEST and that supports
  * Type I presence aware clients - IE, one that will pass SUBSCRIBE, NOTIFY messages through to the
  * User Agents. You can use nist.gov's JAIN-SIP proxy for this test. I used the old one with the
@@ -74,6 +76,7 @@ import org.junit.Test;
  * password a1b2c3d4 - these URIs include: sip:becky@nist.gov, sip:amit@nist.gov, sip:tom@nist.gov,
  * sip:vidya@nist.gov. By default, the proxy host is 127.0.0.1 and its listening port is 5060.
  * 
+ * <p>
  * AFter a few test runs of this class, the JAIN-SIP proxy starts throwing TransactionUnavailable
  * exceptions (TODO, investigate further) - restarting the proxy clears things up.
  * 
@@ -143,6 +146,9 @@ public class TestPresenceWithProxy {
 
   }
 
+  /**
+   * Initialize the sipStack and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -172,6 +178,9 @@ public class TestPresenceWithProxy {
     }
   }
 
+  /**
+   * Release the sipStack and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     ua.dispose();

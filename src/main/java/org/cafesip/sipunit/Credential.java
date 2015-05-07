@@ -50,56 +50,26 @@ public class Credential {
    */
   public Credential() {}
 
-  /**
-   * This method returns the password.
-   * 
-   * @return the password string.
-   */
   public String getPassword() {
     return password;
   }
 
-  /**
-   * This method sets the password to use when authentication is required.
-   * 
-   * @param password The password value to set.
-   */
   public void setPassword(String password) {
     this.password = password;
   }
 
-  /**
-   * This method returns the realm.
-   * 
-   * @return the realm string.
-   */
   public String getRealm() {
     return realm;
   }
 
-  /**
-   * This method sets the realm associated with the user name and password.
-   * 
-   * @param realm The realm value to set.
-   */
   public void setRealm(String realm) {
     this.realm = realm;
   }
 
-  /**
-   * This method returns the user.
-   * 
-   * @return the user string.
-   */
   public String getUser() {
     return user;
   }
 
-  /**
-   * This method sets the user name to use when authentication is required.
-   * 
-   * @param user The user value to set.
-   */
   public void setUser(String user) {
     this.user = user;
   }

@@ -51,6 +51,7 @@ import javax.sip.message.Response;
  * The EventSubscriber class represents a generic subscription conforming to the event subscription
  * and asynchronous notification framework defined by RFC-3265. This class is used for the
  * Subscriber-side perspective as opposed to the NOTIFY sending side.
+ * 
  * <p>
  * This object is created as the result of an initial outbound SUBSCRIBE message or REFER message.
  * This object is used indirectly by a test program to proceed through the subscribing side
@@ -59,6 +60,7 @@ import javax.sip.message.Response;
  * active, termination reason if terminated, errors encountered during received SUBSCRIBE/REFER
  * response and incoming NOTIFY message validation, and details of any received responses and
  * requests if needed.
+ * 
  * <p>
  * Event package-specific handling/information is handled by the classes extending this class. The
  * user test programs use those subclasses directly.
@@ -316,13 +318,16 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    * one of the subscription-related methods (for example: PresenceSubscriber.refreshBuddy(),
    * ReferSubscriber.unsubscribe(), etc.) that take Request as a parameter, which will result in the
    * request being sent out.
+   * 
    * <p>
    * If you don't need to modify the next SUBSCRIBE request to introduce errors, don't bother with
    * this method and just call one of the alternative subscription-related methods that doesn't take
    * a Request parameter - it will create and send the request in one step.
+   * 
    * <p>
    * Effective use of this method requires knowledge of the JAIN SIP API Request and Header classes.
    * Use those to modify the request returned by this method.
+   * 
    * <p>
    * Note that subscription-creating methods like SipPhone.addBuddy() and SipPhone.refer() do not
    * have any signatures that take Request as a parameter. The reason is because a correct initial
@@ -659,15 +664,18 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    * end for this transaction, handling authentication challenges if needed, and updating this
    * object with the results of the request/response sequence. It performs any eventpackage-specific
    * validation on the received response and returns false if that validation fails.
+   * 
    * <p>
    * Call this method after calling any of the subscription operation methods that send a SUBSCRIBE
    * or REFER request like SipPhone.addBuddy(), PresenceSubscriber.refreshBuddy(), SipPhone.refer(),
    * etc. and getting back a positive indication.
+   * 
    * <p>
    * If a success indication is returned by this method, you can call other methods on this object
    * to find out the result of the messaging sequence: isSubscriptionActive/Pending/Terminated() for
    * subscription state information, getTimeLeft() if subscription expiry information has been
    * received.
+   * 
    * <p>
    * The next step if this method returns true is to call waitNotify() to retrieve/wait for the
    * NOTIFY request from the far end which may or may not have already come in.
@@ -844,9 +852,11 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    * based on the NOTIFY contents, and creates and returns the correctly formed response that should
    * be sent back in reply to the NOTIFY, based on the NOTIFY content that was received. Call this
    * method after getting a NOTIFY request from method waitNotify().
+   * 
    * <p>
    * If a null value is returned by this method, call getReturnCode() and/or getErrorMessage() to
    * see why.
+   * 
    * <p>
    * If a non-null response object is returned by this method, it doesn't mean that NOTIFY
    * validation passed. If there was invalid content in the NOTIFY, the response object returned by
@@ -858,10 +868,12 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    * can call methods isSubscriptionActive/Pending/Terminated(), getTerminationReason() and/or
    * getTimeLeft() for updated subscription information, and for event-specific information that may
    * have been updated by the received NOTIFY, call the appropriate Subscription subclass methods.
+   * 
    * <p>
    * The next step after this is to invoke replyToNotify() to send the response to the network. You
    * may modify/corrupt the response returned by this method (using the JAIN-SIP API) before passing
    * it to replyToNotify().
+   * 
    * <p>
    * Validation performed by this method includes: event header existence, correct event type (done
    * by the event-specific subclass), NOTIFY event ID matches that in the sent request (SUBSCRIBE,
@@ -1179,7 +1191,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns the last response received on this subscription.
+   * Gets the last response received on this subscription.
    * 
    * @return A SipResponse object representing the last response message received, or null if none
    *         has been received.
@@ -1197,7 +1209,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns the last request received on this subscription.
+   * Gets the last request received on this subscription.
    * 
    * @return A SipRequest object representing the last request message received, or null if none has
    *         been received.
@@ -1215,7 +1227,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns all the responses received on this subscription, including any that
+   * Gets the responses received on this subscription, including any that
    * required re-initiation of the subscription (ie, authentication challenge). Not included are
    * out-of-sequence (late) responses.
    * 
@@ -1230,7 +1242,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns all the NOTIFY requests received on this subscription. (Retransmissions
+   * Gets the NOTIFY requests received on this subscription. (Retransmissions
    * aren't included.)
    * 
    * @return ArrayList of zero or more SipRequest objects.
@@ -1314,7 +1326,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns the URI of the user that this Subscription is for.
+   * Gets the URI of the user that this Subscription is for.
    * 
    * @return The user's URI.
    */
@@ -1323,17 +1335,19 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns any errors accumulated during collection of responses and NOTIFY requests.
+   * Get any errors accumulated during collection of responses and NOTIFY requests.
    * Since this happens automatically, asynchronous of the test program activity, there's not a
    * handy way like a method call return code to report these errors if they happen. They are errors
    * like: No CSEQ header in received NOTIFY, error or exception resending request with
    * authorization header, unexpected null transaction object at response timeout, etc. You should
    * at various points call assertNoSubscriptionErrors() method on SipTestCase or SipAssert during a
    * test to verify none have been encountered.
+   * 
    * <p>
    * The case where a NOTIFY is received by a SipPhone but there is no matching subscription results
    * in 481 response being sent back and an event error entry in each Subscription object associated
    * with that SipPhone (to ensure it will be seen by the test program).
+   * 
    * <p>
    * Aside from being put in the event error list, event errors are output with the SipUnit trace if
    * you have it turned on (SipStack.setTraceEnabled(true)). You can clear this list by calling
@@ -1442,7 +1456,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns the dialog associated with this subscription.
+   * Get the dialog associated with this subscription.
    * 
    * @return The JAIN-SIP Dialog object.
    */
@@ -1451,7 +1465,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns the dialog ID associated with this subscription, or an empty string if the
+   * Get the dialog ID associated with this subscription, or an empty string if the
    * dialog isn't created yet.
    * 
    * @return String which is the dialog ID associated with this subscription
@@ -1467,6 +1481,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    * unexamined-as-yet-by-the-test-program NOTIFY messages accumulated when this method is called,
    * it returns the next in line (FIFO) immediately. Otherwise, it waits for the next NOTIFY message
    * to be received from the network for this subscription.
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) A NOTIFY message is received, for this
    * subscription. The received NOTIFY javax.sip.RequestEvent object is returned in this case. The
@@ -1474,6 +1489,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
    * for the caller is to pass the object returned by this method to processNotify() for handling.
    * 2) The wait timeout period specified by the parameter to this method expires. Null is returned
    * in this case. 3) An error occurs. Null is returned in this case.
+   * 
    * <p>
    * A NOTIFY message whose CSEQ# is not greater than those previously received is discarded and not
    * returned by this method.
@@ -1523,6 +1539,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   /**
    * The waitResponse() method waits for a response for a previously sent subscription request
    * message (SUBSCRIBE, REFER, ...).
+   * 
    * <p>
    * This method blocks until one of the following occurs: 1) A javax.sip.ResponseEvent is received.
    * This is the object returned by this method. 2) A javax.sip.TimeoutEvent is received. This is
@@ -1565,7 +1582,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns the most recent response received from the network for this subscription.
+   * Get the most recent response received from the network for this subscription.
    * Knowledge of JAIN-SIP API is required to examine the object returned from this method.
    * Alternately, call getLastReceivedResponse() to see the primary values (status, reason)
    * contained in the last received response.
@@ -1588,7 +1605,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * This method returns the last request that was sent out for this subscription.
+   * Get the last request that was sent out for this subscription.
    * 
    * @return javax.sip.message.Request last sent out
    */

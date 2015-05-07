@@ -35,6 +35,7 @@ import javax.sip.message.Request;
  * The primary purpose of this class is as a test utility, to verify other UA's NOTIFY reception
  * processing.
  * 
+ * <p>
  * When instantiated, an object of this class listens for a REFER or SUBSCRIBE message. After the
  * calling program has sent a message to this object's uri, it can call this object's processRefer()
  * or processSubscribe() method to receive and process the received request and send a response.

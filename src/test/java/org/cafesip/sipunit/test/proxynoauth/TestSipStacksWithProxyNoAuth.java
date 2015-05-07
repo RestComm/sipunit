@@ -33,6 +33,7 @@ import org.junit.Test;
 /**
  * This class tests multiple SipStacks on the same machine.
  * 
+ * <p>
  * Tests in this class require that a Proxy/registrar server be running with authentication turned
  * off. Defaults: proxy host = 192.168.112.1, port = 5060, protocol = udp.
  * 
@@ -85,6 +86,9 @@ public class TestSipStacksWithProxyNoAuth {
     properties2.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
   }
 
+  /**
+   * Initialize the sipStack 1 & 2 and a user agent for the test.
+   */
   @Before
   public void setUp() throws Exception {
     try {
@@ -103,6 +107,9 @@ public class TestSipStacksWithProxyNoAuth {
     }
   }
 
+  /**
+   * Release the sipStack 1 & 2 and a user agent for the test.
+   */
   @After
   public void tearDown() throws Exception {
     ua.dispose();

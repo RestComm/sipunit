@@ -44,6 +44,7 @@ public class SipMessage {
    * This method is FOR SIPUNIT INTERNAL USE ONLY. It requires knowledge of JAIN SIP API. Used by
    * SipTestCase/SipAssert.
    * 
+   * <p>
    * Obtains a ListIterator over all the headers with the specified name in this message. The order
    * of the items returned is the same as the order in which they appeared in the message.
    * 

@@ -129,6 +129,7 @@ public class SipStack implements SipListener {
    * to take advantage of JAIN-SIP 1.2 architecture, multiple listening points per provider -
    * multiple protocols.)
    * 
+   * <p>
    * A test program may contain one or more SipStack objects, each of which may have one or more
    * SipPhones.
    * 
@@ -196,7 +197,6 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * 
    * Equivalent to the other constructor without any properties specified.
    * 
    * @param proto SIP transport protocol (default is UDP).
@@ -368,7 +368,7 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * This method returns the JAIN-SIP AddressFactory associated with the SipStack.
+   * Gets the JAIN-SIP AddressFactory associated with the SipStack.
    * 
    * @return the address factory.
    */
@@ -377,7 +377,7 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * This method returns the JAIN-SIP HeaderFactory associated with the SipStack.
+   * Gets the JAIN-SIP HeaderFactory associated with the SipStack.
    * 
    * @return the header factory.
    */
@@ -386,7 +386,7 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * This method returns the JAIN-SIP MessageFactory associated with the SipStack.
+   * Gets the JAIN-SIP MessageFactory associated with the SipStack.
    * 
    * @return the message factory.
    */
@@ -395,7 +395,7 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * This method returns the JAIN-SIP SipProvider associated with the SipStack.
+   * Gets the JAIN-SIP SipProvider associated with the SipStack.
    * 
    * @return the sip provider.
    */
@@ -404,7 +404,7 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * This method returns the JAIN-SIP SipStack associated with this JUnit SipStack.
+   * Gets the JAIN-SIP SipStack associated with this JUnit SipStack.
    * 
    * @return the JAIN-SIP SipStack.
    */
