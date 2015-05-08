@@ -266,13 +266,19 @@ public class SipAssert {
     assertTrue(msg, responseReceived(statusCode, obj));
   }
 
-  private static boolean responseReceived(int statusCode, MessageListener obj) {
-    ArrayList<SipResponse> responses = obj.getAllReceivedResponses();
+  /**
+   * Check the given message listener object received a response with the indicated status
+   * code.
+   *
+   * @param statusCode the code we want to find
+   * @param messageListener the {@link MessageListener} we want to check
+   * @return true if a received response matches the given statusCode
+   */
+  public static boolean responseReceived(int statusCode, MessageListener messageListener) {
+    ArrayList<SipResponse> responses = messageListener.getAllReceivedResponses();
 
-    Iterator<SipResponse> i = responses.iterator();
-    while (i.hasNext()) {
-      int response_code = (i.next()).getStatusCode();
-      if (response_code == statusCode) {
+    for (SipResponse r : responses) {
+      if (statusCode == r.getStatusCode()) {
         return true;
       }
     }
