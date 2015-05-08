@@ -16,17 +16,24 @@
 
 package org.cafesip.sipunit;
 
+import static com.jayway.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.concurrent.Callable;
+
 import javax.sip.header.CSeqHeader;
 import javax.sip.header.Header;
 import javax.sip.message.Request;
+
+import com.jayway.awaitility.core.ConditionTimeoutException;
 
 /**
  * This class is the static equivalent of SipTestCase. It is intended for use with JUnit 4 or for
@@ -264,6 +271,24 @@ public class SipAssert {
   public static void assertResponseReceived(String msg, int statusCode, MessageListener obj) {
     assertNotNull("Null assert object passed in", obj);
     assertTrue(msg, responseReceived(statusCode, obj));
+  }
+
+  /**
+   * Await until a the size of {@link SipCall#getAllReceivedResponses()} is equal to count.
+   * 
+   * @param call the {@link SipCall} under test
+   * @param count the expected amount of responses
+   * @throws ConditionTimeoutException If condition was not fulfilled within the default time
+   *         period.
+   */
+  public static void awaitReceivedResponses(final SipCall call, final int count) {
+    await().until(new Callable<Integer>() {
+
+      @Override
+      public Integer call() throws Exception {
+        return call.getAllReceivedResponses().size();
+      }
+    }, is(count));
   }
 
   /**
