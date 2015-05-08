@@ -1,7 +1,7 @@
 SipUnit
-----
+-------
 
-  * SipUnit 2.0.0 is out !
+* SipUnit 2.0.0 is out !
 
 The following are the highlights of the release. Thanks to George Vagenas for his recent major contributions to SipUnit and also to S. Pitucha for contributing patches.
 
@@ -12,6 +12,6 @@ The following are the highlights of the release. Thanks to George Vagenas for hi
   * TLS support has been verified.
   * JAIN SIP stack was updated.
 
-Get the latest release either as a [http://sourceforge.net/projects/mobicents/files/Mobicents%20SipUnit/ binary] or [https://oss.sonatype.org/content/groups/public/org/cafesip/sipunit/sipunit/2.0.0/ Maven dependency]
-----
+### Get the latest release either as a [http://sourceforge.net/projects/mobicents/files/Mobicents%20SipUnit/ binary] or [https://oss.sonatype.org/content/groups/public/org/cafesip/sipunit/sipunit/2.0.0/ Maven dependency]
+
 For SipUnit history/archive information please visit http://cafesip.sourceforge.net/site/projects/sipunit/
