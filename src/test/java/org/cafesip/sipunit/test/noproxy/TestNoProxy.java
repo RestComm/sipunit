@@ -106,9 +106,9 @@ public class TestNoProxy {
 
   private String testProtocol;
 
-  private static final Properties defaultProperties = new Properties();
+  private static Properties getDefaultProperties() {
+    Properties defaultProperties = new Properties();
 
-  static {
     defaultProperties.setProperty("javax.sip.STACK_NAME", "testAgent");
     defaultProperties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
     defaultProperties.setProperty("gov.nist.javax.sip.DEBUG_LOG", "testAgent_debug.txt");
@@ -120,11 +120,13 @@ public class TestNoProxy {
     defaultProperties.setProperty("sipunit.test.port", "5061");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
     defaultProperties.setProperty("gov.nist.javax.sip.PASS_INVITE_NON_2XX_ACK_TO_LISTENER", "true");
+    return defaultProperties;
   }
 
-  private Properties properties = new Properties(defaultProperties);
+  protected Properties properties;
 
   public TestNoProxy() {
+    properties = getDefaultProperties();
     properties.putAll(System.getProperties());
 
     try {
