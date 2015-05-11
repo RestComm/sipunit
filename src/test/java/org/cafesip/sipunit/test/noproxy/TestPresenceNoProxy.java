@@ -152,7 +152,6 @@ public class TestPresenceNoProxy {
     // tell far end to wait for a SUBSCRIBE, and when it
     // comes in, respond with OK
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
-    Thread.sleep(500);
 
     assertEquals(0, ua.getBuddyList().size()); // my list empty
 
@@ -194,11 +193,9 @@ public class TestPresenceNoProxy {
     assertTrue(sub.getTimeLeft() <= 3600);
 
     // tell far end to send a NOTIFY
-    Thread.sleep(500);
     String notifyBody =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<presence entity=\"sip:becky@cafesip.org\" xmlns=\"urn:ietf:params:xml:ns:pidf\"><tuple id=\"1\"><status><basic>closed</basic></status></tuple></presence>";
     assertTrue(ub.sendNotify(SubscriptionStateHeader.ACTIVE, null, notifyBody, 2400, false));
-    Thread.sleep(10);
 
     // get the NOTIFY
     RequestEvent reqevent = sub.waitNotify(500);
@@ -331,7 +328,6 @@ public class TestPresenceNoProxy {
     // tell far end to wait for a SUBSCRIBE, and when it
     // comes in, respond with OK
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "Okey dokey"));
-    Thread.sleep(500);
 
     assertEquals(1, ua.getBuddyList().size());
     assertEquals(0, ua.getRetiredBuddies().size());
@@ -483,7 +479,6 @@ public class TestPresenceNoProxy {
 
     // prepare far end to receive SUBSCRIBE
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
-    Thread.sleep(500);
 
     // do the SUBSCRIBE sequence
     PresenceSubscriber sub = ua.addBuddy(buddy, 2000);
@@ -523,7 +518,6 @@ public class TestPresenceNoProxy {
 
     // prepare far end to receive SUBSCRIBE
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Ended"));
-    Thread.sleep(500);
 
     // remove buddy from contacts, do the SUBSCRIBE sequence
     assertTrue(sub.removeBuddy(300));
@@ -638,7 +632,6 @@ public class TestPresenceNoProxy {
 
     // prepare far end to receive SUBSCRIBE
     assertTrue(ns.processSubscribe(5000, SipResponse.OK, "OK"));
-    Thread.sleep(500);
 
     // do something with a buddy - sends SUBSCRIBE, gets response
     PresenceSubscriber sub = ua.fetchPresenceInfo(buddy, 2000);
@@ -731,9 +724,7 @@ public class TestPresenceNoProxy {
 
     // do another fetch
 
-    Thread.sleep(100);
     assertTrue(ns.processSubscribe(5000, SipResponse.OK, "OKay"));
-    Thread.sleep(500);
 
     sub = ua.fetchPresenceInfo(buddy, 2000);
 
@@ -834,7 +825,6 @@ public class TestPresenceNoProxy {
 
     // prepare far end to receive SUBSCRIBE
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
-    Thread.sleep(500);
 
     // do something with a buddy - sends SUBSCRIBE, gets response
     PresenceSubscriber sub = ua.fetchPresenceInfo(buddy, 2000);
@@ -876,7 +866,6 @@ public class TestPresenceNoProxy {
     // tell far end to wait for a SUBSCRIBE, and when it
     // comes in, respond with OK
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
-    Thread.sleep(500);
 
     // add the buddy to the buddy list - sends SUBSCRIBE, gets response
     PresenceSubscriber sub = ua.addBuddy(buddy, 2000);
@@ -949,7 +938,6 @@ public class TestPresenceNoProxy {
 
     // prepare far end to receive SUBSCRIBE - TODO non-OK responses
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
-    Thread.sleep(500);
 
     // do the SUBSCRIBE sequence
     sub = ua.addBuddy(buddy, 2300, "myevent-id", 2000);
@@ -1031,7 +1019,6 @@ public class TestPresenceNoProxy {
 
     // prepare far end to receive SUBSCRIBE
     assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OKee"));
-    Thread.sleep(500);
 
     // do something with a buddy - sends SUBSCRIBE, gets response
     PresenceSubscriber sub = ua.addBuddy(buddy, 2000);
@@ -1320,7 +1307,6 @@ public class TestPresenceNoProxy {
     assertEquals("Should have gotten 481 response for stray NOTIFY",
         SipResponse.CALL_OR_TRANSACTION_DOES_NOT_EXIST, response.getStatusCode());
 
-    // //////////////////////////////////////////////////////////
     // repeat w/2 buddies using wrong presentity. Verify
     // presence event on both
     setUpTwoBuddies(ua, buddy, "open", buddy2, "open");
@@ -1360,7 +1346,6 @@ public class TestPresenceNoProxy {
     // s1.clearEventErrors();
     // s2.clearEventErrors();
 
-    // //////////////////////////////////////////////////////////
     // repeat w/2 buddies using correct presentity but wrong event ID.
     // Verify
     // presence event on both
@@ -1422,7 +1407,6 @@ public class TestPresenceNoProxy {
     // ////////// add buddy1 to the buddy list ///////////////////
 
     assertTrue(buddy1.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     PresenceSubscriber s1 = ua.addBuddy(buddyone, 2000); // send
     // SUBSCRIBE,
     // get response
@@ -1455,9 +1439,7 @@ public class TestPresenceNoProxy {
     // /////////// add buddys 2 and 3 to the buddy list ////////////////
 
     assertTrue(buddy2.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     assertTrue(buddy3.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     PresenceSubscriber s2 = ua.addBuddy(buddytwo, 2000);
     assertEquals(2, ua.getBuddyList().size());
     assertEquals(0, ua.getRetiredBuddies().size());
@@ -1532,10 +1514,8 @@ public class TestPresenceNoProxy {
 
     // ////////// refresh one guy, make his dev data same as another
     // ///////// another guy gets notify out of the blue, 2 tuples
-    // ////////
 
     assertTrue(buddy2.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     assertTrue(s2.refreshBuddy(2000));
     assertEquals(3, ua.getBuddyList().size());
     assertEquals(0, ua.getRetiredBuddies().size());
@@ -1604,7 +1584,6 @@ public class TestPresenceNoProxy {
     // //////// remove a buddy from the list ///////////////////
 
     assertTrue(buddy1.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     assertTrue(s1.removeBuddy(2000)); // send unSUBSCRIBE,
     // get response
     assertEquals(2, ua.getBuddyList().size());
@@ -1659,7 +1638,6 @@ public class TestPresenceNoProxy {
 
     // like the remove above
     assertTrue(buddy1.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     s1 = ua.fetchPresenceInfo(buddyone, 2000); // send unSUBSCRIBE,
     // get response
     assertNotNull(s1);
@@ -1710,9 +1688,7 @@ public class TestPresenceNoProxy {
     // ///////// remove the other two buddies also /////////
 
     assertTrue(buddy2.processSubscribe(15000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     assertTrue(buddy3.processSubscribe(25000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     assertTrue(s2.removeBuddy(22000));
     assertEquals(1, ua.getBuddyList().size());
     assertEquals(2, ua.getRetiredBuddies().size());
@@ -1791,9 +1767,7 @@ public class TestPresenceNoProxy {
         new PresenceNotifySender(sipStack.createSipPhone(host, testProtocol, myPort, b2));
 
     assertTrue(buddy1.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     assertTrue(buddy2.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    Thread.sleep(500);
     PresenceSubscriber s1 = ua.addBuddy(b1, 2000);
     PresenceSubscriber s2 = ua.addBuddy(b2, 2000);
     assertNotNull(s1);
