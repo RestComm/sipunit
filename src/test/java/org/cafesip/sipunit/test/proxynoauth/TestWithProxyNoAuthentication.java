@@ -27,6 +27,7 @@ import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.cafesip.sipunit.SipAssert.assertNotAnswered;
 import static org.cafesip.sipunit.SipAssert.assertResponseNotReceived;
 import static org.cafesip.sipunit.SipAssert.assertResponseReceived;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -45,6 +46,7 @@ import org.junit.Test;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.EventObject;
+
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.TimeoutEvent;
@@ -106,7 +108,7 @@ public class TestWithProxyNoAuthentication {
   @After
   public void tearDown() throws Exception {
     ua.dispose();
-    sipStack.dispose();
+    awaitStackDispose(sipStack);
   }
 
   /**

@@ -18,6 +18,7 @@ package org.cafesip.sipunit.test.proxywithauth;
 
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -40,6 +41,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
+
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.address.SipURI;
@@ -168,8 +170,7 @@ public class TestPresenceWithSipexProxy {
       ub.unregister(ub.getContactInfo().getURI(), 200);
       ub.dispose();
     }
-
-    sipStack.dispose();
+    awaitStackDispose(sipStack);
   }
 
   @Test

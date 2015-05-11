@@ -34,6 +34,7 @@ import static org.cafesip.sipunit.SipAssert.assertRequestReceived;
 import static org.cafesip.sipunit.SipAssert.assertResponseNotReceived;
 import static org.cafesip.sipunit.SipAssert.assertResponseReceived;
 import static org.cafesip.sipunit.SipAssert.awaitReceivedResponses;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -184,15 +185,8 @@ public class TestNoProxy {
    */
   @After
   public void tearDown() throws Exception {
-    if (ua != null) {
-      ua.dispose();
-      ua = null;
-    }
-
-    if (sipStack != null) {
-      sipStack.dispose();
-      sipStack = null;
-    }
+    ua.dispose();
+    awaitStackDispose(sipStack);
   }
 
   @Test

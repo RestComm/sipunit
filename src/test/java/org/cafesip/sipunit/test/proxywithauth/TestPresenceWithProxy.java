@@ -18,6 +18,7 @@ package org.cafesip.sipunit.test.proxywithauth;
 
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -48,6 +49,7 @@ import java.util.EventObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.TimeoutEvent;
@@ -175,7 +177,7 @@ public class TestPresenceWithProxy {
   @After
   public void tearDown() throws Exception {
     ua.dispose();
-    sipStack.dispose();
+    awaitStackDispose(sipStack);
   }
 
   @Test

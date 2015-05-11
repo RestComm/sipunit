@@ -17,6 +17,7 @@
 package org.cafesip.sipunit.test.proxynoauth;
 
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -29,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Properties;
+
 import javax.sip.message.Response;
 
 /**
@@ -104,8 +106,8 @@ public class TestSipStacksWithProxyNoAuth {
   @After
   public void tearDown() throws Exception {
     ua.dispose();
-    sipStack1.dispose();
-    sipStack2.dispose();
+    awaitStackDispose(sipStack1);
+    awaitStackDispose(sipStack2);
   }
 
   @Test

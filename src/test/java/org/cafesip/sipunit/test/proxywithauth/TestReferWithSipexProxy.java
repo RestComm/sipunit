@@ -19,6 +19,7 @@ package org.cafesip.sipunit.test.proxywithauth;
 import static org.cafesip.sipunit.SipAssert.assertBodyContains;
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -37,6 +38,7 @@ import org.junit.Test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Properties;
+
 import javax.sip.RequestEvent;
 import javax.sip.address.SipURI;
 import javax.sip.header.SubscriptionStateHeader;
@@ -184,7 +186,7 @@ public class TestReferWithSipexProxy {
       ub.dispose();
     }
 
-    sipStack.dispose();
+    awaitStackDispose(sipStack);
   }
 
   @Test

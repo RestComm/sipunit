@@ -17,6 +17,7 @@
 package org.cafesip.sipunit.test.noproxy;
 
 import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -47,6 +48,7 @@ import java.util.EventObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.TimeoutEvent;
@@ -131,15 +133,8 @@ public class TestPresenceNoProxy {
    */
   @After
   public void tearDown() throws Exception {
-    if (ua != null) {
-      ua.dispose();
-      ua = null;
-    }
-
-    if (sipStack != null) {
-      sipStack.dispose();
-      sipStack = null;
-    }
+    ua.dispose();
+    awaitStackDispose(sipStack);
   }
 
   @Test

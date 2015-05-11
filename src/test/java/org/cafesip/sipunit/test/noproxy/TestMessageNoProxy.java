@@ -17,6 +17,7 @@
 package org.cafesip.sipunit.test.noproxy;
 
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -145,20 +146,9 @@ public class TestMessageNoProxy {
    */
   @After
   public void tearDown() throws Exception {
-    if (ua != null) {
-      ua.dispose();
-      ua = null;
-    }
-
-    if (sipStack1 != null) {
-      sipStack1.dispose();
-      sipStack1 = null;
-    }
-
-    if (sipStack2 != null) {
-      sipStack2.dispose();
-      sipStack2 = null;
-    }
+    ua.dispose();
+    awaitStackDispose(sipStack1);
+    awaitStackDispose(sipStack2);
   }
 
   @Test
