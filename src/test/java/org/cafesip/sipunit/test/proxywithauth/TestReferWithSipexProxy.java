@@ -252,7 +252,7 @@ public class TestReferWithSipexProxy {
     // ********** II. Refresh the subscription
 
     // prepare the far end to respond to SUBSCRIBE
-    assertTrue(referee.processSubscribe(5000, SipResponse.OK, "OK Refreshed"));
+    referee.processSubscribe(5000, SipResponse.OK, "OK Refreshed");
     Thread.sleep(100);
 
     // send the SUBSCRIBE
@@ -297,7 +297,7 @@ public class TestReferWithSipexProxy {
     // ********** III. Terminate the subscription from the referrer side
 
     // prepare the far end to respond to unSUBSCRIBE
-    assertTrue(referee.processSubscribe(5000, SipResponse.OK, "OK Done"));
+    referee.processSubscribe(5000, SipResponse.OK, "OK Done");
     Thread.sleep(100);
 
     // send the un-SUBSCRIBE

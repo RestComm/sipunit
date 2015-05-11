@@ -470,7 +470,7 @@ public class TestPresenceWithProxy {
     assertTrue(pserver.getErrorMessage(), registered);
 
     // prepare far end to receive SUBSCRIBE within 2 sec, respond w/OK
-    assertTrue(pserver.processSubscribe(2000, SipResponse.OK, "OK"));
+    pserver.processSubscribe(2000, SipResponse.OK, "OK");
 
     // (2) establish a subscription, get the buddy in the buddy list
     PresenceSubscriber sub = ua.addBuddy(buddy, 1000);
@@ -519,7 +519,7 @@ public class TestPresenceWithProxy {
     // (3) Now, end the subscription from our (client) side
 
     // prepare far end to receive SUBSCRIBE within 2 sec, reply with OK
-    assertTrue(pserver.processSubscribe(2000, SipResponse.OK, "OK Ended"));
+    pserver.processSubscribe(2000, SipResponse.OK, "OK Ended");
 
     // remove buddy from contacts list, terminating SUBSCRIBE sequence
     sub = ua.getBuddyInfo(buddy);
@@ -647,7 +647,7 @@ public class TestPresenceWithProxy {
     // reply to the NOTIFY
 
     // prepare far end to receive SUBSCRIBE
-    assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK"));
+    ub.processSubscribe(5000, SipResponse.OK, "OK");
     Thread.sleep(500);
 
     // do something with a buddy - sends SUBSCRIBE, gets response
@@ -744,7 +744,7 @@ public class TestPresenceWithProxy {
     // do another fetch
 
     Thread.sleep(100);
-    assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OKay"));
+    ub.processSubscribe(5000, SipResponse.OK, "OKay");
     Thread.sleep(500);
 
     sub = ua.fetchPresenceInfo(buddy, 2000);
@@ -851,7 +851,7 @@ public class TestPresenceWithProxy {
     assertTrue(ub.getErrorMessage(), registered);
 
     // prepare far end to receive SUBSCRIBE
-    assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OKee"));
+    ub.processSubscribe(5000, SipResponse.OK, "OKee");
     Thread.sleep(500);
 
     // do something with a buddy - sends SUBSCRIBE, gets fist response
@@ -1150,8 +1150,8 @@ public class TestPresenceWithProxy {
             "a1b2c3d4"));
     assertTrue(buddy2sim.getErrorMessage(), registered);
 
-    assertTrue(buddy1sim.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
-    assertTrue(buddy2sim.processSubscribe(5000, SipResponse.OK, "OK")); // prepare
+    buddy1sim.processSubscribe(5000, SipResponse.OK, "OK"); // prepare
+    buddy2sim.processSubscribe(5000, SipResponse.OK, "OK"); // prepare
     Thread.sleep(500);
     PresenceSubscriber s1 = ua.addBuddy(buddy, 2000);
     PresenceSubscriber s2 = ua.addBuddy(buddy2, 2000);
