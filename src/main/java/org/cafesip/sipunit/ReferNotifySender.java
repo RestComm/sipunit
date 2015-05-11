@@ -129,15 +129,15 @@ public class ReferNotifySender extends PresenceNotifySender {
 
     public void run() {
       try {
-        ub.unlistenRequestMessage(); // clear out request queue
-        ub.listenRequestMessage();
+        phone.unlistenRequestMessage(); // clear out request queue
+        phone.listenRequestMessage();
 
-        RequestEvent inc_req = ub.waitRequest(timeout);
+        RequestEvent inc_req = phone.waitRequest(timeout);
         while (inc_req != null) {
           receivedRequests.add(new SipRequest(inc_req));
           Request req = inc_req.getRequest();
           if (req.getMethod().equals(Request.REFER) == false) {
-            inc_req = ub.waitRequest(timeout);
+            inc_req = phone.waitRequest(timeout);
             continue;
           }
 
@@ -145,7 +145,7 @@ public class ReferNotifySender extends PresenceNotifySender {
             synchronized (dialogLock) {
               ServerTransaction trans = inc_req.getServerTransaction();
               if (trans == null) {
-                trans = ub.getParent().getSipProvider().getNewServerTransaction(req);
+                trans = phone.getParent().getSipProvider().getNewServerTransaction(req);
               }
 
               if (toTag == null) {
@@ -153,7 +153,7 @@ public class ReferNotifySender extends PresenceNotifySender {
               }
 
               // enable auth challenge handling
-              ub.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
+              phone.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
 
               // save event header
               if (overrideEvent != null) {
@@ -165,7 +165,7 @@ public class ReferNotifySender extends PresenceNotifySender {
               dialog = sendResponse(trans, statusCode, reasonPhrase, toTag, req, duration);
 
               if (dialog == null) {
-                ub.clearAuthorizations(
+                phone.clearAuthorizations(
                     ((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
                 return;
               }
@@ -179,7 +179,7 @@ public class ReferNotifySender extends PresenceNotifySender {
           }
         }
 
-        setErrorMessage(ub.getErrorMessage());
+        setErrorMessage(phone.getErrorMessage());
         return;
       } catch (Exception e) {
         setErrorMessage("Exception: " + e.getClass().getName() + ": " + e.getMessage());
@@ -254,15 +254,15 @@ public class ReferNotifySender extends PresenceNotifySender {
 
     public void run() {
       try {
-        ub.unlistenRequestMessage(); // clear out request queue
-        ub.listenRequestMessage();
+        phone.unlistenRequestMessage(); // clear out request queue
+        phone.listenRequestMessage();
 
-        RequestEvent inc_req = ub.waitRequest(timeout);
+        RequestEvent inc_req = phone.waitRequest(timeout);
         while (inc_req != null) {
           receivedRequests.add(new SipRequest(inc_req));
           Request req = inc_req.getRequest();
           if (req.getMethod().equals(Request.REFER) == false) {
-            inc_req = ub.waitRequest(timeout);
+            inc_req = phone.waitRequest(timeout);
             continue;
           }
 
@@ -270,7 +270,7 @@ public class ReferNotifySender extends PresenceNotifySender {
             synchronized (dialogLock) {
               ServerTransaction trans = inc_req.getServerTransaction();
               if (trans == null) {
-                trans = ub.getParent().getSipProvider().getNewServerTransaction(req);
+                trans = phone.getParent().getSipProvider().getNewServerTransaction(req);
               }
 
               if (toTag == null) {
@@ -278,7 +278,7 @@ public class ReferNotifySender extends PresenceNotifySender {
               }
 
               // enable auth challenge handling
-              ub.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
+              phone.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
 
               // save original event header
               eventHeader = (EventHeader) req.getHeader(EventHeader.NAME).clone();
@@ -298,7 +298,7 @@ public class ReferNotifySender extends PresenceNotifySender {
               dialog = sendResponse(trans, statusCode, reasonPhrase, toTag, req, -1);
 
               if (dialog == null) {
-                ub.clearAuthorizations(
+                phone.clearAuthorizations(
                     ((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
                 return;
               }
@@ -312,7 +312,7 @@ public class ReferNotifySender extends PresenceNotifySender {
           }
         }
 
-        setErrorMessage(ub.getErrorMessage());
+        setErrorMessage(phone.getErrorMessage());
         return;
       } catch (Exception e) {
         setErrorMessage("Exception: " + e.getClass().getName() + ": " + e.getMessage());
@@ -328,7 +328,7 @@ public class ReferNotifySender extends PresenceNotifySender {
    * @throws ParseException
    */
   protected AllowEventsHeader getAllowEventsHeaderForResponse() throws ParseException {
-    AllowEventsHeader ahdr = ub.getParent().getHeaderFactory().createAllowEventsHeader("refer");
+    AllowEventsHeader ahdr = phone.getParent().getHeaderFactory().createAllowEventsHeader("refer");
     return ahdr;
   }
 
@@ -337,7 +337,7 @@ public class ReferNotifySender extends PresenceNotifySender {
    * @throws ParseException
    */
   protected SupportedHeader getSupportedHeaderForResponse() throws ParseException {
-    SupportedHeader shdr = ub.getParent().getHeaderFactory().createSupportedHeader("refer");
+    SupportedHeader shdr = phone.getParent().getHeaderFactory().createSupportedHeader("refer");
     return shdr;
   }
 
@@ -347,7 +347,7 @@ public class ReferNotifySender extends PresenceNotifySender {
    */
   protected AcceptHeader getAcceptHeaderForResponse() throws ParseException {
     AcceptHeader accept =
-        ub.getParent().getHeaderFactory().createAcceptHeader("message", "sipfrag");
+        phone.getParent().getHeaderFactory().createAcceptHeader("message", "sipfrag");
     return accept;
   }
 
