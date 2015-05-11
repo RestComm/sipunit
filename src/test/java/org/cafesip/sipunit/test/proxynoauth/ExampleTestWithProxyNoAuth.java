@@ -21,6 +21,7 @@ import static org.cafesip.sipunit.SipAssert.assertHeaderNotContains;
 import static org.cafesip.sipunit.SipAssert.assertHeaderNotPresent;
 import static org.cafesip.sipunit.SipAssert.assertHeaderPresent;
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -36,6 +37,7 @@ import org.junit.Test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Properties;
+
 import javax.sip.message.Response;
 
 /**
@@ -131,7 +133,7 @@ public class ExampleTestWithProxyNoAuth {
   @After
   public void tearDown() throws Exception {
     ua.dispose();
-    sipStack.dispose();
+    awaitStackDispose(sipStack);
   }
 
   /**

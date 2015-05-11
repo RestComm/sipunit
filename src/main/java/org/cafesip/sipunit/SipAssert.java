@@ -777,6 +777,24 @@ public class SipAssert {
     assertEquals(buf.toString(), 0, subscription.getEventErrors().size());
   }
 
+  /**
+   * Awaits the an error free {@link SipStack#dispose()}.
+   */
+  public static void awaitStackDispose(final SipStack sipStack) {
+    await().until(new Runnable() {
+
+      @Override
+      public void run() {
+        try {
+          sipStack.dispose();
+        } catch (RuntimeException e) {
+          e.printStackTrace();
+          fail();
+        }
+      }
+    });
+  }
+
   // Later: ContentDispositionHeader, ContentEncodingHeader,
   // ContentLanguageHeader,
   // ContentLengthHeader, ContentTypeHeader, MimeVersionHeader

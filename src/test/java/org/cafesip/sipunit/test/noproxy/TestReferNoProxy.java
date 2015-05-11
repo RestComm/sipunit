@@ -16,13 +16,15 @@
 
 package org.cafesip.sipunit.test.noproxy;
 
+import static com.jayway.awaitility.Awaitility.await;
 import static org.cafesip.sipunit.SipAssert.assertBodyContains;
 import static org.cafesip.sipunit.SipAssert.assertHeaderContains;
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
 import static org.cafesip.sipunit.SipAssert.awaitAnswered;
 import static org.cafesip.sipunit.SipAssert.awaitDialogReady;
-import static com.jayway.awaitility.Awaitility.await;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -44,7 +46,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ListIterator;
@@ -133,15 +134,8 @@ public class TestReferNoProxy {
    */
   @After
   public void tearDown() throws Exception {
-    if (ua != null) {
-      ua.dispose();
-      ua = null;
-    }
-
-    if (sipStack != null) {
-      sipStack.dispose();
-      sipStack = null;
-    }
+    ua.dispose();
+    awaitStackDispose(sipStack);
   }
 
   @Test(expected = ParseException.class)

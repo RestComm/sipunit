@@ -29,6 +29,7 @@ import static org.cafesip.sipunit.SipAssert.assertNotAnswered;
 import static org.cafesip.sipunit.SipAssert.assertRequestReceived;
 import static org.cafesip.sipunit.SipAssert.assertResponseNotReceived;
 import static org.cafesip.sipunit.SipAssert.assertResponseReceived;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -53,6 +54,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.Properties;
+
 import javax.sip.ResponseEvent;
 import javax.sip.address.Address;
 import javax.sip.address.SipURI;
@@ -177,7 +179,7 @@ public class TestWithProxyAuthentication {
   @After
   public void tearDown() throws Exception {
     ua.dispose();
-    sipStack.dispose();
+    awaitStackDispose(sipStack);
   }
 
   @Test

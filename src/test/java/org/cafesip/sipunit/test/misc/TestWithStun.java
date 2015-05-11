@@ -17,6 +17,7 @@
 package org.cafesip.sipunit.test.misc;
 
 import static com.jayway.awaitility.Awaitility.await;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 
 import org.cafesip.sipunit.Credential;
 import org.cafesip.sipunit.SipCall;
@@ -184,7 +185,7 @@ public class TestWithStun extends SipTestCase {
   @After
   public void tearDown() throws Exception {
     ua.dispose();
-    sipStack.dispose();
+    awaitStackDispose(sipStack);
   }
 
   public void testCall() throws Exception {
