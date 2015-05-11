@@ -128,19 +128,6 @@ public class TestNoProxy {
 
   protected Properties properties;
 
-  public TestNoProxy() {
-    properties = getDefaultProperties();
-    properties.putAll(System.getProperties());
-
-    try {
-      myPort = Integer.parseInt(properties.getProperty("sipunit.test.port"));
-    } catch (NumberFormatException e) {
-      myPort = 5061;
-    }
-
-    testProtocol = properties.getProperty("sipunit.test.protocol");
-  }
-
   static String DEFAULT_USER_A = "amit@nist.gov";
   static String DEFAULT_USER_B = "becky@nist.gov";
 
@@ -173,6 +160,17 @@ public class TestNoProxy {
    */
   @Before
   public void setUp() throws Exception {
+    properties = getDefaultProperties();
+    properties.putAll(System.getProperties());
+
+    try {
+      myPort = Integer.parseInt(properties.getProperty("sipunit.test.port"));
+    } catch (NumberFormatException e) {
+      myPort = 5061;
+    }
+
+    testProtocol = properties.getProperty("sipunit.test.protocol");
+
     sipStack = new SipStack(testProtocol, myPort, properties);
     SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
         || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
