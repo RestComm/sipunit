@@ -16,6 +16,7 @@
 
 package org.cafesip.sipunit.test.noproxy;
 
+import static com.jayway.awaitility.Awaitility.await;
 import static org.cafesip.sipunit.SipAssert.assertAnswered;
 import static org.cafesip.sipunit.SipAssert.assertBodyContains;
 import static org.cafesip.sipunit.SipAssert.assertBodyNotContains;
@@ -33,6 +34,7 @@ import static org.cafesip.sipunit.SipAssert.assertRequestReceived;
 import static org.cafesip.sipunit.SipAssert.assertResponseNotReceived;
 import static org.cafesip.sipunit.SipAssert.assertResponseReceived;
 import static org.cafesip.sipunit.SipAssert.awaitReceivedResponses;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -59,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
@@ -3106,15 +3109,22 @@ public class TestNoProxy {
     ResponseEvent event = callA.getLastReceivedResponse().getResponseEvent();
     assertEquals("Unexpected 1st response received", Response.TRYING, event.getResponse()
         .getStatusCode());
-    ClientTransaction ct = event.getClientTransaction();
-    assertEquals(TransactionState._TERMINATED, ct.getState().getValue());
+    final ClientTransaction ct = event.getClientTransaction();
+
+    await().until(new Callable<Integer>() {
+
+      @Override
+      public Integer call() throws Exception {
+        return ct.getState().getValue();
+      }
+    }, is(TransactionState._TERMINATED));
 
     assertTrue(callA.waitOutgoingCallResponse(2000));
-    event = callA.getLastReceivedResponse().getResponseEvent();
-    assertEquals("Unexpected 2nd response received", Response.OK, event.getResponse()
+    ResponseEvent event2  = callA.getLastReceivedResponse().getResponseEvent();
+    assertEquals("Unexpected 2nd response received", Response.OK, event2.getResponse()
         .getStatusCode());
-    ct = event.getClientTransaction();
-    assertEquals(TransactionState._TERMINATED, ct.getState().getValue());
+    ClientTransaction ct2 = event2.getClientTransaction();
+    assertEquals(TransactionState._TERMINATED, ct2.getState().getValue());
   }
 
   @Test
