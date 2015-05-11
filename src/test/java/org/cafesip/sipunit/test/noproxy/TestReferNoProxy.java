@@ -16,12 +16,12 @@
 
 package org.cafesip.sipunit.test.noproxy;
 
-import static org.cafesip.sipunit.SipAssert.assertAnswered;
 import static org.cafesip.sipunit.SipAssert.assertBodyContains;
 import static org.cafesip.sipunit.SipAssert.assertHeaderContains;
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
 import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
-import static org.cafesip.sipunit.SipAssert.awaitReceivedResponses;
+import static org.cafesip.sipunit.SipAssert.awaitAnswered;
+import static org.cafesip.sipunit.SipAssert.awaitDialogReady;
 import static com.jayway.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -458,7 +458,7 @@ public class TestReferNoProxy {
     assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", callA);
+    awaitAnswered("Outgoing call leg not answered", callA);
     callA.sendInviteOkAck();
     assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
@@ -601,7 +601,7 @@ public class TestReferNoProxy {
     assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", callA);
+    awaitAnswered("Outgoing call leg not answered", callA);
     callA.sendInviteOkAck();
     assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
@@ -855,7 +855,7 @@ public class TestReferNoProxy {
     assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", callA);
+    awaitAnswered("Outgoing call leg not answered", callA);
     callA.sendInviteOkAck();
     assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
@@ -1198,7 +1198,7 @@ public class TestReferNoProxy {
     assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
 
     // A side finish call establishment
-    assertAnswered("Outgoing call leg not answered", callA);
+    awaitAnswered("Outgoing call leg not answered", callA);
     callA.sendInviteOkAck();
     assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
@@ -1659,16 +1659,6 @@ public class TestReferNoProxy {
     assertTrue(subscription.replyToNotify(reqevent, response));
   }
 
-  private void awaitDialogReady(final ReferNotifySender ub) {
-    await().until(new Runnable() {
-
-      @Override
-      public void run() {
-        assertNotNull(ub.getDialog());
-      }
-    });
-  }
-
   @Test
   public void testNotifyTimeouts() throws Exception {
     // create a refer-To URI
@@ -1953,7 +1943,7 @@ public class TestReferNoProxy {
     assertNotNull(callA);
     assertTrue(callB.waitForIncomingCall(1000));
     assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
-    assertAnswered(callA);
+    awaitAnswered(callA);
     assertTrue(callA.sendInviteOkAck());
 
     // B side - prepare to receive REFER
@@ -2013,7 +2003,7 @@ public class TestReferNoProxy {
     assertNotNull(callA);
     assertTrue(callB.waitForIncomingCall(1000));
     assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0));
-    assertAnswered(callA);
+    awaitAnswered(callA);
     assertTrue(callA.sendInviteOkAck());
 
     // B side - prepare to receive REFER
