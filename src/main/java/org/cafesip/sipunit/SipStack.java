@@ -17,6 +17,7 @@
 package org.cafesip.sipunit;
 
 import gov.nist.javax.sip.ResponseEventExt;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.ParseException;
@@ -26,6 +27,7 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Properties;
 import java.util.Random;
+
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.InvalidArgumentException;
@@ -282,7 +284,7 @@ public class SipStack implements SipListener {
       sipStack.deleteSipProvider(sipProvider);
       sipFactory.resetFactory();
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
