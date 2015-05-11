@@ -2894,6 +2894,8 @@ public class TestNoProxy {
     Dialog dialogB = transactionB.getDialog();
 
     assertTrue(callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600));
+    awaitReceivedResponses(callA, 1);
+
     assertTrue(callA.waitForAnswer(200));
     // verify ResponseEvent is accessible
     SipResponse response = callA.getLastReceivedResponse();
