@@ -571,6 +571,44 @@ public class SipAssert {
   }
 
   /**
+   * Awaits that the given incoming or outgoing call leg was answered. Assertion failure output
+   * includes the given message text.
+   * 
+   * @param msg message text to output if the assertion fails.
+   * @param call The incoming or outgoing call leg.
+   */
+  public static void awaitAnswered(SipCall call) {
+    awaitAnswered(null, call);
+  }
+
+  /**
+   * Awaits that the given incoming or outgoing call leg was answered. Assertion failure output
+   * includes the given message text.
+   * 
+   * @param msg message text to output if the assertion fails.
+   * @param call The incoming or outgoing call leg.
+   */
+  public static void awaitAnswered(final String msg, final SipCall call) {
+    await().until(new Runnable() {
+
+      @Override
+      public void run() {
+        assertAnswered(msg, call);
+      }
+    });
+  }
+
+  public static void awaitDialogReady(final ReferNotifySender ub) {
+    await().until(new Runnable() {
+
+      @Override
+      public void run() {
+        assertNotNull(ub.getDialog());
+      }
+    });
+  }
+
+  /**
    * Asserts that the given incoming or outgoing call leg has not been answered.
    * 
    * @param call The incoming or outgoing call leg.
