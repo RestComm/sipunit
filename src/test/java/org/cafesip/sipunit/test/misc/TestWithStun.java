@@ -142,7 +142,7 @@ public class TestWithStun extends SipTestCase {
    */
   public void setUp() throws Exception {
     // use the stun server to find out my public address
-    assertTrue(getPublicAddress());
+    getPublicAddress();
 
     sipStack = new SipStack(testProtocol, myPort, properties);
     SipStack.setTraceEnabled(true);
@@ -156,27 +156,16 @@ public class TestWithStun extends SipTestCase {
     ua.setPublicAddress(publicIp, publicPort);
   }
 
-  public boolean getPublicAddress() {
+  public void getPublicAddress() throws StunException {
     StunAddress localAddr = new StunAddress(properties.getProperty("javax.sip.IP_ADDRESS"), myPort);
     StunAddress serverAddr = new StunAddress(properties.getProperty("stun.server"), 3478);
 
     NetworkConfigurationDiscoveryProcess addressDiscovery =
         new NetworkConfigurationDiscoveryProcess(localAddr, serverAddr);
 
-    try {
-      addressDiscovery.start();
-    } catch (StunException e) {
-      e.printStackTrace();
-      return false;
-    }
+    addressDiscovery.start();
 
-    StunDiscoveryReport stunReport = null;
-    try {
-      stunReport = addressDiscovery.determineAddress();
-    } catch (StunException e) {
-      e.printStackTrace();
-      return false;
-    }
+    StunDiscoveryReport stunReport = addressDiscovery.determineAddress();
 
     StunAddress stunAddress = stunReport.getPublicAddress();
 
@@ -187,8 +176,6 @@ public class TestWithStun extends SipTestCase {
     // udp port
 
     addressDiscovery.shutDown();
-
-    return true;
   }
 
   /**
