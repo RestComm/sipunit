@@ -1754,16 +1754,12 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
       String methodUriParameter, Map<String, String> otherUriParameters, String joinUriHeader,
       String replacesUriHeader, String bodyUriHeader, Map<String, String> otherUriHeaders)
           throws ParseException {
-    StringBuffer buf = new StringBuffer();
-    if (scheme != null) {
-      buf.append(scheme);
-    }
-    buf.append(userHostPort);
+    String address = scheme == null ? userHostPort : scheme + userHostPort;
 
-    Address addr = getAddressFactory().createAddress(buf.toString());
+    Address addr = getAddressFactory().createAddress(address);
     URI addrUri = addr.getURI();
     if (!addrUri.isSipURI()) {
-      throw new ParseException("Non-SIP URI not supported: " + buf.toString(), 0);
+      throw new ParseException("Non-SIP URI not supported: " + address, 0);
     }
     SipURI uri = (SipURI) addrUri;
 
