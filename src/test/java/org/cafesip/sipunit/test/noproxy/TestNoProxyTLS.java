@@ -19,7 +19,7 @@ package org.cafesip.sipunit.test.noproxy;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.util.Properties;
+import java.util.LinkedHashMap;
 
 /**
  * This class tests SipUnit API methods.
@@ -32,11 +32,11 @@ import java.util.Properties;
  */
 public class TestNoProxyTLS extends TestNoProxy {
 
-  private static Properties systemProperties;
+  private static LinkedHashMap<Object, Object> systemProperties;
 
   @BeforeClass
   public static void setupTestNoProxyTLS() {
-    systemProperties = new Properties(System.getProperties());
+    systemProperties = new LinkedHashMap<>(System.getProperties());
 
     System.setProperty("javax.net.ssl.keyStore",
         ClassLoader.getSystemClassLoader().getResource("testkeys").getPath());
