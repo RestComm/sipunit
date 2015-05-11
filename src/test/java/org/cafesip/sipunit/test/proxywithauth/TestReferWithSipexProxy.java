@@ -205,7 +205,7 @@ public class TestReferWithSipexProxy {
     ReferNotifySender referee = new ReferNotifySender(ub);
 
     // prepare referee to receive REFER and respond with OK
-    assertTrue(referee.processRefer(5000, SipResponse.OK, "OK"));
+    referee.processRefer(5000, SipResponse.OK, "OK");
     Thread.sleep(50);
 
     // ********* I. Send REFER out-of-dialog, initiate subscription

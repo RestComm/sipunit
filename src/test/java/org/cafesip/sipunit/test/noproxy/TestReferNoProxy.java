@@ -260,7 +260,7 @@ public class TestReferNoProxy {
 
     // create & prepare the referee
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(5000, SipResponse.OK, "OK"));
+    ub.processRefer(5000, SipResponse.OK, "OK");
 
     assertEquals(0, ua.getRefererList().size());
 
@@ -465,7 +465,7 @@ public class TestReferNoProxy {
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
     referHandler.setDialog(callB.getDialog());
-    assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED, "Accepted"));
+    referHandler.processRefer(4000, SipResponse.ACCEPTED, "Accepted");
 
     // A side - send a REFER message
     SipURI referTo =
@@ -609,7 +609,7 @@ public class TestReferNoProxy {
     // A side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ua);
     referHandler.setDialog(callA.getDialog());
-    assertTrue(referHandler.processRefer(4000, SipResponse.ACCEPTED, "Accepted"));
+    referHandler.processRefer(4000, SipResponse.ACCEPTED, "Accepted");
 
     // B side - send a REFER message
     SipURI referTo =
@@ -862,8 +862,8 @@ public class TestReferNoProxy {
     // B side - set up REFER handler
     ReferNotifySender referHandler = new ReferNotifySender(ub);
     referHandler.setDialog(callB.getDialog());
-    assertTrue(referHandler.processReferSendNotifyBeforeResponse(2000, SipResponse.ACCEPTED,
-        "Accepted", SubscriptionStateHeader.TERMINATED, "noresource", "SIP/2.0 100 Trying\n", 0));
+    referHandler.processReferSendNotifyBeforeResponse(2000, SipResponse.ACCEPTED,
+        "Accepted", SubscriptionStateHeader.TERMINATED, "noresource", "SIP/2.0 100 Trying\n", 0);
 
     // A side - send a REFER message
     SipURI referTo =
@@ -981,7 +981,7 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
 
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(5000, SipResponse.TRYING, "Trying"));
+    ub.processRefer(5000, SipResponse.TRYING, "Trying");
 
     // User A: send REFER
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -999,7 +999,7 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
 
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK", 60, null));
+    ub.processRefer(1000, SipResponse.OK, "OK", 60, null);
 
     // User A: send REFER out-of-dialog
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 1000, null);
@@ -1020,7 +1020,7 @@ public class TestReferNoProxy {
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
     EventHeader badEvent = ua.getParent().getHeaderFactory().createEventHeader("refer");
     badEvent.setEventId("wrong-id");
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK", -1, badEvent));
+    ub.processRefer(1000, SipResponse.OK, "OK", -1, badEvent);
 
     // User A: send REFER out-of-dialog
     ReferSubscriber subscription =
@@ -1038,7 +1038,7 @@ public class TestReferNoProxy {
   public void testErrorSubscribeResponseBadExpiry() throws Exception {
     // prepare referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
 
     // send REFER, get OK - minimal processing
     SipURI referTo =
@@ -1071,7 +1071,7 @@ public class TestReferNoProxy {
   public void testErrorSubscribeResponseNoExpiry() throws Exception {
     // prepare referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
 
     // send REFER, get OK - minimal processing
     SipURI referTo =
@@ -1103,7 +1103,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadExpiry() throws Exception {
     // prepare referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
 
     // send REFER, get OK - minimal processing
     SipURI referTo =
@@ -1142,7 +1142,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyNoExpiry() throws Exception {
     // prepare referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
 
     // send REFER, get OK - minimal processing
     SipURI referTo =
@@ -1170,7 +1170,7 @@ public class TestReferNoProxy {
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
 
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(5000, SipResponse.NOT_IMPLEMENTED, "NI", 60, null));
+    ub.processRefer(5000, SipResponse.NOT_IMPLEMENTED, "NI", 60, null);
 
     // User A: send REFER out-of-dialog
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1205,8 +1205,8 @@ public class TestReferNoProxy {
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
     referHandler.setDialog(callB.getDialog());
-    assertTrue(referHandler.processRefer(4000, SipResponse.NOT_ACCEPTABLE_HERE,
-        "Not Acceptable Here"));
+    referHandler.processRefer(4000, SipResponse.NOT_ACCEPTABLE_HERE,
+        "Not Acceptable Here");
 
     // A side - send a REFER message in-dialog
     SipURI referTo =
@@ -1220,7 +1220,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadBodyPendingState() throws Exception {
     // prepare far end referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted");
 
     // send REFER, get OK - minimal processing
     SipURI referTo =
@@ -1302,7 +1302,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadBodyActiveState() throws Exception {
     // prepare far end referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
 
     // send REFER, get OK - minimal processing
     SipURI referTo =
@@ -1384,7 +1384,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadBodyTerminatedState() throws Exception {
     // prepare far end referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
 
     // send REFER, get OK - minimal processing
     SipURI referTo =
@@ -1410,7 +1410,7 @@ public class TestReferNoProxy {
     // tell far end to send a bad NOTIFY body - bad SIP version token
     // start a new subscription
     ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
     referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1433,7 +1433,7 @@ public class TestReferNoProxy {
     // tell far end to send a bad NOTIFY body - non-numeric status code
     // start a new subscription
     ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
     referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1457,7 +1457,7 @@ public class TestReferNoProxy {
     // upper
     // start a new subscription
     ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
     referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1481,7 +1481,7 @@ public class TestReferNoProxy {
     // lower
     // start a new subscription
     ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
     referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1506,7 +1506,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadContentTypeSubtypePendingState() throws Exception {
     // establish the subscription
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1552,7 +1552,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadContentTypeSubtypeActiveState() throws Exception {
     // establish the subscription
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1598,7 +1598,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyMissingBody() throws Exception {
     // establish the subscription
     final ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1631,7 +1631,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyMissingCtHeader() throws Exception {
     // establish the subscription
     final ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "Accepted");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1677,7 +1677,7 @@ public class TestReferNoProxy {
 
     // create & prepare the referee simulator (User B) to respond to REFER
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(5000, SipResponse.ACCEPTED, "OK Accepted"));
+    ub.processRefer(5000, SipResponse.ACCEPTED, "OK Accepted");
 
     // User A: send REFER out-of-dialog
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1741,7 +1741,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyMissingEventHeader() throws Exception {
     // establish the subscription
     final ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "pending");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1774,7 +1774,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadEventType() throws Exception {
     // establish the subscription
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "pending");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1807,7 +1807,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyMissingSubsStateHeader() throws Exception {
     // establish the subscription
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "pending");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);
@@ -1840,7 +1840,7 @@ public class TestReferNoProxy {
   public void testErrorNotifyBadEventID() throws Exception {
     // establish the subscription
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.ACCEPTED, "pending"));
+    ub.processRefer(1000, SipResponse.ACCEPTED, "pending");
     SipURI referTo =
         ua.getUri("sip:", "dave@denver.example.org", "udp", "INVITE", null, null, null, null, null);
     final ReferSubscriber subscription =
@@ -1882,7 +1882,7 @@ public class TestReferNoProxy {
   public void testMultipleSubscriptionsPerReferTo() throws Exception {
     // prepare referee side
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(1000, SipResponse.OK, "OK"));
+    ub.processRefer(1000, SipResponse.OK, "OK");
 
     // send REFER 1, get OK - minimal processing
     SipURI referTo =
@@ -1903,7 +1903,7 @@ public class TestReferNoProxy {
 
     // send REFER 2, sets up a second subscription
     ReferNotifySender ub2 = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub2.processRefer(1000, SipResponse.OK, "OK"));
+    ub2.processRefer(1000, SipResponse.OK, "OK");
     ReferSubscriber subscription2 =
         ua.refer("sip:becky@cafesip.org", referTo, "eventid-2", 5000, null);
     assertNotNull(subscription2);
@@ -1959,7 +1959,7 @@ public class TestReferNoProxy {
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
     referHandler.setDialog(callB.getDialog());
-    assertTrue(referHandler.processRefer(2000, SipResponse.ACCEPTED, "Accepted"));
+    referHandler.processRefer(2000, SipResponse.ACCEPTED, "Accepted");
 
     // A side - send a REFER message with additional/replace headers & body
 
@@ -2019,7 +2019,7 @@ public class TestReferNoProxy {
     // B side - prepare to receive REFER
     ReferNotifySender referHandler = new ReferNotifySender(ub);
     referHandler.setDialog(callB.getDialog());
-    assertTrue(referHandler.processRefer(2000, SipResponse.ACCEPTED, "Accepted"));
+    referHandler.processRefer(2000, SipResponse.ACCEPTED, "Accepted");
 
     // A side - send a REFER message with additional/replace headers & body
 
@@ -2063,7 +2063,7 @@ public class TestReferNoProxy {
   public void testOutboundOutdialogAdditionalHeaders() throws Exception {
     // create & prepare the referee
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(5000, SipResponse.OK, "OK"));
+    ub.processRefer(5000, SipResponse.OK, "OK");
 
     // A: send REFER with additional/replace headers & body
 
@@ -2106,7 +2106,7 @@ public class TestReferNoProxy {
 
     // create & prepare the referee
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(5000, SipResponse.OK, "OK"));
+    ub.processRefer(5000, SipResponse.OK, "OK");
 
     // A: send REFER with additional/replace headers & body
 
@@ -2152,7 +2152,7 @@ public class TestReferNoProxy {
 
     // create & prepare the referee simulator (User B) to respond to REFER
     ReferNotifySender ub = new ReferNotifySender(sipStack.createSipPhone("sip:becky@cafesip.org"));
-    assertTrue(ub.processRefer(5000, SipResponse.OK, "OK"));
+    ub.processRefer(5000, SipResponse.OK, "OK");
 
     // User A: send REFER out-of-dialog
     ReferSubscriber subscription = ua.refer("sip:becky@cafesip.org", referTo, null, 5000, null);

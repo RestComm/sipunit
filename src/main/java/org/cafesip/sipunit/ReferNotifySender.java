@@ -60,12 +60,9 @@ public class ReferNotifySender extends PresenceNotifySender {
   /**
    * This method waits for up to 10 seconds to receive a REFER and if received, it sends an OK
    * response.
-   * 
-   * @return true if REFER is received and response sending was successful, false otherwise (call
-   *         getErrorMessage() for details).
    */
-  public boolean processRefer() {
-    return processRefer(10000, SipResponse.OK, null);
+  public void processRefer() {
+    processRefer(10000, SipResponse.OK, null);
   }
 
   /**
@@ -77,10 +74,9 @@ public class ReferNotifySender extends PresenceNotifySender {
    * @param timeout - number of milliseconds to wait for the request
    * @param statusCode - use in the response to the request
    * @param reasonPhrase - if not null, use in the response
-   * @return true if the thread got started OK.
    */
-  public boolean processRefer(long timeout, int statusCode, String reasonPhrase) {
-    return processRefer(timeout, statusCode, reasonPhrase, -1, null);
+  public void processRefer(long timeout, int statusCode, String reasonPhrase) {
+     processRefer(timeout, statusCode, reasonPhrase, -1, null);
   }
 
   /**
@@ -90,21 +86,12 @@ public class ReferNotifySender extends PresenceNotifySender {
    * an EventHeader for overriding what would normally/correctly be sent back in the response
    * (normally same as what was received in the request).
    */
-  public boolean processRefer(long timeout, int statusCode, String reasonPhrase, int duration,
+  public void processRefer(long timeout, int statusCode, String reasonPhrase, int duration,
       EventHeader overrideEvent) {
     setErrorMessage("");
 
     PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase, duration, overrideEvent);
     b.start();
-    try {
-      Thread.sleep(500);
-    } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      return false;
-    }
-
-    return true;
   }
 
   class PhoneB extends Thread {
@@ -204,9 +191,8 @@ public class ReferNotifySender extends PresenceNotifySender {
    * @param notifyTermReason
    * @param notifyBody
    * @param notifyTimeLeft
-   * @return true if the thread got started OK.
    */
-  public boolean processReferSendNotifyBeforeResponse(long timeout, int statusCode,
+  public void processReferSendNotifyBeforeResponse(long timeout, int statusCode,
       String reasonPhrase, String notifySubscriptionState, String notifyTermReason,
       String notifyBody, int notifyTimeLeft) {
     setErrorMessage("");
@@ -214,15 +200,6 @@ public class ReferNotifySender extends PresenceNotifySender {
     PhoneB2 b = new PhoneB2(timeout + 1000, statusCode, reasonPhrase, notifySubscriptionState,
         notifyTermReason, notifyBody, notifyTimeLeft);
     b.start();
-    try {
-      Thread.sleep(500);
-    } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      return false;
-    }
-
-    return true;
   }
 
   class PhoneB2 extends Thread {
