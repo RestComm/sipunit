@@ -63,7 +63,8 @@ import javax.sip.message.Response;
  * 
  */
 public class PresenceNotifySender implements MessageListener {
-  protected SipPhone ub;
+
+  protected SipPhone phone;
 
   protected Dialog dialog;
 
@@ -84,12 +85,12 @@ public class PresenceNotifySender implements MessageListener {
   /**
    * A constructor for this class. This object immediately starts listening for a SUBSCRIBE request.
    * 
-   * @param userb SipPhone object to use for messaging.
+   * @param phone SipPhone object to use for messaging.
    */
-  public PresenceNotifySender(SipPhone userb) {
-    ub = userb;
-    ub.setLoopback(true);
-    ub.listenRequestMessage();
+  public PresenceNotifySender(SipPhone phone) {
+    this.phone = phone;
+    phone.setLoopback(true);
+    phone.listenRequestMessage();
     receivedRequests = Collections.synchronizedList(new ArrayList<SipRequest>());
     receivedResponses = Collections.synchronizedList(new ArrayList<SipResponse>());
   }
@@ -99,7 +100,7 @@ public class PresenceNotifySender implements MessageListener {
    * 
    */
   public void dispose() {
-    ub.dispose();
+    phone.dispose();
   }
 
   /**
@@ -175,15 +176,15 @@ public class PresenceNotifySender implements MessageListener {
 
     public void run() {
       try {
-        ub.unlistenRequestMessage(); // clear out request queue
-        ub.listenRequestMessage();
+        phone.unlistenRequestMessage(); // clear out request queue
+        phone.listenRequestMessage();
 
-        RequestEvent inc_req = ub.waitRequest(timeout);
+        RequestEvent inc_req = phone.waitRequest(timeout);
         while (inc_req != null) {
           receivedRequests.add(new SipRequest(inc_req));
           Request req = inc_req.getRequest();
           if (req.getMethod().equals(Request.SUBSCRIBE) == false) {
-            inc_req = ub.waitRequest(timeout);
+            inc_req = phone.waitRequest(timeout);
             continue;
           }
 
@@ -191,7 +192,7 @@ public class PresenceNotifySender implements MessageListener {
             synchronized (dialogLock) {
               ServerTransaction trans = inc_req.getServerTransaction();
               if (trans == null) {
-                trans = ub.getParent().getSipProvider().getNewServerTransaction(req);
+                trans = phone.getParent().getSipProvider().getNewServerTransaction(req);
               }
 
               if (toTag == null) {
@@ -208,7 +209,7 @@ public class PresenceNotifySender implements MessageListener {
               }
 
               // enable auth challenge handling
-              ub.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
+              phone.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
 
               // save event header
               if (overrideEvent != null) {
@@ -220,7 +221,7 @@ public class PresenceNotifySender implements MessageListener {
               dialog = sendResponse(trans, statusCode, reasonPhrase, toTag, req, duration);
 
               if (dialog == null) {
-                ub.clearAuthorizations(
+                phone.clearAuthorizations(
                     ((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
                 return;
               }
@@ -234,7 +235,7 @@ public class PresenceNotifySender implements MessageListener {
           }
         }
 
-        setErrorMessage(ub.getErrorMessage());
+        setErrorMessage(phone.getErrorMessage());
         return;
       } catch (Exception e) {
         setErrorMessage("Exception: " + e.getClass().getName() + ": " + e.getMessage());
@@ -248,10 +249,10 @@ public class PresenceNotifySender implements MessageListener {
   protected Dialog sendResponse(ServerTransaction transaction, int statusCode, String reasonPhrase,
       String toTag, Request request, int duration) {
     try {
-      Response response = ub.getParent().getMessageFactory().createResponse(statusCode, request);
+      Response response = phone.getParent().getMessageFactory().createResponse(statusCode, request);
 
       if (duration != -1) {
-        response.setHeader(ub.getParent().getHeaderFactory().createExpiresHeader(duration));
+        response.setHeader(phone.getParent().getHeaderFactory().createExpiresHeader(duration));
       }
 
       if (reasonPhrase != null) {
@@ -263,7 +264,7 @@ public class PresenceNotifySender implements MessageListener {
       }
 
       ((ToHeader) response.getHeader(ToHeader.NAME)).setTag(toTag);
-      response.addHeader((ContactHeader) ub.getContactInfo().getContactHeader().clone());
+      response.addHeader((ContactHeader) phone.getContactInfo().getContactHeader().clone());
 
       if (statusCode / 100 == 2) // 2xx
       {
@@ -298,7 +299,7 @@ public class PresenceNotifySender implements MessageListener {
    * @throws ParseException
    */
   protected AllowEventsHeader getAllowEventsHeaderForResponse() throws ParseException {
-    AllowEventsHeader ahdr = ub.getParent().getHeaderFactory().createAllowEventsHeader("presence");
+    AllowEventsHeader ahdr = phone.getParent().getHeaderFactory().createAllowEventsHeader("presence");
     return ahdr;
   }
 
@@ -307,7 +308,7 @@ public class PresenceNotifySender implements MessageListener {
    * @throws ParseException
    */
   protected SupportedHeader getSupportedHeaderForResponse() throws ParseException {
-    SupportedHeader shdr = ub.getParent().getHeaderFactory().createSupportedHeader("presence");
+    SupportedHeader shdr = phone.getParent().getHeaderFactory().createSupportedHeader("presence");
     return shdr;
   }
 
@@ -317,7 +318,7 @@ public class PresenceNotifySender implements MessageListener {
    */
   protected AcceptHeader getAcceptHeaderForResponse() throws ParseException {
     AcceptHeader accept =
-        ub.getParent().getHeaderFactory().createAcceptHeader("application", "pidf+xml");
+        phone.getParent().getHeaderFactory().createAcceptHeader("application", "pidf+xml");
     return accept;
   }
 
@@ -383,19 +384,19 @@ public class PresenceNotifySender implements MessageListener {
         EventHeader ehdr = eventHdr;
         if (ehdr == null) {
           if (eventHeader != null) {
-            ehdr = ub.getParent().getHeaderFactory().createEventHeader(eventHeader.getEventType());
+            ehdr = phone.getParent().getHeaderFactory().createEventHeader(eventHeader.getEventType());
             if (eventHeader.getEventId() != null) {
               ehdr.setEventId(eventHeader.getEventId());
             }
           } else {
-            ehdr = ub.getParent().getHeaderFactory().createEventHeader(getEventType());
+            ehdr = phone.getParent().getHeaderFactory().createEventHeader(getEventType());
           }
         }
         req.setHeader(ehdr);
 
         SubscriptionStateHeader hdr = ssHdr;
         if (hdr == null) {
-          hdr = ub.getParent().getHeaderFactory().createSubscriptionStateHeader(subscriptionState);
+          hdr = phone.getParent().getHeaderFactory().createSubscriptionStateHeader(subscriptionState);
 
           if (subscriptionState.equalsIgnoreCase(SubscriptionStateHeader.TERMINATED)) {
             hdr.setReasonCode(termReason);
@@ -407,7 +408,7 @@ public class PresenceNotifySender implements MessageListener {
 
         AcceptHeader accept = accHdr;
         if (accept == null) {
-          accept = ub.getParent().getHeaderFactory().createAcceptHeader(getPackageContentType(),
+          accept = phone.getParent().getHeaderFactory().createAcceptHeader(getPackageContentType(),
               getPackageContentSubType());
         }
         req.setHeader(accept);
@@ -415,14 +416,14 @@ public class PresenceNotifySender implements MessageListener {
         // now for the body
         ContentTypeHeader ct_hdr = ctHdr;
         if (ct_hdr == null) {
-          ct_hdr = ub.getParent().getHeaderFactory()
+          ct_hdr = phone.getParent().getHeaderFactory()
               .createContentTypeHeader(getPackageContentType(), getPackageContentSubType());
         }
 
         req.setContent(body, ct_hdr);
 
         req.setContentLength(
-            ub.getParent().getHeaderFactory().createContentLengthHeader(body.length()));
+            phone.getParent().getHeaderFactory().createContentLengthHeader(body.length()));
 
         return sendNotify(req, viaProxy);
       } catch (Exception e) {
@@ -479,17 +480,17 @@ public class PresenceNotifySender implements MessageListener {
       synchronized (dialogLock) {
         EventHeader ehdr;
         if (eventHeader != null) {
-          ehdr = ub.getParent().getHeaderFactory().createEventHeader(eventHeader.getEventType());
+          ehdr = phone.getParent().getHeaderFactory().createEventHeader(eventHeader.getEventType());
           if (eventHeader.getEventId() != null) {
             ehdr.setEventId(eventHeader.getEventId());
           }
         } else {
-          ehdr = ub.getParent().getHeaderFactory().createEventHeader(getEventType());
+          ehdr = phone.getParent().getHeaderFactory().createEventHeader(getEventType());
         }
         req.setHeader(ehdr);
 
         SubscriptionStateHeader hdr =
-            ub.getParent().getHeaderFactory().createSubscriptionStateHeader(subscriptionState);
+            phone.getParent().getHeaderFactory().createSubscriptionStateHeader(subscriptionState);
 
         if (subscriptionState.equalsIgnoreCase(SubscriptionStateHeader.TERMINATED)) {
           hdr.setReasonCode(termReason);
@@ -503,42 +504,42 @@ public class PresenceNotifySender implements MessageListener {
 
         // now for the body
         if (body != null) {
-          ContentTypeHeader ct_hdr = ub.getParent().getHeaderFactory()
+          ContentTypeHeader ct_hdr = phone.getParent().getHeaderFactory()
               .createContentTypeHeader(getPackageContentType(), getPackageContentSubType());
           req.setContent(body, ct_hdr);
           req.setContentLength(
-              ub.getParent().getHeaderFactory().createContentLengthHeader(body.length()));
+              phone.getParent().getHeaderFactory().createContentLengthHeader(body.length()));
         }
 
         if (dialog == null) {
-          req.setHeader(ub.getParent().getHeaderFactory()
+          req.setHeader(phone.getParent().getHeaderFactory()
               .createCallIdHeader("somecallid-" + (System.currentTimeMillis() % 3600000)));
 
           toTag = new Long(Calendar.getInstance().getTimeInMillis()).toString();
           FromHeader from_header =
-              ub.getParent().getHeaderFactory().createFromHeader(ub.getAddress(), toTag);
+              phone.getParent().getHeaderFactory().createFromHeader(phone.getAddress(), toTag);
           req.setHeader(from_header);
 
-          Address to = ub.getParent().getAddressFactory()
-              .createAddress(ub.getParent().getAddressFactory().createSipURI(toUser, toDomain));
-          ToHeader to_header = ub.getParent().getHeaderFactory().createToHeader(to, null);
+          Address to = phone.getParent().getAddressFactory()
+              .createAddress(phone.getParent().getAddressFactory().createSipURI(toUser, toDomain));
+          ToHeader to_header = phone.getParent().getHeaderFactory().createToHeader(to, null);
           req.setHeader(to_header);
 
           CSeqHeader cseq =
-              ub.getParent().getHeaderFactory().createCSeqHeader((long) 14, Request.NOTIFY);
+              phone.getParent().getHeaderFactory().createCSeqHeader((long) 14, Request.NOTIFY);
           req.setHeader(cseq);
 
-          MaxForwardsHeader max_forwards = ub.getParent().getHeaderFactory()
+          MaxForwardsHeader max_forwards = phone.getParent().getHeaderFactory()
               .createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
           req.setHeader(max_forwards);
 
-          ArrayList<ViaHeader> via_headers = ub.getViaHeaders();
+          ArrayList<ViaHeader> via_headers = phone.getViaHeaders();
           Iterator<ViaHeader> i = via_headers.iterator();
           while (i.hasNext()) {
             req.addHeader((Header) i.next());
           }
 
-          req.addHeader((ContactHeader) ub.getContactInfo().getContactHeader().clone());
+          req.addHeader((ContactHeader) phone.getContactInfo().getContactHeader().clone());
         }
       }
     } catch (Exception e) {
@@ -570,11 +571,11 @@ public class PresenceNotifySender implements MessageListener {
       }
 
       try {
-        ub.addAuthorizations(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId(), req);
+        phone.addAuthorizations(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId(), req);
 
-        SipTransaction transaction = ub.sendRequestWithTransaction(req, viaProxy, dialog, this);
+        SipTransaction transaction = phone.sendRequestWithTransaction(req, viaProxy, dialog, this);
         if (transaction == null) {
-          setErrorMessage(ub.getErrorMessage());
+          setErrorMessage(phone.getErrorMessage());
           return false;
         }
 
@@ -615,14 +616,14 @@ public class PresenceNotifySender implements MessageListener {
     SipTransaction transaction;
 
     synchronized (dialogLock) {
-      transaction = ub.sendRequestWithTransaction(req, viaProxy, dialog);
+      transaction = phone.sendRequestWithTransaction(req, viaProxy, dialog);
       if (transaction == null) {
-        setErrorMessage(ub.getErrorMessage());
+        setErrorMessage(phone.getErrorMessage());
         return null;
       }
 
       // enable auth challenge handling
-      ub.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
+      phone.enableAuthorization(((CallIdHeader) req.getHeader(CallIdHeader.NAME)).getCallId());
 
       dialog = transaction.getClientTransaction().getDialog();
       setLastSentNotify(req);
@@ -656,7 +657,7 @@ public class PresenceNotifySender implements MessageListener {
    *         getException() for further diagnostics.
    */
   public EventObject waitResponse(SipTransaction trans, long timeout) {
-    EventObject event = ub.waitResponse(trans, timeout);
+    EventObject event = phone.waitResponse(trans, timeout);
 
     if (event instanceof ResponseEvent) {
       receivedResponses.add(new SipResponse((ResponseEvent) event));
@@ -674,9 +675,9 @@ public class PresenceNotifySender implements MessageListener {
    *         to find out why.
    */
   public boolean register(Credential credential) {
-    ub.addUpdateCredential(credential);
-    if (ub.register(null, 3600) == false) {
-      setErrorMessage(ub.format());
+    phone.addUpdateCredential(credential);
+    if (phone.register(null, 3600) == false) {
+      setErrorMessage(phone.format());
       return false;
     }
 
@@ -807,10 +808,10 @@ public class PresenceNotifySender implements MessageListener {
 
         synchronized (dialogLock) {
           Request msg = getLastSentNotify();
-          msg = ub.processAuthChallenge(response, msg);
+          msg = phone.processAuthChallenge(response, msg);
           if (msg == null) {
             setErrorMessage("PresenceNotifySender: Error responding to authentication challenge: "
-                + ub.getErrorMessage());
+                + phone.getErrorMessage());
             return null;
           }
 
@@ -820,9 +821,9 @@ public class PresenceNotifySender implements MessageListener {
           hdr.setSeqNumber(cseq + 1);
 
           // send the message
-          SipTransaction transaction = ub.sendRequestWithTransaction(msg, false, dialog);
+          SipTransaction transaction = phone.sendRequestWithTransaction(msg, false, dialog);
           if (transaction == null) {
-            setErrorMessage("Error resending NOTIFY with authorization: " + ub.getErrorMessage());
+            setErrorMessage("Error resending NOTIFY with authorization: " + phone.getErrorMessage());
             return null;
           }
 
