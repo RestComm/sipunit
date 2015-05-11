@@ -169,7 +169,6 @@ public class TestTwoOrMoreSipStacksNoProxy {
     SipCall callB = ub.createSipCall();
 
     callB.listenForIncomingCall();
-    Thread.sleep(10);
 
     callA.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
         + testProtocol);
@@ -180,8 +179,6 @@ public class TestTwoOrMoreSipStacksNoProxy {
 
     callB.sendIncomingCallResponse(Response.RINGING, null, -1);
     assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
-
-    Thread.sleep(200);
 
     callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
     assertLastOperationSuccess("b send OK - " + callB.format(), callB);
@@ -201,8 +198,6 @@ public class TestTwoOrMoreSipStacksNoProxy {
 
     callA.sendInviteOkAck();
     assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
-
-    Thread.sleep(500);
 
     callA.listenForDisconnect();
     assertLastOperationSuccess("a listen disc - " + callA.format(), callA);
