@@ -110,8 +110,8 @@ public class PresenceNotifySender implements MessageListener {
    * @return true if SUBSCRIBE received and response sending was successful, false otherwise (call
    *         getErrorMessage() for details).
    */
-  public boolean processSubscribe() {
-    return processSubscribe(10000, SipResponse.OK, null);
+  public void processSubscribe() {
+    processSubscribe(10000, SipResponse.OK, null);
   }
 
   /**
@@ -125,8 +125,8 @@ public class PresenceNotifySender implements MessageListener {
    * @param reasonPhrase - if not null, use in the SUBSCRIBE response
    * @return true if the thread got started OK.
    */
-  public boolean processSubscribe(long timeout, int statusCode, String reasonPhrase) {
-    return processSubscribe(timeout, statusCode, reasonPhrase, -1, null);
+  public void processSubscribe(long timeout, int statusCode, String reasonPhrase) {
+    processSubscribe(timeout, statusCode, reasonPhrase, -1, null);
   }
 
   /**
@@ -137,21 +137,12 @@ public class PresenceNotifySender implements MessageListener {
    * &gt;= 0. (b) this method takes an EventHeader for overriding what would normally/correctly be
    * sent back in the respone (same as what was received in the request).
    */
-  public boolean processSubscribe(long timeout, int statusCode, String reasonPhrase,
+  public void processSubscribe(long timeout, int statusCode, String reasonPhrase,
       int overrideDuration, EventHeader overrideEvent) {
     setErrorMessage("");
 
     PhoneB b = new PhoneB(timeout + 500, statusCode, reasonPhrase, overrideDuration, overrideEvent);
     b.start();
-    try {
-      Thread.sleep(500);
-    } catch (InterruptedException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-      return false;
-    }
-
-    return true;
   }
 
   class PhoneB extends Thread {

@@ -349,7 +349,7 @@ public class TestReferNoProxy {
     // A unsubscribes, gets OK response
 
     // prepare the far end
-    assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Done"));
+    ub.processSubscribe(5000, SipResponse.OK, "OK Done");
 
     // send the un-SUBSCRIBE
     assertTrue(subscription.unsubscribe(100));
@@ -759,7 +759,7 @@ public class TestReferNoProxy {
 
     // B refreshes the subscription
     // prepare A to receive SUBSCRIBE
-    assertTrue(referHandler.processSubscribe(2000, SipResponse.OK, "OK"));
+    referHandler.processSubscribe(2000, SipResponse.OK, "OK");
     // refresh
     assertTrue(subscription.refresh(10, "eventid-x", 500));
     assertEquals(SipResponse.OK, subscription.getReturnCode());
@@ -1708,7 +1708,7 @@ public class TestReferNoProxy {
     // TEST NOTIFY TIMEOUT WHILE IN TERMINATED STATE
     // terminate the subscription from the referrer side
     // prepare the far end to respond to unSUBSCRIBE
-    assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Done"));
+    ub.processSubscribe(5000, SipResponse.OK, "OK Done");
     // send the un-SUBSCRIBE
     assertTrue(subscription.unsubscribe(100));
     assertFalse(subscription.isRemovalComplete());
@@ -2194,7 +2194,7 @@ public class TestReferNoProxy {
 
     // terminate the subscription from the referrer side
     // prepare the far end to respond to unSUBSCRIBE
-    assertTrue(ub.processSubscribe(5000, SipResponse.OK, "OK Done"));
+    ub.processSubscribe(5000, SipResponse.OK, "OK Done");
 
     // send the un-SUBSCRIBE
     assertTrue(subscription.unsubscribe(100));
