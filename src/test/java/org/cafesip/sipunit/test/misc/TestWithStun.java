@@ -16,13 +16,14 @@
 
 package org.cafesip.sipunit.test.misc;
 
+import static com.jayway.awaitility.Awaitility.await;
+
 import org.cafesip.sipunit.Credential;
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTestCase;
-
 import org.junit.After;
 
 import java.util.Properties;
@@ -226,9 +227,8 @@ public class TestWithStun extends SipTestCase {
 
     SipCall callB = ub.createSipCall();
     callB.listenForIncomingCall();
-    Thread.sleep(50);
 
-    SipCall callA =
+    final SipCall callA =
         ua.makeCall(
             "sip:your-publicserver-account2@" + properties.getProperty("sipunit.test.domain"), null);
 
@@ -237,14 +237,22 @@ public class TestWithStun extends SipTestCase {
     assertTrue(callB.waitForIncomingCall(5000));
 
     callB.sendIncomingCallResponse(Response.RINGING, "Ringing", 600);
-    Thread.sleep(1000);
+    await().until(new Runnable() {
 
-    assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+      @Override
+      public void run() {
+        assertResponseReceived("Should have gotten RINGING response", SipResponse.RINGING, callA);
+      }
+    });
 
     callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 600);
-    Thread.sleep(1000);
+    await().until(new Runnable() {
 
-    assertResponseReceived(SipResponse.OK, callA);
+      @Override
+      public void run() {
+        assertResponseReceived(SipResponse.OK, callA);
+      }
+    });
 
     assertTrue(callA.sendInviteOkAck());
     assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
@@ -252,7 +260,6 @@ public class TestWithStun extends SipTestCase {
     assertTrue(callB.waitForAck(1000));
 
     callA.listenForDisconnect();
-    Thread.sleep(100);
 
     assertTrue(callB.disconnect());
     assertLastOperationSuccess("b disc - " + callB.format(), callB);
