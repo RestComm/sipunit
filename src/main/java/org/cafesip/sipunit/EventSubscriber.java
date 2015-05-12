@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.Iterator;
 import java.util.LinkedList;
+
 import javax.sip.Dialog;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
@@ -47,6 +48,9 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The EventSubscriber class represents a generic subscription conforming to the event subscription
  * and asynchronous notification framework defined by RFC-3265. This class is used for the
@@ -69,6 +73,8 @@ import javax.sip.message.Response;
  * 
  */
 public class EventSubscriber implements MessageListener, SipActionObject {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EventSubscriber.class);
 
   protected String targetUri; // The subscription target (ie,
 
@@ -172,7 +178,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   protected boolean startSubscription(Request req, long timeout, boolean viaProxy,
       ArrayList<Header> additionalHeaders, ArrayList<Header> replaceHeaders, String body) {
     initErrorInfo();
-    SipStack.trace("Starting subscription for URI " + targetUri);
+    LOG.trace("Starting subscription for URI {}", targetUri);
 
     if (sendRequest(req, viaProxy, additionalHeaders, replaceHeaders, body) == true) {
       if (waitNextPositiveResponse(timeout) == true) {
@@ -186,15 +192,15 @@ public class EventSubscriber implements MessageListener, SipActionObject {
      * "489", described herein) have the same meanings and handling as described in SIP [1]
      */
 
-    SipStack.trace("Subscription startup failed : " + getErrorMessage());
+    LOG.trace("Subscription startup failed : {}", getErrorMessage());
 
     return false;
   }
 
   protected boolean refreshSubscription(Request req, long timeout, boolean viaProxy) {
     initErrorInfo();
-    SipStack.trace("Refreshing subscription for URI " + targetUri + ", previous time left = "
-        + getTimeLeft());
+    LOG.trace("Refreshing subscription for URI {}, previous time left = {}", targetUri,
+        getTimeLeft());
 
     if (sendRequest(req, viaProxy) == true) {
       if (waitNextPositiveResponse(timeout) == true) {
@@ -211,8 +217,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
         subscriptionState = SubscriptionStateHeader.TERMINATED;
 
-        SipStack.trace("Terminating subscription for URI " + targetUri
-            + " due to received response code = " + getReturnCode());
+        LOG.trace("Terminating subscription for URI {} due to received response code = {}",
+            targetUri, getReturnCode());
       }
 
       /*
@@ -223,7 +229,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
        */
     }
 
-    SipStack.trace("Subscription refresh failed : " + getErrorMessage());
+    LOG.trace("Subscription refresh failed : {}", getErrorMessage());
 
     return false;
   }
@@ -234,7 +240,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
     if ((subscriptionState.equalsIgnoreCase(SubscriptionStateHeader.ACTIVE))
         || (subscriptionState.equalsIgnoreCase(SubscriptionStateHeader.PENDING))) {
-      SipStack.trace("Ending subscription for URI " + targetUri + ", time left = " + getTimeLeft());
+      LOG.trace("Ending subscription for URI {}, time left = {}", targetUri, getTimeLeft());
 
       subscriptionState = SubscriptionStateHeader.TERMINATED;
       terminationReason = reason;
@@ -246,7 +252,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         }
       }
 
-      SipStack.trace("Subscription termination failed : " + getErrorMessage());
+      LOG.trace("Subscription termination failed : {}", getErrorMessage());
 
       return false;
     }
@@ -256,7 +262,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
   protected boolean fetchSubscription(Request req, long timeout, boolean viaProxy) {
     initErrorInfo();
-    SipStack.trace("Fetching subscription information for URI " + targetUri);
+    LOG.trace("Fetching subscription information for URI {}", targetUri);
 
     subscriptionState = SubscriptionStateHeader.TERMINATED;
     terminationReason = "Fetch";
@@ -273,7 +279,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
      * "489", described herein) have the same meanings and handling as described in SIP [1]
      */
 
-    SipStack.trace("Subscription fetch failed : " + getErrorMessage());
+    LOG.trace("Subscription fetch failed : {}", getErrorMessage());
 
     return false;
   }
@@ -358,9 +364,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     initErrorInfo();
 
     try {
-      SipStack.trace("Creating " + method + " message with duration "
-          + (duration == -1 ? "not included" : duration) + ", event id = " + eventId
-          + ", event type = " + eventType);
+      LOG.trace("Creating {} message with duration {}, event id = {}, event type = {}", method,
+          (duration == -1 ? "not included" : duration), eventId, eventType);
       AddressFactory addrFactory = parent.getAddressFactory();
       HeaderFactory hdrFactory = parent.getHeaderFactory();
 
@@ -404,7 +409,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
           req.addHeader(parent.getHeaderFactory().createRouteHeader(routeAddress));
         }
 
-        SipStack.trace("We have created this dialog-initiating " + method + ": " + req);
+        LOG.trace("We have created this dialog-initiating {}: {}", method, req);
       } else if (dialog.getState() == null) {
         // we've sent before but not
         // heard back
@@ -413,12 +418,12 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         requestCSeq = hdrFactory.createCSeqHeader(requestCSeq.getSeqNumber() + 1, method);
         req.setHeader(requestCSeq);
 
-        SipStack.trace("We have created this dialog-initiating resend " + method + ": " + req);
+        LOG.trace("We have created this dialog-initiating resend {}: {}", method, req);
       } else {
         // dialog is established enough to use
         req = dialog.createRequest(method);
         req.setHeader((ContactHeader) parent.getContactInfo().getContactHeader().clone());
-        SipStack.trace("Dialog has created this established dialog " + method + ": " + req);
+        LOG.trace("Dialog has created this established dialog {}: {}", method, req);
       }
 
       // set other needed request info
@@ -534,7 +539,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
           return false;
         }
 
-        SipStack.trace("Sent REQUEST: " + req.toString());
+        LOG.trace("Sent REQUEST: {}", req);
 
         dialog = transaction.getClientTransaction().getDialog();
 
@@ -545,8 +550,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
           }
         }
 
-        SipStack.trace("Sent subscription request to "
-            + dialog.getRemoteParty().getURI().toString() + " for " + targetUri);
+        LOG.trace("Sent subscription request to {} for {}", dialog.getRemoteParty().getURI(),
+            targetUri);
 
         return true;
       } catch (Exception e) {
@@ -571,8 +576,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     } else if (event instanceof TimeoutEvent) {
       processTimeout((TimeoutEvent) event);
     } else {
-      System.err.println("Subscription.processEvent() - invalid event type received: "
-          + event.getClass().getName() + ": " + event.toString());
+      LOG.error("invalid event type received: {}: {}", event.getClass().getName(), event.toString());
     }
   }
 
@@ -592,7 +596,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       synchronized (eventErrors) {
         eventErrors.addLast(err);
       }
-      SipStack.trace(err);
+      LOG.trace(err);
       return;
     }
 
@@ -601,8 +605,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       if (rcvSeqHdr.getSeqNumber() <= notifyCSeq.getSeqNumber()) {
         EventSubscriber.sendResponse(parent, requestEvent, SipResponse.OK, "OK");
 
-        SipStack.trace("Received NOTIFY CSEQ " + rcvSeqHdr.getSeqNumber()
-            + " not new, discarding message");
+        LOG.trace("Received NOTIFY CSEQ {}  not new, discarding message", rcvSeqHdr.getSeqNumber());
         return;
       }
     }
@@ -626,7 +629,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         synchronized (eventErrors) {
           eventErrors.addLast(errstring);
         }
-        SipStack.trace(errstring);
+        LOG.trace(errstring);
         return;
       }
 
@@ -649,7 +652,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         synchronized (eventErrors) {
           eventErrors.addLast(errstring);
         }
-        SipStack.trace(errstring);
+        LOG.trace(errstring);
         return;
       }
 
@@ -699,8 +702,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       int status = response.getStatusCode();
       cseqStr = "CSEQ " + ((CSeqHeader) response.getHeader(CSeqHeader.NAME)).toString();
 
-      SipStack.trace("Processing " + cseqStr + " response with status code " + status + " from "
-          + targetUri);
+      LOG.trace("Processing {} response with status code {} from {}", cseqStr, status, targetUri);
 
       while (status != SipResponse.OK) {
         if (status == SipResponse.ACCEPTED) {
@@ -710,8 +712,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         if (status / 100 == 1) {
           // provisional
           if (waitNextPositiveResponse(timeout) == false) {
-            SipStack.trace("*** RESPONSE ERROR ***  (" + cseqStr + ", " + targetUri + ") - "
-                + getErrorMessage());
+            LOG.error("*** RESPONSE ERROR ***  ({}, " + targetUri + ") - {}", cseqStr,
+                getErrorMessage());
             return false;
           }
 
@@ -719,8 +721,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
           status = response.getStatusCode();
           cseqStr = "CSEQ " + ((CSeqHeader) response.getHeader(CSeqHeader.NAME)).toString();
 
-          SipStack.trace("Processing " + cseqStr + " response with status code " + status
-              + " from " + targetUri);
+          LOG.trace("Processing {} response with status code {} from {}", cseqStr, status,
+              targetUri);
 
           continue;
         } else if ((status == Response.UNAUTHORIZED)
@@ -730,8 +732,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
           // get the new response
           if (waitNextPositiveResponse(timeout) == false) {
-            SipStack.trace("*** RESPONSE ERROR ***  (" + cseqStr + ", " + targetUri + ") - "
-                + getErrorMessage());
+            LOG.error("*** RESPONSE ERROR ***  ({}, {}) - {}", cseqStr, targetUri,
+                getErrorMessage());
             return false;
           }
 
@@ -739,8 +741,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
           status = response.getStatusCode();
           cseqStr = "CSEQ " + ((CSeqHeader) response.getHeader(CSeqHeader.NAME)).toString();
 
-          SipStack.trace("Processing " + cseqStr + " response with status code " + status
-              + " from " + targetUri);
+          LOG.trace("Processing {} response with status code {} from ", cseqStr, status, targetUri);
 
           continue;
         } else {
@@ -767,8 +768,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         validateExpiresDuration(expires, false);
 
         // use the received expiry time as the subscription duration
-        SipStack.trace(targetUri + ": received expiry = " + expires
-            + ", updating current expiry which was " + getTimeLeft());
+        LOG.trace("{}: received expiry = {}, updating current expiry which was {}", targetUri,
+            expires, getTimeLeft());
 
         setTimeLeft(expires);
       }
@@ -782,7 +783,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     } catch (SubscriptionError e) {
       String err =
           "*** RESPONSE ERROR ***  (" + cseqStr + ", " + targetUri + ") - " + e.getReason();
-      SipStack.trace(err);
+      LOG.error(err);
 
       setReturnCode(e.getStatusCode());
       setErrorMessage(err);
@@ -816,9 +817,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
         dialog = transaction.getClientTransaction().getDialog();
 
-        SipStack.trace("Resent request: " + msg.toString());
-        SipStack.trace("Resent request to " + dialog.getRemoteParty().getURI().toString() + " for "
-            + targetUri);
+        LOG.trace("Resent request: {}", msg.toString());
+        LOG.trace("Resent request to {} for {}", dialog.getRemoteParty().getURI(), targetUri);
       }
     } catch (Exception ex) {
       transaction = null;
@@ -841,9 +841,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
       ((SipProvider) req.getSource()).sendResponse(response);
     } catch (Exception e) {
-      System.err.println("Failure sending error response (" + reason + ") for received "
-          + req.getRequest().getMethod() + ", Exception: " + e.getClass().getName() + ": "
-          + e.getMessage());
+      LOG.error("Failure sending error response (" + reason + ") for received "
+          + req.getRequest().getMethod() + ", Exception: " + e.toString(), e);
     }
   }
 
@@ -901,7 +900,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       Request request = requestEvent.getRequest();
       cseqStr = "CSEQ " + ((CSeqHeader) request.getHeader(CSeqHeader.NAME)).getSeqNumber();
 
-      SipStack.trace("Processing NOTIFY " + cseqStr + " request for subscription to " + targetUri);
+      LOG.trace("Processing NOTIFY {} request for subscription to {}", cseqStr, targetUri);
 
       // validate received event header against the one sent
 
@@ -956,8 +955,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       }
 
       // subscription is active or pending - update time left
-      SipStack.trace(targetUri + ": received expiry = " + expires
-          + ", updating current expiry which was " + getTimeLeft());
+      LOG.trace("{}: received expiry = {}, updating current expiry which was {}", targetUri,
+          expires, getTimeLeft());
       setTimeLeft(expires);
 
       Response response = createNotifyResponse(requestEvent, SipResponse.OK, "OK");
@@ -969,7 +968,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     } catch (SubscriptionError e) {
       String err =
           "*** NOTIFY REQUEST ERROR ***  (" + cseqStr + ", " + targetUri + ") - " + e.getReason();
-      SipStack.trace(err);
+      LOG.error(err);
 
       Response response = createNotifyResponse(requestEvent, e.getStatusCode(), e.getReason());
       if (response != null) {
@@ -1001,7 +1000,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     try {
       if (reqevent.getServerTransaction() == null) {
         // 1st NOTIFY received before 1st response
-        SipStack.trace("Informational : no UAS transaction available for received NOTIFY");
+        LOG.trace("Informational : no UAS transaction available for received NOTIFY");
 
         // send response statelessly
         ((SipProvider) reqevent.getSource()).sendResponse(response);
@@ -1015,8 +1014,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       return false;
     }
 
-    SipStack.trace("Sent response message to received NOTIFY, status code : "
-        + response.getStatusCode() + ", reason : " + response.getReasonPhrase());
+    LOG.trace("Sent response message to received NOTIFY, status code : {}, reason : {}",
+        response.getStatusCode(), response.getReasonPhrase());
 
     return true;
   }
@@ -1227,9 +1226,9 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * Gets the responses received on this subscription, including any that
-   * required re-initiation of the subscription (ie, authentication challenge). Not included are
-   * out-of-sequence (late) responses.
+   * Gets the responses received on this subscription, including any that required re-initiation of
+   * the subscription (ie, authentication challenge). Not included are out-of-sequence (late)
+   * responses.
    * 
    * @return ArrayList of zero or more SipResponse objects.
    * 
@@ -1242,8 +1241,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * Gets the NOTIFY requests received on this subscription. (Retransmissions
-   * aren't included.)
+   * Gets the NOTIFY requests received on this subscription. (Retransmissions aren't included.)
    * 
    * @return ArrayList of zero or more SipRequest objects.
    * 
@@ -1335,13 +1333,13 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * Get any errors accumulated during collection of responses and NOTIFY requests.
-   * Since this happens automatically, asynchronous of the test program activity, there's not a
-   * handy way like a method call return code to report these errors if they happen. They are errors
-   * like: No CSEQ header in received NOTIFY, error or exception resending request with
-   * authorization header, unexpected null transaction object at response timeout, etc. You should
-   * at various points call assertNoSubscriptionErrors() method on SipTestCase or SipAssert during a
-   * test to verify none have been encountered.
+   * Get any errors accumulated during collection of responses and NOTIFY requests. Since this
+   * happens automatically, asynchronous of the test program activity, there's not a handy way like
+   * a method call return code to report these errors if they happen. They are errors like: No CSEQ
+   * header in received NOTIFY, error or exception resending request with authorization header,
+   * unexpected null transaction object at response timeout, etc. You should at various points call
+   * assertNoSubscriptionErrors() method on SipTestCase or SipAssert during a test to verify none
+   * have been encountered.
    * 
    * <p>
    * The case where a NOTIFY is received by a SipPhone but there is no matching subscription results
@@ -1409,8 +1407,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
     Request req = request.getRequest();
     String cseqStr = "CSEQ " + ((CSeqHeader) req.getHeader(CSeqHeader.NAME)).getSeqNumber();
-    SipStack.trace("Creating NOTIFY " + cseqStr + " response with status code " + status
-        + ", reason phrase = " + reason);
+    LOG.trace("Creating NOTIFY {} response with status code {}, reason phrase = {}", cseqStr,
+        status, reason);
 
     try {
       Response response = parent.getMessageFactory().createResponse(status, req);
@@ -1465,8 +1463,8 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * Get the dialog ID associated with this subscription, or an empty string if the
-   * dialog isn't created yet.
+   * Get the dialog ID associated with this subscription, or an empty string if the dialog isn't
+   * created yet.
    * 
    * @return String which is the dialog ID associated with this subscription
    */
@@ -1506,9 +1504,9 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     synchronized (this) {
       if (reqEvents.size() == 0) {
         try {
-          SipStack.trace("Subscription.waitNotify() - about to block, waiting");
+          LOG.trace("about to block, waiting");
           this.wait(timeout);
-          SipStack.trace("Subscription.waitNotify() - we've come out of the block");
+          LOG.trace("we've come out of the block");
         } catch (Exception ex) {
           setException(ex);
           setErrorMessage("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
@@ -1517,7 +1515,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         }
       }
 
-      SipStack.trace("Subscription.waitNotify() - either we got the request, or timed out");
+      LOG.trace("either we got the request, or timed out");
       if (reqEvents.size() == 0) {
         String err =
             "*** NOTIFY REQUEST ERROR ***  (" + targetUri
@@ -1525,7 +1523,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         synchronized (eventErrors) {
           eventErrors.addLast(err);
         }
-        SipStack.trace(err);
+        LOG.trace(err);
 
         setReturnCode(SipSession.TIMEOUT_OCCURRED);
         setErrorMessage(err);
@@ -1558,9 +1556,9 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       LinkedList<EventObject> events = transaction.getEvents();
       if (events.size() == 0) {
         try {
-          SipStack.trace("Subscription.waitResponse() - about to block, waiting");
+          LOG.trace("about to block, waiting");
           responseBlock.waitForEvent(timeout);
-          SipStack.trace("Subscription.waitResponse() - we've come out of the block");
+          LOG.trace("we've come out of the block");
         } catch (Exception ex) {
           setException(ex);
           setErrorMessage("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
@@ -1569,7 +1567,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         }
       }
 
-      SipStack.trace("Subscription.waitResponse() - either we got the response, or timed out");
+      LOG.trace("either we got the response, or timed out");
 
       if (events.size() == 0) {
         setReturnCode(SipSession.TIMEOUT_OCCURRED);
@@ -1582,10 +1580,10 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   }
 
   /**
-   * Get the most recent response received from the network for this subscription.
-   * Knowledge of JAIN-SIP API is required to examine the object returned from this method.
-   * Alternately, call getLastReceivedResponse() to see the primary values (status, reason)
-   * contained in the last received response.
+   * Get the most recent response received from the network for this subscription. Knowledge of
+   * JAIN-SIP API is required to examine the object returned from this method. Alternately, call
+   * getLastReceivedResponse() to see the primary values (status, reason) contained in the last
+   * received response.
    * 
    * @return javax.sip.ResponseEvent - last received response to a previously sent subscription
    *         request.

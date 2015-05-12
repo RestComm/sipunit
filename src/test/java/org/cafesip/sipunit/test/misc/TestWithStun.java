@@ -26,6 +26,8 @@ import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTestCase;
 import org.junit.After;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
@@ -74,6 +76,8 @@ import net.java.stun4j.client.StunDiscoveryReport;
  * 
  */
 public class TestWithStun extends SipTestCase {
+  private static final Logger LOG = LoggerFactory.getLogger(SipTestCase.class);
+
   private SipStack sipStack;
 
   private SipPhone ua;
@@ -102,7 +106,6 @@ public class TestWithStun extends SipTestCase {
     defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
-    defaultProperties.setProperty("sipunit.trace", "true");
     defaultProperties.setProperty("sipunit.test.port", "5060");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
@@ -146,9 +149,8 @@ public class TestWithStun extends SipTestCase {
     getPublicAddress();
 
     sipStack = new SipStack(testProtocol, myPort, properties);
-    SipStack.setTraceEnabled(true);
 
-    SipStack.trace("My public IP address = " + publicIp + ", port = " + publicPort);
+    LOG.trace("My public IP address = {}, port = {}", publicIp, publicPort);
 
     ua =
         sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
@@ -192,7 +194,7 @@ public class TestWithStun extends SipTestCase {
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"),
         "your-publicserver-account1", "your-publicserver-account1-password"));
 
-    SipStack.trace("About to register using credentials ");
+    LOG.trace("About to register using credentials ");
 
     ua.register(null, 3600);
 

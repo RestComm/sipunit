@@ -16,6 +16,9 @@
  */
 package org.cafesip.sipunit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +50,7 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+
 /**
  * This class is used for handling one leg of a call. That is, it represents an outgoing call leg or
  * an incoming call leg. In a telephone call, there are two call legs. The outgoing call leg is the
@@ -77,6 +81,9 @@ import javax.sip.message.Response;
  * 
  */
 public class SipCall implements SipActionObject, MessageListener {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SipCall.class);
+
   private SipPhone parent;
 
   private int returnCode = -1;
@@ -141,7 +148,7 @@ public class SipCall implements SipActionObject, MessageListener {
             parent.addAuthorizations(callId.getCallId(), bye);
             transaction = parent.sendRequestWithTransaction(bye, false, dialog);
           } catch (Exception e) {
-            SipStack.trace("Disposing call, couldn't send BYE: " + e.getMessage());
+            LOG.error("Disposing call, couldn't send BYE: " + e.toString(), e);
           }
         }
       }
@@ -941,7 +948,7 @@ public class SipCall implements SipActionObject, MessageListener {
 
     Response resp = ((ResponseEvent) response_event).getResponse();
     receivedResponses.add(new SipResponse((ResponseEvent) response_event));
-    SipStack.trace("Outgoing message response received: " + resp.toString());
+    LOG.trace("Outgoing message response received: {}", resp.toString());
 
     setReturnCode(resp.getStatusCode());
     if (returnCode == SipResponse.OK) {
@@ -2197,7 +2204,7 @@ public class SipCall implements SipActionObject, MessageListener {
 
     Response resp = ((ResponseEvent) response_event).getResponse();
     receivedResponses.add(new SipResponse((ResponseEvent) response_event));
-    SipStack.trace("Outgoing call response received: " + resp.toString());
+    LOG.trace("Outgoing call response received: {}", resp.toString());
 
     setReturnCode(resp.getStatusCode());
     if (returnCode == SipResponse.OK) {
@@ -2276,7 +2283,7 @@ public class SipCall implements SipActionObject, MessageListener {
 
     Response resp = ((ResponseEvent) response_event).getResponse();
     receivedResponses.add(new SipResponse((ResponseEvent) response_event));
-    SipStack.trace("RE-INVITE response received: " + resp.toString());
+    LOG.trace("RE-INVITE response received: {}", resp.toString());
 
     setReturnCode(resp.getStatusCode());
 
@@ -2436,8 +2443,8 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * Gets the AddressFactory associated with this object. It may be needed by the
-   * caller if providing additional or replacement JAIN SIP headers for outbound messages.
+   * Gets the AddressFactory associated with this object. It may be needed by the caller if
+   * providing additional or replacement JAIN SIP headers for outbound messages.
    * 
    * @return This SipCall's javax.sip.address.AddressFactory
    * 
@@ -2447,8 +2454,8 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * Gets the HeaderFactory associated with this object. It will be needed by the
-   * caller if providing additional or replacement JAIN SIP headers for outbound messages.
+   * Gets the HeaderFactory associated with this object. It will be needed by the caller if
+   * providing additional or replacement JAIN SIP headers for outbound messages.
    * 
    * @return This SipCall's javax.sip.header.HeaderFactory
    * 
@@ -2567,8 +2574,8 @@ public class SipCall implements SipActionObject, MessageListener {
   }
 
   /**
-   * Gets all the responses received on this call, including any that required
-   * re-initiation of the call (ie, authentication challenge).
+   * Gets all the responses received on this call, including any that required re-initiation of the
+   * call (ie, authentication challenge).
    * 
    * <p>
    * See also SipCall methods getLastReceivedResponse(), findMostRecentResponse(statuscode).
@@ -2682,20 +2689,19 @@ public class SipCall implements SipActionObject, MessageListener {
         + timeout.getClientTransaction().getRequest().toString());
 
     if (transaction == null) {
-      System.err.println(
-          "SipCall.processTimeout() - Unexpected null transaction, received timeout event for: "
-              + timeout.getClientTransaction().getRequest().toString());
+      LOG.error("Unexpected null transaction, received timeout event for: {}", timeout
+          .getClientTransaction().getRequest());
       return;
     }
 
     transaction = null;
-    SipStack.trace("SipCall: " + getErrorMessage());
+    LOG.error(getErrorMessage());
   }
 
   private void processResponse(ResponseEvent responseEvent) {
     Response resp = responseEvent.getResponse();
     receivedResponses.add(new SipResponse(responseEvent));
-    SipStack.trace("Asynchronous response received: " + resp.toString());
+    LOG.trace("Asynchronous response received: {}", resp);
 
     if (transaction == null) {
       setReturnCode(SipSession.INTERNAL_ERROR);
@@ -2703,7 +2709,7 @@ public class SipCall implements SipActionObject, MessageListener {
           + " Unexpected null transaction, received response: " + resp.toString() + "\n"
           + " for sent request: " + responseEvent.getClientTransaction().getRequest().toString());
 
-      System.err.println("SipCall.processResponse() - " + getErrorMessage());
+      LOG.error(getErrorMessage());
       return;
     }
 
@@ -2732,8 +2738,7 @@ public class SipCall implements SipActionObject, MessageListener {
     } else if (returnCode != SipResponse.OK) {
       setErrorMessage((String) SipSession.statusCodeDescription.get(new Integer(returnCode)));
 
-      SipStack.trace("SipCall.processNonInviteResponse() - received response: " + resp.toString()
-          + "\n" + " for sent request: " + req.toString());
+      LOG.error("received response: {}\n for sent request: {}", resp.toString(), req.toString());
     }
   }
 
@@ -2756,14 +2761,14 @@ public class SipCall implements SipActionObject, MessageListener {
       if (msg == null) {
         setReturnCode(parent.getReturnCode());
         setErrorMessage(parent.getErrorMessage());
-        SipStack.trace(getErrorMessage());
+        LOG.error(getErrorMessage());
 
         return;
       }
 
       if (reInitiateOutgoingCall(msg, this) == false) {
         // error info already set
-        SipStack.trace(getErrorMessage());
+        LOG.error(getErrorMessage());
       }
     }
   }
@@ -2775,16 +2780,16 @@ public class SipCall implements SipActionObject, MessageListener {
     if (msg == null) {
       setReturnCode(parent.getReturnCode());
       setErrorMessage(parent.getErrorMessage());
-      SipStack.trace(getErrorMessage());
+      LOG.error(getErrorMessage());
 
       return;
     }
 
     try {
       // send the message
-      synchronized (this) // needed for asynchronous response -
-      // processEvent()
-      {
+      synchronized (this) {
+        // needed for asynchronous response -
+        // processEvent()
         transaction = parent.sendRequestWithTransaction(msg, false, dialog, this);
       }
 
@@ -2801,7 +2806,7 @@ public class SipCall implements SipActionObject, MessageListener {
     }
 
     if (transaction == null) {
-      SipStack.trace(getErrorMessage());
+      LOG.error(getErrorMessage());
     }
 
     return;
@@ -3407,7 +3412,7 @@ public class SipCall implements SipActionObject, MessageListener {
 
     Response resp = ((ResponseEvent) response_event).getResponse();
     receivedResponses.add(new SipResponse((ResponseEvent) response_event));
-    SipStack.trace("CANCEL response received: " + resp.toString());
+    LOG.info("CANCEL response received: {}", resp.toString());
 
     setReturnCode(resp.getStatusCode());
 

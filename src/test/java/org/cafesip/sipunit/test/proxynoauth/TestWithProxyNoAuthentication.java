@@ -326,8 +326,6 @@ public class TestWithProxyNoAuthentication {
     // sendReply(Response OK, toTag, contact),
     // waitResponse()
 
-    SipStack.setTraceEnabled(true);
-
     ua.register("amit", "a1b2c3d4", null, 0, 10000);
     assertLastOperationSuccess(ua.format(), ua);
 
@@ -707,7 +705,6 @@ public class TestWithProxyNoAuthentication {
   public void testBothSidesAsynchMakeCall() throws Exception {
     ua.register("amit", "a1b2c3d4", null, 0, 10000);
     assertLastOperationSuccess(ua.format(), ua);
-    SipStack.setTraceEnabled(true);
 
     SipPhone ub =
         sipStack.createSipPhone(PROXY_HOST, PROXY_PROTO, PROXY_PORT, "sip:becky@cafesip.org");

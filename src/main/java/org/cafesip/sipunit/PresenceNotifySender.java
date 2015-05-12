@@ -16,6 +16,9 @@
  */
 package org.cafesip.sipunit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -63,6 +66,8 @@ import javax.sip.message.Response;
  * 
  */
 public class PresenceNotifySender implements MessageListener {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PresenceNotifySender.class);
 
   protected SipPhone phone;
 
@@ -218,7 +223,7 @@ public class PresenceNotifySender implements MessageListener {
               }
             }
 
-            SipStack.trace("Sent response to SUBSCRIBE");
+            LOG.trace("Sent response to SUBSCRIBE");
             return;
           } catch (Throwable e) {
             setErrorMessage("Throwable: " + e.getClass().getName() + ": " + e.getMessage());
@@ -257,8 +262,7 @@ public class PresenceNotifySender implements MessageListener {
       ((ToHeader) response.getHeader(ToHeader.NAME)).setTag(toTag);
       response.addHeader((ContactHeader) phone.getContactInfo().getContactHeader().clone());
 
-      if (statusCode / 100 == 2) // 2xx
-      {
+      if (statusCode / 100 == 2) { // 2xx
         AcceptHeader accept = getAcceptHeaderForResponse();
         if (accept != null)
           response.setHeader(accept);
@@ -572,8 +576,7 @@ public class PresenceNotifySender implements MessageListener {
 
         setLastSentNotify(req);
 
-        SipStack.trace("Sent NOTIFY to " + dialog.getRemoteParty().getURI().toString() + ": \n"
-            + req.toString());
+        LOG.trace("Sent NOTIFY to {}:\n{}", dialog.getRemoteParty().getURI(), req);
 
         return true;
       } catch (Exception e) {
@@ -620,7 +623,7 @@ public class PresenceNotifySender implements MessageListener {
       setLastSentNotify(req);
     }
 
-    SipStack.trace("Sent NOTIFY " + req.getHeader(ToHeader.NAME));
+    LOG.trace("Sent NOTIFY {}", req.getHeader(ToHeader.NAME));
 
     return transaction;
   }
@@ -687,7 +690,7 @@ public class PresenceNotifySender implements MessageListener {
 
   protected void setErrorMessage(String errorMessage) {
     if (errorMessage.length() > 0) {
-      SipStack.trace("Notify sender error : " + errorMessage);
+      LOG.trace("Notify sender error : {}", errorMessage);
     }
     this.errorMessage = errorMessage;
   }
@@ -821,7 +824,7 @@ public class PresenceNotifySender implements MessageListener {
           dialog = transaction.getClientTransaction().getDialog();
           setLastSentNotify(msg);
 
-          SipStack.trace("Resent REQUEST: " + msg.toString());
+          LOG.trace("Resent REQUEST: {}", msg);
 
           return transaction;
         }

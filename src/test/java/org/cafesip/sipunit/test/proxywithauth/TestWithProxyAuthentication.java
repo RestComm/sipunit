@@ -44,10 +44,13 @@ import org.cafesip.sipunit.SipRequest;
 import org.cafesip.sipunit.SipResponse;
 import org.cafesip.sipunit.SipStack;
 import org.cafesip.sipunit.SipTransaction;
+import org.cafesip.sipunit.test.noproxy.TestMessageNoProxy;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -97,6 +100,7 @@ import javax.sip.message.Response;
  * 
  */
 public class TestWithProxyAuthentication {
+  private static final Logger LOG = LoggerFactory.getLogger(TestMessageNoProxy.class);
 
   private SipStack sipStack;
 
@@ -128,7 +132,6 @@ public class TestWithProxyAuthentication {
     defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
-    defaultProperties.setProperty("sipunit.trace", "true");
     defaultProperties.setProperty("sipunit.test.port", "9091");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
@@ -165,9 +168,6 @@ public class TestWithProxyAuthentication {
   @Before
   public void setUp() throws Exception {
     sipStack = new SipStack(testProtocol, myPort, properties);
-    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-
     ua =
         sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
             proxyPort, myUrl);
@@ -184,7 +184,7 @@ public class TestWithProxyAuthentication {
 
   @Test
   public void testAuthRegistration() throws Exception {
-    SipStack.trace("testAuthRegistration");
+    LOG.trace("testAuthRegistration");
 
     ua.register("amit", "a1b2c3d4", null, 4890, 10000);
     assertLastOperationSuccess("user a registration - " + ua.format(), ua);
@@ -223,7 +223,7 @@ public class TestWithProxyAuthentication {
 
   @Test
   public void testCustomContactRegistration() throws Exception {
-    SipStack.trace("testCustomContactRegistration");
+    LOG.trace("testCustomContactRegistration");
 
     ua.register("amit", "a1b2c3d4", "sip:billy@bob.land:9090;transport=tcp", 4890, 10000);
     assertLastOperationSuccess("user a registration - " + ua.format(), ua);
@@ -253,7 +253,7 @@ public class TestWithProxyAuthentication {
     // authentication must be turned
     // on
     // at server
-    SipStack.trace("testBadPasswdRegistration");
+    LOG.trace("testBadPasswdRegistration");
 
     ua.register("amit", "a1b2c3d44", ua.getAddress().toString(), 0, 10000);
     assertLastOperationFail("Registration should have failed", ua);
@@ -268,7 +268,7 @@ public class TestWithProxyAuthentication {
     // test the nonblocking version
     // of
     // SipPhone.makeCall()
-    SipStack.trace("testBothSidesAsynchMakeCall");
+    LOG.trace("testBothSidesAsynchMakeCall");
 
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
@@ -351,7 +351,7 @@ public class TestWithProxyAuthentication {
     // test the nonblocking version
     // of
     // SipPhone.makeCall()
-    SipStack.trace("testAsynchMakeCallCallerDisc");
+    LOG.trace("testAsynchMakeCallCallerDisc");
 
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
@@ -481,7 +481,7 @@ public class TestWithProxyAuthentication {
   public void testBothSidesCallerDisc() throws Exception {
     // test the blocking version of
     // SipPhone.makeCall()
-    SipStack.trace("testBothSidesCallerDisc");
+    LOG.trace("testBothSidesCallerDisc");
 
     final class PhoneB extends Thread {
 
@@ -582,7 +582,7 @@ public class TestWithProxyAuthentication {
 
   @Test
   public void testMakeCallExtraJainsipParms() {
-    SipStack.trace("testBothSidesCallerDisc");
+    LOG.trace("testBothSidesCallerDisc");
 
     final class PhoneB extends Thread {
 
@@ -715,7 +715,7 @@ public class TestWithProxyAuthentication {
   public void testMakeCallExtraStringParms() throws Exception {
     // test the blocking version of
     // SipPhone.makeCall() with extra String parameters
-    SipStack.trace("testBothSidesCallerDisc");
+    LOG.trace("testBothSidesCallerDisc");
 
     final class PhoneB extends Thread {
 
@@ -837,7 +837,7 @@ public class TestWithProxyAuthentication {
     // test the
     // nonblocking
     // SipPhone.makeCall() with extra JAIN SIP parameters
-    SipStack.trace("testNonblockingMakeCallExtraJainsipParms");
+    LOG.trace("testNonblockingMakeCallExtraJainsipParms");
 
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
@@ -943,7 +943,7 @@ public class TestWithProxyAuthentication {
     // nonblocking
     // version
     // of SipPhone.makeCall() with extra String parameters
-    SipStack.trace("testNonblockingMakeCallExtraStringParms");
+    LOG.trace("testNonblockingMakeCallExtraStringParms");
 
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
@@ -1040,7 +1040,7 @@ public class TestWithProxyAuthentication {
   public void testMiscExtraParms() throws Exception {
     // test the remaining SipCall methods
     // that take extra parameters
-    SipStack.trace("testMiscExtraParms");
+    LOG.trace("testMiscExtraParms");
 
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
@@ -1207,7 +1207,7 @@ public class TestWithProxyAuthentication {
   public void testBothSidesCalleeDisc() throws Exception {
     // test the blocking version of
     // SipPhone.makeCall()
-    SipStack.trace("testBothSidesCalleeDisc");
+    LOG.trace("testBothSidesCalleeDisc");
 
     final class PhoneB extends Thread {
 
@@ -1277,7 +1277,7 @@ public class TestWithProxyAuthentication {
    */
   @Test
   public void testReinvite() throws Exception {
-    SipStack.trace("testReinvite");
+    LOG.trace("testReinvite");
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));
     ua.register(null, 3600);
@@ -1583,7 +1583,7 @@ public class TestWithProxyAuthentication {
   // this method tests cancel from a to b
   @Test
   public void testCancel() throws Exception {
-    SipStack.trace("testCancel");
+    LOG.trace("testCancel");
 
     ua.addUpdateCredential(new Credential(properties.getProperty("sipunit.test.domain"), "amit",
         "a1b2c3d4"));

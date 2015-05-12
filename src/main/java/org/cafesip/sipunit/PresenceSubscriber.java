@@ -16,6 +16,9 @@
  */
 package org.cafesip.sipunit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -63,6 +66,9 @@ import org.cafesip.sipunit.presenceparser.pidf.Tuple;
  * 
  */
 public class PresenceSubscriber extends EventSubscriber {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PresenceSubscriber.class);
+
   /*
    * List of zero or more PresenceDeviceInfo objects (active devices) for this Subscription
    * buddy/watchee, indexed by the IDs received in the NOTIFY tuples
@@ -218,7 +224,7 @@ public class PresenceSubscriber extends EventSubscriber {
         presenceExtensions.addAll((Collection<?>) doc.getAny());
       }
 
-      SipStack.trace("Successfully processed NOTIFY message body for Subscription to " + targetUri);
+      LOG.trace("Successfully processed NOTIFY message body for Subscription to " + targetUri);
     } catch (Exception e) {
       throw new SubscriptionError(SipResponse.BAD_REQUEST,
           "NOTIFY body parsing error : " + e.getMessage());

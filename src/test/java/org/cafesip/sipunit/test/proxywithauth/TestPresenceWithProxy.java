@@ -40,6 +40,8 @@ import org.cafesip.sipunit.SipTransaction;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -89,6 +91,8 @@ import javax.sip.message.Response;
  */
 public class TestPresenceWithProxy {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TestPresenceWithProxy.class);
+
   private SipStack sipStack;
 
   private SipPhone ua;
@@ -119,7 +123,6 @@ public class TestPresenceWithProxy {
     defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
-    defaultProperties.setProperty("sipunit.trace", "true");
     defaultProperties.setProperty("sipunit.test.port", "5093");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
@@ -155,9 +158,6 @@ public class TestPresenceWithProxy {
   @Before
   public void setUp() throws Exception {
     sipStack = new SipStack(testProtocol, myPort, properties);
-    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-    SipStack.trace("Properties: " + properties.toString());
 
     ua =
         sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,
@@ -1049,7 +1049,7 @@ public class TestPresenceWithProxy {
 
     // process the NOTIFY
 
-    System.out.println("The following validation FATAL_ERROR is SUPPOSED TO HAPPEN");
+    LOG.trace("The following validation FATAL_ERROR is SUPPOSED TO HAPPEN");
     response = sub.processNotify(reqevent);
     assertNotNull(response);
 

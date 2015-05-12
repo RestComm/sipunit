@@ -30,6 +30,8 @@ import org.cafesip.sipunit.SipStack;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Properties;
@@ -50,6 +52,7 @@ import javax.sip.message.Response;
  *
  */
 public class TestMessageNoProxy {
+  private static final Logger LOG = LoggerFactory.getLogger(TestMessageNoProxy.class);
 
   private SipStack sipStack1;
 
@@ -62,8 +65,6 @@ public class TestMessageNoProxy {
   private int port2 = 5090;
 
   private String testProtocol = "udp";
-
-  private boolean sipunitTrace = true;
 
   private static final Properties defaultProperties1 = new Properties();
 
@@ -99,7 +100,7 @@ public class TestMessageNoProxy {
       try {
         port1 = Integer.parseInt(prop);
       } catch (NumberFormatException e) {
-        System.err.println("Number format exception for input port: " + prop
+        LOG.error("Number format exception for input port: " + prop
             + " - defaulting port1 to 5061");
         port1 = 5061;
       }
@@ -110,7 +111,7 @@ public class TestMessageNoProxy {
       try {
         port2 = Integer.parseInt(prop);
       } catch (NumberFormatException e) {
-        System.err.println("Number format exception for input port: " + prop
+        LOG.error("Number format exception for input port: " + prop
             + " - defaulting port2 to 5091");
         port2 = 5091;
       }
@@ -119,11 +120,6 @@ public class TestMessageNoProxy {
     prop = inputProps.getProperty("sipunit.test.protocol");
     if (prop != null) {
       testProtocol = prop;
-    }
-
-    prop = inputProps.getProperty("sipunit.trace");
-    if (prop != null) {
-      sipunitTrace = prop.trim().equalsIgnoreCase("true") || prop.trim().equalsIgnoreCase("on");
     }
   }
 
@@ -134,8 +130,6 @@ public class TestMessageNoProxy {
   public void setUp() throws Exception {
     sipStack1 = new SipStack(testProtocol, port1, properties1);
     sipStack2 = new SipStack(testProtocol, port2, properties2);
-
-    SipStack.setTraceEnabled(sipunitTrace);
 
     ua = sipStack1.createSipPhone("sip:amit@nist.gov");
     ua.setLoopback(true);

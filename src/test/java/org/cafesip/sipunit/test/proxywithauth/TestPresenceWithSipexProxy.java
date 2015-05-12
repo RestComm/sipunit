@@ -49,7 +49,6 @@ import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-
 /**
  * This class tests authentication challenges for a SipUnit presence subscriber. Tests in this class
  * require a proxy that will authenticate using DIGEST and that can receive and respond to SUBSCRIBE
@@ -104,7 +103,6 @@ public class TestPresenceWithSipexProxy {
     defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
-    defaultProperties.setProperty("sipunit.trace", "true");
     defaultProperties.setProperty("sipunit.test.port", "5093");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
@@ -141,9 +139,6 @@ public class TestPresenceWithSipexProxy {
   @Before
   public void setUp() throws Exception {
     sipStack = new SipStack(testProtocol, myPort, properties);
-    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-    SipStack.trace("Properties: " + properties.toString());
 
     ua =
         sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,

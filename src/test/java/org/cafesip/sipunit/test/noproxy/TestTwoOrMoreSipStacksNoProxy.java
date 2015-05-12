@@ -120,11 +120,6 @@ public class TestTwoOrMoreSipStacksNoProxy {
     if (prop != null) {
       testProtocol = prop;
     }
-
-    prop = inputProps.getProperty("sipunit.trace");
-    if (prop != null) {
-      sipunitTrace = prop.trim().equalsIgnoreCase("true") || prop.trim().equalsIgnoreCase("on");
-    }
   }
 
   /**
@@ -134,8 +129,6 @@ public class TestTwoOrMoreSipStacksNoProxy {
   public void setUp() throws Exception {
     sipStack1 = new SipStack(testProtocol, port1, properties1);
     sipStack2 = new SipStack(testProtocol, port2, properties2);
-
-    SipStack.setTraceEnabled(sipunitTrace);
 
     ua = sipStack1.createSipPhone("sip:amit@nist.gov");
     ua.setLoopback(true);

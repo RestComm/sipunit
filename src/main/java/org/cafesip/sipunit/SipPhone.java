@@ -17,6 +17,9 @@
 
 package org.cafesip.sipunit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.EventObject;
@@ -84,6 +87,9 @@ import javax.sip.message.Response;
  * 
  */
 public class SipPhone extends SipSession implements SipActionObject, RequestListener {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SipPhone.class);
+
   public static final int DEFAULT_SUBSCRIBE_DURATION = 3600;
 
   private CSeqHeader cseq;
@@ -1216,8 +1222,8 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
     if (event instanceof RequestEvent) {
       processRequestEvent((RequestEvent) event);
     } else {
-      System.err.println("SipPhone.processEvent() - invalid event type received: "
-          + event.getClass().getName() + ": " + event.toString());
+      LOG.error("invalid event type received: " + event.getClass().getName() + ": "
+          + event.toString());
     }
   }
 
@@ -1233,7 +1239,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
           + ") - SipPhone.processRequestEvent() - incoming request was misrouted, expected NOTIFY but got "
           + request.getMethod() + " : " + request;
       distributeEventError(err);
-      SipStack.trace(err);
+      LOG.error(err);
       return;
     }
 
@@ -1251,7 +1257,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
           + ") - SipPhone.processRequestEvent() - Received a NOTIFY request with no event header : \n"
           + request;
       distributeEventError(err);
-      SipStack.trace(err);
+      LOG.error(err);
       return;
     }
 
@@ -1281,7 +1287,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
       String err = "*** NOTIFY REQUEST ERROR ***  (SipPhone " + me
           + ") - SipPhone.processRequestEvent() - " + error + " : \n" + request;
       distributeEventError(err);
-      SipStack.trace(err);
+      LOG.error(err);
       return;
     }
 
@@ -1295,7 +1301,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
     String error = "*** NOTIFY REQUEST ERROR ***  (" + from.getAddress().getURI().toString()
         + ") : " + err + " : " + request.toString();
     distributeEventError(error);
-    SipStack.trace(error);
+    LOG.error(error);
 
     return;
   }
