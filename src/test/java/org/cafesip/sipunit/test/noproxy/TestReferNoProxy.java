@@ -24,7 +24,6 @@ import static org.cafesip.sipunit.SipAssert.assertNoSubscriptionErrors;
 import static org.cafesip.sipunit.SipAssert.awaitAnswered;
 import static org.cafesip.sipunit.SipAssert.awaitDialogReady;
 import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -46,11 +45,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.address.Address;
@@ -96,7 +97,6 @@ public class TestReferNoProxy {
     defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
-    defaultProperties.setProperty("sipunit.trace", "true");
     defaultProperties.setProperty("sipunit.test.port", "5061");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
   }
@@ -113,7 +113,6 @@ public class TestReferNoProxy {
     }
 
     testProtocol = properties.getProperty("sipunit.test.protocol");
-
   }
 
   /**
@@ -122,8 +121,6 @@ public class TestReferNoProxy {
   @Before
   public void setUp() throws Exception {
     sipStack = new SipStack(testProtocol, myPort, properties);
-    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
 
     ua = sipStack.createSipPhone("sip:amit@nist.gov");
     ua.setLoopback(true);

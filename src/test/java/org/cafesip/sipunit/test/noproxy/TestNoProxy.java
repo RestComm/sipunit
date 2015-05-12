@@ -57,6 +57,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,6 +104,8 @@ import javax.sip.message.Response;
  * 
  */
 public class TestNoProxy {
+  private static final Logger LOG = LoggerFactory.getLogger(TestNoProxy.class);
+
   private SipStack sipStack;
 
   private SipPhone ua;
@@ -120,7 +124,6 @@ public class TestNoProxy {
     defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
-    defaultProperties.setProperty("sipunit.trace", "true");
     defaultProperties.setProperty("sipunit.test.port", "5061");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
     defaultProperties.setProperty("gov.nist.javax.sip.PASS_INVITE_NON_2XX_ACK_TO_LISTENER", "true");
@@ -173,8 +176,6 @@ public class TestNoProxy {
     testProtocol = properties.getProperty("sipunit.test.protocol");
 
     sipStack = new SipStack(testProtocol, myPort, properties);
-    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
 
     ua = sipStack.createSipPhone(getSipUserA());
     ua.setLoopback(true);
@@ -1315,7 +1316,7 @@ public class TestNoProxy {
   // TestWithProxyAuthentication does the other direction
   @Test
   public void testReinvite() throws Exception {
-    SipStack.trace("testAdditionalMessageParms"); // using reinvite
+    LOG.trace("testAdditionalMessageParms"); // using reinvite
 
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
@@ -2466,7 +2467,7 @@ public class TestNoProxy {
     ub.sendReply(incReq, Response.RINGING, null, toTag, contact, -1, null, null, null, null, null);
     assertLastOperationSuccess(ub.format(), ub);
 
-    System.out.println("about to wait for RINGING");
+    LOG.trace("about to wait for RINGING");
 
     // receive it on the 'a' side
     callA.waitOutgoingCallResponse(10000);
@@ -2484,7 +2485,7 @@ public class TestNoProxy {
   // this method tests cancel from a to b
   @Test
   public void testCancel() throws Exception {
-    SipStack.trace("testCancelWithoutHeader");
+    LOG.trace("testCancelWithoutHeader");
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
 
@@ -2537,7 +2538,7 @@ public class TestNoProxy {
 
   @Test
   public void testCancelAfter100Trying() throws Exception {
-    SipStack.trace("testCancelAfter100Trying");
+    LOG.trace("testCancelAfter100Trying");
 
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
@@ -2582,7 +2583,7 @@ public class TestNoProxy {
 
   @Test
   public void testCancelBeforeInvite() throws Exception {
-    SipStack.trace("testCancelBeforeInvite");
+    LOG.trace("testCancelBeforeInvite");
 
     SipCall callA = ua.createSipCall();
     SipTransaction cancel = callA.sendCancel();
@@ -2592,7 +2593,7 @@ public class TestNoProxy {
 
   @Test
   public void testCancelBeforeAnyResponse() throws Exception {
-    SipStack.trace("testCancelBeforeAnyResponse");
+    LOG.trace("testCancelBeforeAnyResponse");
 
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
@@ -2645,7 +2646,7 @@ public class TestNoProxy {
   // this method tests cancel from a to b
   @Test
   public void testCancelWith481() throws Exception {
-    SipStack.trace("testCancelWithoutHeaderWith481");
+    LOG.trace("testCancelWithoutHeaderWith481");
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
 
@@ -2704,7 +2705,7 @@ public class TestNoProxy {
 
   @Test
   public void testCancelExtraJainsipParms() throws Exception {
-    SipStack.trace("testCancelExtraJainsipParms");
+    LOG.trace("testCancelExtraJainsipParms");
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
 
@@ -2783,7 +2784,7 @@ public class TestNoProxy {
 
   @Test
   public void testCancelExtraStringParms() throws Exception {
-    SipStack.trace("testCancelExtraStringParms");
+    LOG.trace("testCancelExtraStringParms");
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
 
@@ -2862,7 +2863,7 @@ public class TestNoProxy {
 
   @Test
   public void testReceivedRequestResponseEvents() throws Exception {
-    SipStack.trace("testReceivedRequestResponseEvents");
+    LOG.trace("testReceivedRequestResponseEvents");
 
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
@@ -2986,7 +2987,7 @@ public class TestNoProxy {
 
   @Test
   public void testCancelRequestResponseEvents() throws Exception {
-    SipStack.trace("testCancelRequestResponseEvents");
+    LOG.trace("testCancelRequestResponseEvents");
     SipPhone ub = sipStack.createSipPhone(getSipUserB());
     ub.setLoopback(true);
 

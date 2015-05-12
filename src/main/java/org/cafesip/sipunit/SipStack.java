@@ -16,6 +16,9 @@
 
 package org.cafesip.sipunit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import gov.nist.javax.sip.ResponseEventExt;
 
 import java.net.InetAddress;
@@ -59,7 +62,7 @@ import javax.sip.message.MessageFactory;
  */
 public class SipStack implements SipListener {
 
-  private static boolean traceEnabled = false;
+  private static final Logger LOG = LoggerFactory.getLogger(SipStack.class);
 
   private static SipFactory sipFactory = null;
 
@@ -289,34 +292,15 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * Indicates if the SipUnit stack trace has been enabled.
-   * 
-   * @return true if the stack trace is enabled.
-   */
-  public static boolean isTraceEnabled() {
-    return traceEnabled;
-  }
-
-  /**
-   * Turn on or off the SipUnit stack tracing. After calling this method with a value of true, call
-   * SipStack.trace() to output trace messages.
-   * 
-   * @param traceEnabled true to turn on the tracing, false to turn it off.
-   */
-  public static void setTraceEnabled(boolean traceEnabled) {
-    SipStack.traceEnabled = traceEnabled;
-  }
-
-  /**
    * FOR INTERNAL USE ONLY. Not to be used by a test program.
    */
   public void processRequest(RequestEvent arg0) {
-    SipStack.trace("SipStack: request received !");
+    LOG.trace("request received !");
     synchronized (listeners) {
       Iterator<SipListener> iter = listeners.iterator();
       while (iter.hasNext() == true) {
         SipListener listener = iter.next();
-        SipStack.trace("SipStack: calling listener");
+        LOG.trace("calling listener");
         listener.processRequest(arg0);
       }
     }
@@ -429,39 +413,24 @@ public class SipStack implements SipListener {
   }
 
   /**
-   * Outputs the given string to console, if SipStack.setTraceEnabled(true) has been called.
-   * 
-   * @param msg String to output to console.
-   */
-  public synchronized static void trace(String msg) {
-    // grossly simplified
-    // for now, not
-    // implemented
-    if (traceEnabled) {
-      System.out.println("SIPUNIT TRACE:  " + System.currentTimeMillis() + "  " + msg);
-    }
-  }
-
-  /**
    * Outputs to console the provided header string followed by the message.
    * 
    * @param informationalHeader
    * @param msg
    */
   public static void dumpMessage(String informationalHeader, javax.sip.message.Message msg) {
-    SipStack.trace(informationalHeader + "..........");
-    SipStack.trace(msg.toString());
+    LOG.trace(informationalHeader + "{}.......... \n {}", informationalHeader, msg);
 
     ListIterator rhdrs = msg.getHeaders(RouteHeader.NAME);
     while (rhdrs.hasNext()) {
       RouteHeader rhdr = (RouteHeader) rhdrs.next();
 
       if (rhdr != null) {
-        SipStack.trace("RouteHeader address: " + rhdr.getAddress().toString());
+        LOG.trace("RouteHeader address: {}", rhdr.getAddress().toString());
         Iterator i = rhdr.getParameterNames();
         while (i.hasNext()) {
           String parm = (String) i.next();
-          SipStack.trace("RouteHeader parameter " + parm + ": " + rhdr.getParameter(parm));
+          LOG.trace("RouteHeader parameter {}: {}", parm, rhdr.getParameter(parm));
         }
       }
     }
@@ -471,11 +440,11 @@ public class SipStack implements SipListener {
       RecordRouteHeader rrhdr = (RecordRouteHeader) rrhdrs.next();
 
       if (rrhdr != null) {
-        SipStack.trace("RecordRouteHeader address: " + rrhdr.getAddress().toString());
+        LOG.trace("RecordRouteHeader address: {}", rrhdr.getAddress());
         Iterator i = rrhdr.getParameterNames();
         while (i.hasNext()) {
           String parm = (String) i.next();
-          SipStack.trace("RecordRouteHeader parameter " + parm + ": " + rrhdr.getParameter(parm));
+          LOG.trace("RecordRouteHeader parameter {}: {}", parm, rrhdr.getParameter(parm));
         }
       }
     }

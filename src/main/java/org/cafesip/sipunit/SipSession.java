@@ -17,6 +17,9 @@
 
 package org.cafesip.sipunit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import gov.nist.javax.sip.header.ParameterNames;
 
 import java.text.ParseException;
@@ -80,6 +83,9 @@ import javax.sip.message.Response;
  * 
  */
 public class SipSession implements SipListener, SipActionObject {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SipSession.class);
+
   /**
    * Comment for <code>SIPUNIT_INTERNAL_RETURNCODE_MIN</code> A constant marking the lowest possible
    * SipUnit internal return code value. Anything below this is not internal, but a standard RFC3261
@@ -356,10 +362,10 @@ public class SipSession implements SipListener, SipActionObject {
       return false;
     }
 
-    // System.out.println("my public IP " + host);
-    // System.out.println("my public port = " + port);
-    // System.out.println("my sentby = "
-    // + parent.getSipProvider().getListeningPoints()[0].getSentBy());
+    // LOG.info("my public IP {}", host);
+    // LOG.info("my public port = {}", port);
+    // LOG.info("my sentby = {}",
+    //  parent.getSipProvider().getListeningPoints()[0].getSentBy());
 
     return true;
   }
@@ -383,16 +389,15 @@ public class SipSession implements SipListener, SipActionObject {
     // (so that local messaging without proxy still works) - but ONLY IF
     // setLoopback() has been called
 
-    SipStack.trace("SipSession: request received !");
-    SipStack.trace("     me ('To' check) = " + me);
-    SipStack
-        .trace("     my local contact info ('Request URI' check) = " + my_contact_info.getURI());
-    SipStack.trace("     " + req_msg.toString());
+    LOG.trace("request received !");
+    LOG.trace("     me ('To' check) = {}", me);
+    LOG.trace("     my local contact info ('Request URI' check) = {}", my_contact_info.getURI());
+    LOG.trace("     {}" , req_msg.toString());
 
     if (destMatch((SipURI) my_contact_info.getContactHeader().getAddress().getURI(),
         (SipURI) req_msg.getRequestURI()) == false) {
       if (!loopback) {
-        SipStack.trace("     skipping 'To' check, we're not loopback (see setLoopback())");
+        LOG.trace("     skipping 'To' check, we're not loopback (see setLoopback())");
         return;
       }
 
@@ -416,13 +421,13 @@ public class SipSession implements SipListener, SipActionObject {
 
     synchronized (reqBlock) {
       if (rcvRequests == false) {
-        SipStack.trace("SipSession: not interested in blocking requests");
+        LOG.trace("not interested in blocking requests");
         return;
       }
 
       reqEvents.addLast(request);
 
-      SipStack.trace("SipSession: notifying block object");
+      LOG.trace("notifying block object");
       reqBlock.notifyEvent();
     }
   }
@@ -1098,9 +1103,9 @@ public class SipSession implements SipListener, SipActionObject {
     synchronized (reqBlock) {
       if (reqEvents.size() == 0) {
         try {
-          SipStack.trace("SS.waitRequest() - about to block, waiting");
+          LOG.trace("about to block, waiting");
           reqBlock.waitForEvent(timeout);
-          SipStack.trace("SS.waitRequest() - we've come out of the block");
+          LOG.trace("we've come out of the block");
         } catch (Exception ex) {
           setException(ex);
           setErrorMessage("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
@@ -1109,7 +1114,7 @@ public class SipSession implements SipListener, SipActionObject {
         }
       }
 
-      SipStack.trace("SS.waitRequest() - either we got the request, or timed out");
+      LOG.trace("either we got the request, or timed out");
       if (reqEvents.size() == 0) {
         setReturnCode(TIMEOUT_OCCURRED);
         setErrorMessage("The maximum amount of time to wait for a request message has elapsed.");
@@ -1585,7 +1590,7 @@ public class SipSession implements SipListener, SipActionObject {
    */
   public boolean sendUnidirectionalResponse(Response response) {
     initErrorInfo();
-    System.out.println("Sending unidirectional response: " + response);
+    LOG.info("Sending unidirectional response: {}", response);
 
     try {
       parent.getSipProvider().sendResponse(response);
@@ -1594,7 +1599,7 @@ public class SipSession implements SipListener, SipActionObject {
       setException(ex);
       setErrorMessage("Exception: " + ex.getClass().getName() + ": " + ex.getMessage());
       setReturnCode(EXCEPTION_ENCOUNTERED);
-      System.out.println(this.format());
+      LOG.info(this.format());
       return false;
     }
   }

@@ -115,7 +115,6 @@ public class TestReferWithSipexProxy {
     defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
     defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
-    defaultProperties.setProperty("sipunit.trace", "true");
     defaultProperties.setProperty("sipunit.test.port", "5093");
     defaultProperties.setProperty("sipunit.test.protocol", "udp");
 
@@ -156,9 +155,6 @@ public class TestReferWithSipexProxy {
   @Before
   public void setUp() throws Exception {
     sipStack = new SipStack(testProtocol, myPort, properties);
-    SipStack.setTraceEnabled(properties.getProperty("sipunit.trace").equalsIgnoreCase("true")
-        || properties.getProperty("sipunit.trace").equalsIgnoreCase("on"));
-    SipStack.trace("Properties: " + properties.toString());
 
     ua =
         sipStack.createSipPhone(properties.getProperty("sipunit.proxy.host"), testProtocol,

@@ -16,6 +16,9 @@
  */
 package org.cafesip.sipunit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.ParseException;
 import java.util.Calendar;
 
@@ -48,6 +51,9 @@ import javax.sip.message.Request;
  * 
  */
 public class ReferNotifySender extends PresenceNotifySender {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ReferNotifySender.class);
+
   /**
    * A constructor for this class. This object immediately starts listening for a REFER request.
    * 
@@ -158,7 +164,7 @@ public class ReferNotifySender extends PresenceNotifySender {
               }
             }
 
-            SipStack.trace("Sent response to REFER");
+            LOG.trace("Sent response to REFER");
             return;
           } catch (Throwable e) {
             setErrorMessage("Throwable: " + e.getClass().getName() + ": " + e.getMessage());
@@ -261,7 +267,6 @@ public class ReferNotifySender extends PresenceNotifySender {
               eventHeader = (EventHeader) req.getHeader(EventHeader.NAME).clone();
 
               // send the NOTIFY before sending the REFER response
-              Thread.sleep(50);
               Request notifyRequest = inc_req.getDialog().createRequest(SipRequest.NOTIFY);
               notifyRequest = addNotifyHeaders(notifyRequest, null, null, notifySubscriptionState,
                   notifyTermReason, notifyBody, notifyTimeLeft);
@@ -269,7 +274,6 @@ public class ReferNotifySender extends PresenceNotifySender {
               if (sendNotify(notifyRequest, false) == false) {
                 return;
               }
-              Thread.sleep(500);
 
               // now send the REFER response
               dialog = sendResponse(trans, statusCode, reasonPhrase, toTag, req, -1);
@@ -281,7 +285,7 @@ public class ReferNotifySender extends PresenceNotifySender {
               }
             }
 
-            SipStack.trace("Sent response to REFER");
+            LOG.trace("Sent response to REFER");
             return;
           } catch (Throwable e) {
             setErrorMessage("Throwable: " + e.getClass().getName() + ": " + e.getMessage());
