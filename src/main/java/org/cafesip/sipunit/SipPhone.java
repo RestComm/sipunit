@@ -696,9 +696,6 @@ public class SipPhone extends SipSession implements SipActionObject,
         {
             msg = (Request) req_msg.clone();
             msg.setMethod(req_msg.getMethod());
-            ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
-            String toTag = toHeader.getTag();
-            ((ToHeader)msg.getHeader(ToHeader.NAME)).setTag(toTag);
         }
         catch (Exception ex)
         {
