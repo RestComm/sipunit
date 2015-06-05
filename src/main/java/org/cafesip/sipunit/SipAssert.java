@@ -39,7 +39,7 @@ import javax.sip.message.Request;
  * 
  * These methods can be used directly:
  * <code>SipAssert.assertAnswered(...)</code>, or they can be referenced through
- * static import:<br/>
+ * static import:
  * 
  * <pre>
  * import static org.cafesip.sipunit.SipAssert.assertAnswered;

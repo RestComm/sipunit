@@ -57,8 +57,6 @@ public class ReferNotifySender extends PresenceNotifySender
      * 
      * @param userb
      *            SipPhone object to use for messaging.
-     * @throws Exception
-     *             If there's a problem
      */
     public ReferNotifySender(SipPhone userb)
     {
