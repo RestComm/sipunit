@@ -1,11 +1,5 @@
-Contains [http://code.google.com/p/commtesting/wiki/SipUnit SipUnit] SIP Testing framework and [MobicentsArquillianTestingFramework Arquillian Extension for SIP Servlets]
-
-[http://code.google.com/p/commtesting/wiki/SipUnit SipUnit] and [MobicentsArquillianTestingFramework Arquillian Extension for SIP Servlets] is led by [http://www.telestax.com TeleStax, Inc.] and developed collaboratively by a community of individual and enterprise contributors.
-
-
-*_Latest News_*
-
-  * [ArquillianSIPServletsExtension Mobicents Arquillian Sip Servlets Extension] 1.0.0-ALPHA1 has been released
+SipUnit
+----
 
   * SipUnit 2.0.0 is out !
 
