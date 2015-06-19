@@ -1,36 +1,23 @@
-SipUnit README
------------------------
+Contains [http://code.google.com/p/commtesting/wiki/SipUnit SipUnit] SIP Testing framework and [MobicentsArquillianTestingFramework Arquillian Extension for SIP Servlets]
 
-For documentation, visit 
-	http://www.cafesip.org/projects/sipunit/
+[http://code.google.com/p/commtesting/wiki/SipUnit SipUnit] and [MobicentsArquillianTestingFramework Arquillian Extension for SIP Servlets] is led by [http://www.telestax.com TeleStax, Inc.] and developed collaboratively by a community of individual and enterprise contributors.
 
-For license information: Open the file 
-	docs/license/index.html using a web browser.
 
-For the SipUnit API class javadocs: open the file 
-	docs/api/index.html using a web browser.
-	
-For tutorial-type examples, see the SipUnit user guide at
-	http://www.cafesip.org/projects/sipunit/
-	
-For example real test classes that use SipUnit, see the SipUnit unit test java files in the binary 
-    distribution and in the source code project. You can run the noproxy/TestNoProxy
-	test right away, see next item. 
-	For running some of the other test classes, a proxy or stun server is required. For setup info,
-	see the header comments in each test java file and also visit the section on proxy 
-	considerations in the user guide at
-	http://www.cafesip.org/projects/sipunit/
-	
-TO RUN AN EXAMPLE TEST: see how in the installation test section of the SipUnit user guide at
-	http://www.cafesip.org/projects/sipunit/
+*_Latest News_*
 
-To debug what's happening during a SipUnit test, turn on the SipUnit trace by adding
-    this line of code to your test class setUp() method after creating the SipStack:
-         SipStack.setTraceEnabled(true);
-          
-    You can also set the trace level to 32 instead of the default 16 to get even more output. Do it by setting the
-    following property in the properties provided to SipStack creation: 
-        properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
-    
-    Also you can use the NIST-SIP visual trace tool. See how, and get it, here:
-	http://java.net/projects/jsip/sources/svn/show/tags/JAIN-SIP-1-2-165/src/tools/tracesviewer
+  * [ArquillianSIPServletsExtension Mobicents Arquillian Sip Servlets Extension] 1.0.0-ALPHA1 has been released
+
+  * SipUnit 2.0.0 is out !
+
+The following are the highlights of the release. Thanks to George Vagenas for his recent major contributions to SipUnit and also to S. Pitucha for contributing patches.
+
+  * MESSAGE handling has been added, including support for authentication and MESSAGE with or without an existing dialog.
+  * JUnit 4 support was added with static assertions in new SipAssert class.
+  * SipUnit is now mavenized!
+  * Convenience methods were added to get the contact URI as javax.sip.address.URI from SipContact, the call ID from SipCall, and retransmission count from SipStack. Also, support was added for deregistration using wildcard Contact Header and a new waitForAuthorisation() method for when the far end should send 401 or 407.
+  * TLS support has been verified.
+  * JAIN SIP stack was updated.
+
+Get the latest release either as a [http://sourceforge.net/projects/mobicents/files/Mobicents%20SipUnit/ binary] or [https://oss.sonatype.org/content/groups/public/org/cafesip/sipunit/sipunit/2.0.0/ Maven dependency]
+----
+For SipUnit history/archive information please visit http://cafesip.sourceforge.net/site/projects/sipunit/
