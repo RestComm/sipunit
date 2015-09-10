@@ -104,11 +104,11 @@
 <!-- 			<version>1.2.X-SNAPSHOT</version> -->
 		</dependency>
 
-		<dependency>
+		<!--dependency>
 			<groupId>javax.xml</groupId>
 			<artifactId>jax-qname</artifactId>
 			<version>1.1</version>
-		</dependency>
+		</dependency-->
 
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
@@ -146,11 +146,11 @@
 			<version>1.2.8</version>
 		</dependency>
 
-		<dependency>
+		<!--dependency>
 			<groupId>javax.xml</groupId>
 			<artifactId>namespace</artifactId>
 			<version>1.0.1</version>
-		</dependency>
+		</dependency-->
 
 		<dependency>
 			<groupId>javax.sdp</groupId>
@@ -446,7 +446,7 @@
 		<repository>
 			<id>java.net-Public</id>
 			<name>Maven Java Net Snapshots and Releases</name>
-			<url>http://download.java.net/maven/2/</url>
+			<url>https://maven.java.net/content/groups/public/</url>
 			<releases>
 				<enabled>true</enabled>
 				<updatePolicy>never</updatePolicy>
