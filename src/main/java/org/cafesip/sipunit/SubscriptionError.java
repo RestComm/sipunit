@@ -1,61 +1,53 @@
 /*
  * Created on Apr 9, 2009
  * 
- * Copyright 2005 CafeSip.org 
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *	http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
+ * Copyright 2005 CafeSip.org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package org.cafesip.sipunit;
 
 /**
  * @author Becky McElroy
- * 
  */
-public class SubscriptionError extends Throwable
-{
-    /**
-     * Comment for <code>serialVersionUID</code>
-     */
-    private static final long serialVersionUID = 1L;
+public class SubscriptionError extends Throwable {
 
-    private int statusCode = -1;
+  /**
+   * Comment for <code>serialVersionUID</code> .
+   */
+  private static final long serialVersionUID = 1L;
 
-    private String reason;
+  private int statusCode = -1;
 
-    public SubscriptionError(int statusCode, String reason)
-    {
-        this.statusCode = statusCode;
-        this.reason = reason;
-    }
+  private String reason;
 
-    public String getReason()
-    {
-        return reason;
-    }
+  public SubscriptionError(int statusCode, String reason) {
+    this.statusCode = statusCode;
+    this.reason = reason;
+  }
 
-    public void setReason(String reason)
-    {
-        this.reason = reason;
-    }
+  public String getReason() {
+    return reason;
+  }
 
-    public int getStatusCode()
-    {
-        return statusCode;
-    }
+  public void setReason(String reason) {
+    this.reason = reason;
+  }
 
-    public void setStatusCode(int statusCode)
-    {
-        this.statusCode = statusCode;
-    }
+  public int getStatusCode() {
+    return statusCode;
+  }
+
+  public void setStatusCode(int statusCode) {
+    this.statusCode = statusCode;
+  }
 }

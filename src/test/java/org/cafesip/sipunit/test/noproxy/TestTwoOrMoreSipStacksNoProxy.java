@@ -1,31 +1,25 @@
 /*
  * Created on April 21, 2005
  * 
- * Copyright 2005 CafeSip.org 
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- *
- *	http://www.apache.org/licenses/LICENSE-2.0 
- *
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License.
- *
+ * Copyright 2005 CafeSip.org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
 package org.cafesip.sipunit.test.noproxy;
 
 import static org.cafesip.sipunit.SipAssert.assertLastOperationSuccess;
+import static org.cafesip.sipunit.SipAssert.awaitStackDispose;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-import java.util.Properties;
-
-import javax.sip.message.Response;
 
 import org.cafesip.sipunit.SipCall;
 import org.cafesip.sipunit.SipPhone;
@@ -34,244 +28,173 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Properties;
+
+import javax.sip.message.Response;
+
 /**
- * This class tests two SipStacks on the same machine. This test makes use of
- * the fact that with JAIN-SIP 1.2, if you don't provide IP_ADDRESS in the
- * properties when you create a stack, it goes by STACK_NAME only and you can
- * create as many stacks as you want as long as the name is different (and
- * IP_ADDRESS property is null). You can use system properties to override
- * settings in this test except for the IP_ADDRESS property used on the
- * SipStack(s) - it will be ignored by this particular test.
+ * This class tests two SipStacks on the same machine. This test makes use of the fact that with
+ * JAIN-SIP 1.2, if you don't provide IP_ADDRESS in the properties when you create a stack, it goes
+ * by STACK_NAME only and you can create as many stacks as you want as long as the name is different
+ * (and IP_ADDRESS property is null). You can use system properties to override settings in this
+ * test except for the IP_ADDRESS property used on the SipStack(s) - it will be ignored by this
+ * particular test.
  * 
- * Thanks to Venkita S. for contributing the changes to SipSession and SipStack
- * needed to make this work.
+ * <p>
+ * Thanks to Venkita S. for contributing the changes to SipSession and SipStack needed to make this
+ * work.
  * 
- * Tests in this class do not require a proxy/registrar server. Messaging
- * between UACs is direct.
+ * <p>
+ * Tests in this class do not require a proxy/registrar server. Messaging between UACs is direct.
  * 
  * @author Becky McElroy
  * 
  */
-public class TestTwoOrMoreSipStacksNoProxy
-{
-    private SipStack sipStack1;
+public class TestTwoOrMoreSipStacksNoProxy {
 
-    private SipStack sipStack2;
+  private SipStack sipStack1;
 
-    private SipPhone ua;
+  private SipStack sipStack2;
 
-    private int port1 = 5061;
+  private SipPhone ua;
 
-    private int port2 = 5090;
+  private int port1 = 5061;
 
-    private String testProtocol = "udp";
+  private int port2 = 5090;
 
-    private boolean sipunitTrace = true;
+  private String testProtocol = "udp";
 
-    private static final Properties defaultProperties1 = new Properties();
+  private boolean sipunitTrace = true;
 
-    private static final Properties defaultProperties2 = new Properties();
+  private static final Properties defaultProperties1 = new Properties();
 
-    static
-    {
-        defaultProperties1.setProperty("javax.sip.STACK_NAME", "testAgent");
-        defaultProperties1.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
-        defaultProperties1.setProperty("gov.nist.javax.sip.DEBUG_LOG",
-                "testAgent_debug.txt");
-        defaultProperties1.setProperty("gov.nist.javax.sip.SERVER_LOG",
-                "testAgent_log.txt");
-        defaultProperties1.setProperty("gov.nist.javax.sip.READ_TIMEOUT",
-                "1000");
-        defaultProperties1.setProperty(
-                "gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
+  private static final Properties defaultProperties2 = new Properties();
 
-        defaultProperties2.setProperty("javax.sip.STACK_NAME", "testAgent2");
-        defaultProperties2.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
-        defaultProperties2.setProperty("gov.nist.javax.sip.DEBUG_LOG",
-                "testAgent2_debug.txt");
-        defaultProperties2.setProperty("gov.nist.javax.sip.SERVER_LOG",
-                "testAgent2_log.txt");
-        defaultProperties2.setProperty("gov.nist.javax.sip.READ_TIMEOUT",
-                "1000");
-        defaultProperties2.setProperty(
-                "gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
+  static {
+    defaultProperties1.setProperty("javax.sip.STACK_NAME", "testAgent");
+    defaultProperties1.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
+    defaultProperties1.setProperty("gov.nist.javax.sip.DEBUG_LOG", "testAgent_debug.txt");
+    defaultProperties1.setProperty("gov.nist.javax.sip.SERVER_LOG", "testAgent_log.txt");
+    defaultProperties1.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
+    defaultProperties1.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
 
+    defaultProperties2.setProperty("javax.sip.STACK_NAME", "testAgent2");
+    defaultProperties2.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "16");
+    defaultProperties2.setProperty("gov.nist.javax.sip.DEBUG_LOG", "testAgent2_debug.txt");
+    defaultProperties2.setProperty("gov.nist.javax.sip.SERVER_LOG", "testAgent2_log.txt");
+    defaultProperties2.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
+    defaultProperties2.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
+  }
+
+  private Properties properties1 = new Properties(defaultProperties1);
+
+  private Properties properties2 = new Properties(defaultProperties2);
+
+  public TestTwoOrMoreSipStacksNoProxy() {
+    Properties inputProps = new Properties();
+    inputProps.putAll(System.getProperties());
+
+    String prop = inputProps.getProperty("sipunit.testport.1");
+    if (prop != null) {
+      try {
+        port1 = Integer.parseInt(prop);
+      } catch (NumberFormatException e) {
+        System.err.println("Number format exception for input port: " + prop
+            + " - defaulting port1 to 5061");
+        port1 = 5061;
+      }
     }
 
-    private Properties properties1 = new Properties(defaultProperties1);
-
-    private Properties properties2 = new Properties(defaultProperties2);
-
-    public TestTwoOrMoreSipStacksNoProxy()
-    {
-        Properties input_props = new Properties();
-        input_props.putAll(System.getProperties());
-
-        String prop = input_props.getProperty("sipunit.testport.1");
-        if (prop != null)
-        {
-            try
-            {
-                port1 = Integer.parseInt(prop);
-            }
-            catch (NumberFormatException e)
-            {
-                System.err.println("Number format exception for input port: "
-                        + prop + " - defaulting port1 to 5061");
-                port1 = 5061;
-            }
-        }
-
-        prop = input_props.getProperty("sipunit.testport.2");
-        if (prop != null)
-        {
-            try
-            {
-                port2 = Integer.parseInt(prop);
-            }
-            catch (NumberFormatException e)
-            {
-                System.err.println("Number format exception for input port: "
-                        + prop + " - defaulting port2 to 5091");
-                port2 = 5091;
-            }
-        }
-
-        prop = input_props.getProperty("sipunit.test.protocol");
-        if (prop != null)
-        {
-            testProtocol = prop;
-        }
-
-        prop = input_props.getProperty("sipunit.trace");
-        if (prop != null)
-        {
-            sipunitTrace = prop.trim().equalsIgnoreCase("true")
-                    || prop.trim().equalsIgnoreCase("on");
-        }
-
+    prop = inputProps.getProperty("sipunit.testport.2");
+    if (prop != null) {
+      try {
+        port2 = Integer.parseInt(prop);
+      } catch (NumberFormatException e) {
+        System.err.println("Number format exception for input port: " + prop
+            + " - defaulting port2 to 5091");
+        port2 = 5091;
+      }
     }
 
-    @Before
-    public void setUp() throws Exception
-    {
-        try
-        {
-            sipStack1 = new SipStack(testProtocol, port1, properties1);
-            sipStack2 = new SipStack(testProtocol, port2, properties2);
-
-            SipStack.setTraceEnabled(sipunitTrace);
-        }
-        catch (Exception ex)
-        {
-            fail("Exception: " + ex.getClass().getName() + ": "
-                    + ex.getMessage());
-            throw ex;
-        }
-
-        try
-        {
-            ua = sipStack1.createSipPhone("sip:amit@nist.gov");
-            ua.setLoopback(true);
-        }
-        catch (Exception ex)
-        {
-            fail("Exception creating SipPhone: " + ex.getClass().getName()
-                    + ": " + ex.getMessage());
-            throw ex;
-        }
+    prop = inputProps.getProperty("sipunit.test.protocol");
+    if (prop != null) {
+      testProtocol = prop;
     }
+  }
 
-    @After
-    public void tearDown() throws Exception
-    {
-       if (ua != null) 
-       {
-			ua.dispose();
-			ua = null;
-		}
+  /**
+   * Initialize the sipStack 1 & 2 and a user agent for the test.
+   */
+  @Before
+  public void setUp() throws Exception {
+    sipStack1 = new SipStack(testProtocol, port1, properties1);
+    sipStack2 = new SipStack(testProtocol, port2, properties2);
 
-		if (sipStack1 != null) 
-		{
-			sipStack1.dispose();
-			sipStack1 = null;
-		}
-		
-		if (sipStack2 != null) 
-		{
-			sipStack2.dispose();
-			sipStack2 = null;
-		}
-    }
+    ua = sipStack1.createSipPhone("sip:amit@nist.gov");
+    ua.setLoopback(true);
+  }
 
-    @Test
-    public void testBothSides()
-    {
-        try
-        {
-            SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
-            ub.setLoopback(true);
+  /**
+   * Release the sipStack 1 & 2 and a user agent for the test.
+   */
+  @After
+  public void tearDown() throws Exception {
+    ua.dispose();
+    awaitStackDispose(sipStack1);
+    awaitStackDispose(sipStack2);
+  }
 
-            SipCall a = ua.createSipCall();
-            SipCall b = ub.createSipCall();
+  @Test
+  public void testBothSides() throws Exception {
+    SipPhone ub = sipStack2.createSipPhone("sip:becky@nist.gov");
+    ub.setLoopback(true);
 
-            b.listenForIncomingCall();
-            Thread.sleep(10);
+    SipCall callA = ua.createSipCall();
+    SipCall callB = ub.createSipCall();
 
-            a.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress()
-                    + ":" + port2 + ";lr/" + testProtocol);
-            assertLastOperationSuccess("a initiate call - " + a.format(), a);
+    callB.listenForIncomingCall();
 
-            b.waitForIncomingCall(4000);
-            assertLastOperationSuccess("b wait incoming call - " + b.format(),
-                    b);
+    callA.initiateOutgoingCall("sip:becky@nist.gov", ub.getStackAddress() + ":" + port2 + ";lr/"
+        + testProtocol);
+    assertLastOperationSuccess("a initiate call - " + callA.format(), callA);
 
-            b.sendIncomingCallResponse(Response.RINGING, null, -1);
-            assertLastOperationSuccess("b send RINGING - " + b.format(), b);
+    callB.waitForIncomingCall(4000);
+    assertLastOperationSuccess("b wait incoming call - " + callB.format(), callB);
 
-            Thread.sleep(200);
+    callB.sendIncomingCallResponse(Response.RINGING, null, -1);
+    assertLastOperationSuccess("b send RINGING - " + callB.format(), callB);
 
-            b.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
-            assertLastOperationSuccess("b send OK - " + b.format(), b);
+    callB.sendIncomingCallResponse(Response.OK, "Answer - Hello world", 0);
+    assertLastOperationSuccess("b send OK - " + callB.format(), callB);
 
-            a.waitOutgoingCallResponse(5000);
-            assertLastOperationSuccess("a wait 1st response - " + a.format(), a);
-            assertEquals("Unexpected 1st response received", Response.RINGING,
-                    a.getReturnCode());
-            assertNotNull("Default response reason not sent", a
-                    .getLastReceivedResponse().getReasonPhrase());
-            assertEquals("Unexpected default reason", "Ringing", a
-                    .getLastReceivedResponse().getReasonPhrase());
+    callA.waitOutgoingCallResponse(5000);
+    assertLastOperationSuccess("a wait 1st response - " + callA.format(), callA);
+    assertEquals("Unexpected 1st response received", Response.RINGING, callA.getReturnCode());
+    assertNotNull("Default response reason not sent", callA.getLastReceivedResponse()
+        .getReasonPhrase());
+    assertEquals("Unexpected default reason", "Ringing", callA.getLastReceivedResponse()
+        .getReasonPhrase());
 
-            a.waitOutgoingCallResponse(5000);
-            assertLastOperationSuccess("a wait 2nd response - " + a.format(), a);
+    callA.waitOutgoingCallResponse(5000);
+    assertLastOperationSuccess("a wait 2nd response - " + callA.format(), callA);
 
-            assertEquals("Unexpected 2nd response received", Response.OK, a
-                    .getReturnCode());
+    assertEquals("Unexpected 2nd response received", Response.OK, callA.getReturnCode());
 
-            a.sendInviteOkAck();
-            assertLastOperationSuccess("Failure sending ACK - " + a.format(), a);
+    callA.sendInviteOkAck();
+    assertLastOperationSuccess("Failure sending ACK - " + callA.format(), callA);
 
-            Thread.sleep(500);
+    callA.listenForDisconnect();
+    assertLastOperationSuccess("a listen disc - " + callA.format(), callA);
 
-            a.listenForDisconnect();
-            assertLastOperationSuccess("a listen disc - " + a.format(), a);
+    callB.disconnect();
+    assertLastOperationSuccess("b disc - " + callB.format(), callB);
 
-            b.disconnect();
-            assertLastOperationSuccess("b disc - " + b.format(), b);
+    callA.waitForDisconnect(3000);
+    assertLastOperationSuccess("a wait disc - " + callA.format(), callA);
 
-            a.waitForDisconnect(3000);
-            assertLastOperationSuccess("a wait disc - " + a.format(), a);
+    callA.respondToDisconnect();
+    assertLastOperationSuccess("a respond to disc - " + callA.format(), callA);
 
-            a.respondToDisconnect();
-            assertLastOperationSuccess("a respond to disc - " + a.format(), a);
-
-            ub.dispose();
-        }
-        catch (Exception e)
-        {
-            fail("Exception: " + e.getClass().getName() + ": " + e.getMessage());
-        }
-    }
-
+    ub.dispose();
+  }
 }
