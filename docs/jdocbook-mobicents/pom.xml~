@@ -59,8 +59,8 @@
 				      		<version>1.3.0-SNAPSHOT</version>
 				    	</dependency>
 				</dependencies>
-				<configuration>
-					<sourceDocumentName>SipUnit_User_Guide.xml</sourceDocumentName>
+				<configuration>					
+					<sourceDocumentName>SIP_Servlets_Server_User_Guide.xml</sourceDocumentName>
 					<sourceDirectory>${project.build.directory}/docbook/resources</sourceDirectory>
 					<imageResource>
 						<directory>${project.build.directory}/docbook/resources/en-US</directory>
@@ -72,7 +72,7 @@
 						<format>
 							<formatName>pdf</formatName>
 							<stylesheetResource>classpath:/xslt/org/jboss/pdf.xsl</stylesheetResource>
-							<finalName>RestComm_User_Guide.pdf</finalName>
+							<finalName>SIP_Servlets_Server_User_Guide.pdf</finalName>
 						</format>
 						<format>
 							<formatName>html</formatName>
@@ -87,12 +87,11 @@
 					</formats>
 					<options>
 						<xincludeSupported>true</xincludeSupported>
-						<!-- needed for uri-resolvers; can be ommitted if using 'current' uri 
-							scheme -->
+						<!-- needed for uri-resolvers; can be ommitted if using 'current' uri scheme -->
 						<!-- could also locate the docbook dependency and inspect its version... -->
-						<docbookVersion>1.72.0</docbookVersion>
-					</options>
-				</configuration>
+						<docbookVersion>1.72.0</docbookVersion>					
+					</options>		
+				</configuration>			
 			</plugin>
 		</plugins>
 	</build>
