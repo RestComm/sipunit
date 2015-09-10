@@ -58,7 +58,7 @@ import javax.sip.message.Response;
  * <p>
  * This object is created as the result of an initial outbound SUBSCRIBE message
  * or REFER message. This object is used indirectly by a test program to proceed
- * through the subscribing side SUBSCRIBE or REFER <-> NOTIFY sequence(s) and to
+ * through the subscribing side SUBSCRIBE or REFER &lt;-&gt; NOTIFY sequence(s) and to
  * find out details at any given time about the subscription such as the
  * subscription state, amount of time left on the subscription if still active,
  * termination reason if terminated, errors encountered during received

@@ -740,7 +740,6 @@ public class SipCall implements SipActionObject, MessageListener
 	 *            parameter indicates the duration the message is valid, in
 	 *            seconds.
 	 * @return true if the response was successfully sent, false otherwise.
-	 * @throws ParseException 
 	 */
 	public boolean sendMessageResponse(int statusCode, String reasonPhrase, int expires)
 	{
@@ -760,8 +759,7 @@ public class SipCall implements SipActionObject, MessageListener
 	 *            additionalHeaders parameter must contain a ContentTypeHeader
 	 *            for this body to be included in the message. Use null for no
 	 *            body bytes.
-	 * @throws ParseException 
-	 * 
+	 *
 	 */
 	public boolean sendMessageResponse(int statusCode, String reasonPhrase, int expires, String body)
 	{
@@ -799,7 +797,6 @@ public class SipCall implements SipActionObject, MessageListener
 	 *            additionalHeaders parameter must contain a ContentTypeHeader
 	 *            for this body to be included in the message. Use null for no
 	 *            body bytes.
-	 * @throws ParseException 
 	 */
 	public boolean sendMessageResponse(int statusCode, String reasonPhrase, int expires, 
 			ArrayList<Header> additionalHeaders,ArrayList<Header> replaceHeaders, String body) {

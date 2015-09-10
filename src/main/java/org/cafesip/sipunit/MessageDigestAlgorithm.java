@@ -39,7 +39,7 @@ import java.security.NoSuchAlgorithmException;
  * available. It is licensed under the Apache Software License, Version 1.1
  * Copyright (c) 2000.
  * 
- * @author Emil Ivov < emcho@dev.java.net >
+ * @author Emil Ivov &lt; emcho@dev.java.net &gt;
  * @version 1.0
  */
 public class MessageDigestAlgorithm

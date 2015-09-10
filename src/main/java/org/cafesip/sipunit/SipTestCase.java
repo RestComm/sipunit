@@ -32,30 +32,36 @@ import junit.framework.TestCase;
  * The SipAssert class is a static equivalent of this class that you can
  * alternatively use when you can't or don't want to extend SipTestCase.
  * SipTestCase uses SipAssert to perform the assertions.
+ *
  * <p>
- * To write a SIP application test class, or program, pre-JUnit 4 style: <br>
- * 
- * <li>1) implement a subclass of SipTestCase <br>
+ * To write a SIP application test class, or program, pre-JUnit 4 style:
+ *
+ * <ul>
+ * <li>1) implement a subclass of SipTestCase</li>
  * <li>2) define instance attributes that store information needed by each test
- * in the class, such as for SipUnit SipStack, SipPhone objects <br>
- * <li>3) initialize the setup for each test by overriding method setUp() <br>
- * <li>4) clean-up after each test by overriding tearDown() <br>
+ * in the class, such as for SipUnit SipStack, SipPhone objects</li>
+ * <li>3) initialize the setup for each test by overriding method setUp()</li>
+ * <li>4) clean-up after each test by overriding tearDown()</li>
  * <li>5) write one or more tests, each of which is a method beginning with the
- * letters "test", that use SipUnit objects and SipTestCase assertions
+ * letters "test", that use SipUnit objects and SipTestCase assertions</li>
+ * </ul>
+
  * <p>
  * 
- * To write a SIP application test class, or program, JUnit 4 style: <br>
- * 
+ * To write a SIP application test class, or program, JUnit 4 style:
+ *
+ * <ul>
  * <li>1) write a pojo with JUnit 4 annotations (see release notes for JUnit 4.X
- * releases at junit.org for details) <br>
+ * releases at junit.org for details)</li>
  * <li>2) define instance attributes that store information needed by each test
- * in the class, such as for SipUnit SipStack, SipPhone objects <br>
+ * in the class, such as for SipUnit SipStack, SipPhone objects</li>
  * <li>3) initialize/cleanup tests using methods annotated with @Before, @After
- * per JUnit 4 annotations <br>
- * <li>4) use static imports for the SipAssert methods that your tests will use
- * <br>
+ * per JUnit 4 annotations <br></li>
+ * <li>4) use static imports for the SipAssert methods that your tests will use</li>
  * <li>5) write one or more test methods that use SipUnit objects and SipAssert
- * assertions
+ * assertions</li>
+ * </ul>
+ *
  * <p>
  * 
  * The code in the SIP application test class creates SipUnit API objects, calls
@@ -64,11 +70,13 @@ import junit.framework.TestCase;
  * this class or SipAssert, along with the standard JUnit assert methods.
  * Messages are only displayed when an assert fails. See below for an example
  * test class.
+ *
  * <p>
  * 
  * To execute the test program and run the tests, use the standard JUnit test
  * runners which can run a test suite and collect/output the results. This is
  * commonly done using IDE Junit facilities or via the Ant junit target.
+ * </p>
  * <p>
  * EXAMPLE SIP APPLICATION TEST CLASS: (see the SipUnit User Guide for more
  * information on how to use the API effectively)
@@ -178,7 +186,7 @@ import junit.framework.TestCase;
  *              }
  * &lt;/code&gt;
  * </pre>
- * 
+ *
  * @author Amit Chatterjee, Becky McElroy
  * 
  */

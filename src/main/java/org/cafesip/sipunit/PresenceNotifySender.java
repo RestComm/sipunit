@@ -91,8 +91,6 @@ public class PresenceNotifySender implements MessageListener
      * 
      * @param userb
      *            SipPhone object to use for messaging.
-     * @throws Exception
-     *             If there's a problem
      */
     public PresenceNotifySender(SipPhone userb)
     {
@@ -154,7 +152,7 @@ public class PresenceNotifySender implements MessageListener
      * side: (a) this method takes a duration for overriding what would
      * normally/correctly be sent back in the response (which is the same as
      * what was received in the SUBSCRIBE request or default 3600 if none was
-     * received). Observed if >= 0. (b) this method takes an EventHeader for
+     * received). Observed if &gt;= 0. (b) this method takes an EventHeader for
      * overriding what would normally/correctly be sent back in the respone
      * (same as what was received in the request).
      */

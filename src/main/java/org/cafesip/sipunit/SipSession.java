@@ -698,9 +698,9 @@ public class SipSession implements SipListener, SipActionObject
      invite.append("Call-ID: 5ff235b07a7e4c19784d138fb26c1ec8@"
      + thisHostAddr + "\n");
      invite.append("CSeq: 1 INVITE\n");
-     invite.append("From: <sip:amit@nist.gov>;tag=1181356482\n");
-     invite.append("To: <sip:becky@nist.gov>\n");
-     invite.append("Contact: <sip:amit@" + thisHostAddr + ":5060>\n");
+     invite.append("From: &lt;sip:amit@nist.gov&gt;;tag=1181356482\n");
+     invite.append("To: &lt;sip:becky@nist.gov&gt;\n");
+     invite.append("Contact: &lt;sip:amit@" + thisHostAddr + ":5060&gt;\n");
      invite.append("Max-Forwards: 5\n");
      invite.append("Via: SIP/2.0/" + PROXY_PROTO + " " + thisHostAddr
      + ":5060;branch=322e3136382e312e3130303a3530363\n");
@@ -2137,8 +2137,8 @@ public class SipSession implements SipListener, SipActionObject
     /**
      * The getAuthorization() method generates an authorisation header in
      * response to an authentication challenge. The WWWAuthenticateHeader
-     * parameter can represent an UAS->UAC challenge (received status code =
-     * Response.UNAUTHORIZED) or a Proxy->UAC challenge (received status code =
+     * parameter can represent an UAS-&gt;UAC challenge (received status code =
+     * Response.UNAUTHORIZED) or a Proxy-&gt;UAC challenge (received status code =
      * Response.PROXY_AUTHENTICATION_REQUIRED).
      * 
      * This method was copied from the Sip Communicator project (package

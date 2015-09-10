@@ -298,7 +298,7 @@ public class ReferSubscriber extends EventSubscriber
     /**
      * This method is the same as refresh(duration, eventId, timeout) except
      * that the SUBSCRIBE duration sent will be however much time is left on the
-     * current subscription. If time left on the subscription <= 0, unsubscribe
+     * current subscription. If time left on the subscription &lt;= 0, unsubscribe
      * occurs.
      */
     public boolean refresh(String eventId, long timeout)
@@ -319,7 +319,7 @@ public class ReferSubscriber extends EventSubscriber
      * This method is the same as refresh(duration, eventId, timeout) except
      * that the eventId remains unchanged from whatever it already was and the
      * SUBSCRIBE duration sent will be however much time is left on the current
-     * subscription. If time left on the subscription <= 0, unsubscribe occurs.
+     * subscription. If time left on the subscription &lt;= 0, unsubscribe occurs.
      */
     public boolean refresh(long timeout)
     {
