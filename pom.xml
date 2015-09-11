@@ -1,9 +1,9 @@
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.mobicents.sipunit</groupId>
   <artifactId>sipunit</artifactId>
-  <version>2.0.1-SNAPSHOT</version>
+  <version>2.0.1</version>
   <packaging>jar</packaging>
 
   <name>SipUnit</name>
@@ -56,6 +56,7 @@
     <connection>scm:git:https://github.com/Mobicents/sipunit.git</connection>
     <developerConnection>scm:git:https://github.com/Mobicents/sipunit.git</developerConnection>
     <url>https://github.com/Mobicents/sipunit.git</url>
+    <tag>2.0.1</tag>
   </scm>
 
   <distributionManagement>
@@ -267,16 +268,16 @@
             <phase>validate</phase>
             <configuration>
               <target>
-                <property name="compile_classpath" refid="maven.compile.classpath"/>
+                <property name="compile_classpath" refid="maven.compile.classpath" />
 
                 <taskdef classname="com.sun.tools.xjc.XJCTask" name="xjc">
                   <classpath>
-                    <fileset dir="${basedir}/lib" includes="*.jar"/>
-                    <pathelement path="${compile_classpath}"/>
+                    <fileset dir="${basedir}/lib" includes="*.jar" />
+                    <pathelement path="${compile_classpath}" />
 
                   </classpath>
                 </taskdef>
-                <xjc binding="${basedir}/conf/jaxb-bindings.xsd" extension="true" package="org.cafesip.sipunit.presenceparser.pidf" schema="${basedir}/conf/presence-pidf.xsd" target="${project.build.sourceDirectory}"/>
+                <xjc binding="${basedir}/conf/jaxb-bindings.xsd" extension="true" package="org.cafesip.sipunit.presenceparser.pidf" schema="${basedir}/conf/presence-pidf.xsd" target="${project.build.sourceDirectory}" />
               </target>
             </configuration>
             <goals>
@@ -289,7 +290,7 @@
             <configuration>
               <target>
                 <delete failonerror="false" quiet="false">
-                  <fileset dir="${project.build.sourceDirectory}" excludes="org/cafesip/sipunit/presenceparser/pidf/retain" includes="org/cafesip/sipunit/presenceparser/pidf/**/*"/>
+                  <fileset dir="${project.build.sourceDirectory}" excludes="org/cafesip/sipunit/presenceparser/pidf/retain" includes="org/cafesip/sipunit/presenceparser/pidf/**/*" />
                 </delete>
               </target>
             </configuration>
