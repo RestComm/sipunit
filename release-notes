@@ -1,0 +1,3 @@
+mvn release:prepare -Pmaven-release --batch-mode -DdevelopmentVersion=2.0.2-SNAPSHOT -DreleaseVersion=2.0.1 -Dtag=2.0.1 -Darguments="-Dmaven.test.skip=true"
+
+mvn release:perform -Pmaven-release,set-git-hash -Darguments="-Dgpg.passphrase=yourpassphrasehere -Dmaven.test.skip=true"
