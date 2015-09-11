@@ -1,3 +1,30 @@
+Make sure you have gpg keys 
+1. gpg --list-keys
+2. gpg --list-secret-keys
+
+Test that you can sign a file
+1. gpg -ab testfile
+
+Make sure that ~/.m2/settings.xml contains the following profile:
+
+    <profile>
+      <id>release-sign-artifacts</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <gpg.passphrase>PASSPHRASE</gpg.passphrase>
+        <gpg.useagent>true</gpg.useagent>
+        <gpg.defaultKeyring>false</gpg.defaultKeyring>
+      </properties>
+    </profile>
+  </profiles>
+
 mvn release:prepare -Pmaven-release --batch-mode -DdevelopmentVersion=2.0.2-SNAPSHOT -DreleaseVersion=2.0.1 -Dtag=2.0.1 -Darguments="-Dmaven.test.skip=true"
 
 mvn release:perform -Pmaven-release,set-git-hash -Darguments="-Dgpg.passphrase=yourpassphrasehere -Dmaven.test.skip=true"
+
+
