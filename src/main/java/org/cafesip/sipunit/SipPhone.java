@@ -429,11 +429,15 @@ public class SipPhone extends SipSession implements SipActionObject,
      * @param timeout
      *            The maximum amount of time to wait for a response, in
      *            milliseconds. Use a value of 0 to wait indefinitely.
+     * @param username
+     *            The username to complete the security challenge. If there isn't a security challenge this parameter is null.
+     * @param password
+     *            The password to complete the security challenge. If there isn't a security challenge this parameter is null.
      * 
      * @return true if the unregistration succeeded or no unregistration was
      *         needed, false otherwise.
      */
-    public boolean unregister(String contact, long timeout)
+    public boolean unregister(String username, String password, String contact, long timeout)
     {
         initErrorInfo();
 
@@ -485,7 +489,7 @@ public class SipPhone extends SipSession implements SipActionObject,
 			}
 
             // send the REGISTRATION request and get the response
-            Response response = sendRegistrationMessage(msg, null, null, 30000);
+            Response response = sendRegistrationMessage(msg, username, password, 30000);
             if (response == null)
             {
                 return false;
@@ -510,6 +514,31 @@ public class SipPhone extends SipSession implements SipActionObject,
 
     }
 
+    /**
+     * This method performs the SIP unregistration process. It returns true if
+     * unregistration was successful or no unregistration was needed, and false
+     * otherwise. Any authorization headers required for the last registration
+     * are cleared out. If there was no previous registration, this method does
+     * not send any messages.
+     * <p>
+     * If the contact parameter is null, user@hostname is unregistered where
+     * hostname is obtained by calling InetAddr.getLocalHost(). Otherwise, the
+     * contact parameter value is used in the unregistration message sent to the
+     * server.
+     *
+     * @param contact
+     *            The contact URI (ex: sip:bob@192.0.2.4) to unregister or "*".
+     * @param timeout
+     *            The maximum amount of time to wait for a response, in
+     *            milliseconds. Use a value of 0 to wait indefinitely.
+     *
+     * @return true if the unregistration succeeded or no unregistration was
+     *         needed, false otherwise.
+     */
+    public boolean unregister(String contact, long timeout)
+    {
+        return unregister(null, null, contact, timeout);
+    }
     private Response sendRegistrationMessage(Request msg, String user,
             String password, long timeout)
     {
