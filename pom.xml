@@ -166,12 +166,6 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.xml</groupId>
-      <artifactId>namespace</artifactId>
-      <version>1.0.1</version>
-    </dependency>
-
-    <dependency>
       <groupId>javax.sdp</groupId>
       <artifactId>nist-sdp</artifactId>
       <version>1.0</version>
