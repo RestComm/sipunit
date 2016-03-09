@@ -1,6 +1,13 @@
 SipUnit
 -------
 
+Overview
+-------
+SipUnit provides a test environment geared toward unit testing SIP applications. It extends the JUnit test framework to incorporate SIP-specific assertions, and it provides a high-level API for performing the SIP operations needed to interact with or invoke a test target. A test program using the SipUnit API is written in Java and acts as a network element that sends/receives SIP requests and responses. The SipUnit API includes SIP User Agent Client (UAC), User Agent Server (UAS), and basic UAC/UAS Core functionality – the set of processing functions that resides above the SIP transaction and transport layers – for the purpose of interacting with the test target. SipUnit uses the JAIN-SIP reference implementation as its underlying SIP stack/engine. The primary goal of SipUnit is to abstract the details of SIP messaging/call handling and facilitate free-flowing, sequential test code so that a test target can be exercised quickly and painlessly.
+
+Latest News
+-------
+
 * SipUnit 2.0.0 is out !
 
 The following are the highlights of the release. Thanks to George Vagenas for his recent major contributions to SipUnit and also to S. Pitucha for contributing patches.
