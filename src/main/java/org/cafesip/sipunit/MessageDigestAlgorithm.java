@@ -72,7 +72,7 @@ public class MessageDigestAlgorithm {
 
     // The following follows closely the algorithm for generating a response
     // digest as specified by rfc2617
-    String A1 = null;
+    String A1;
 
     if (algorithm == null || algorithm.trim().length() == 0
         || algorithm.trim().equalsIgnoreCase("MD5")) {
@@ -86,7 +86,7 @@ public class MessageDigestAlgorithm {
               + cnonce_value;
     }
 
-    String A2 = null;
+    String A2;
     if (qop_value == null || qop_value.trim().length() == 0
         || qop_value.trim().equalsIgnoreCase("auth")) {
       A2 = Method + ":" + digest_uri_value;
@@ -96,7 +96,7 @@ public class MessageDigestAlgorithm {
       A2 = Method + ":" + digest_uri_value + ":" + H(entity_body);
     }
 
-    String request_digest = null;
+    String request_digest;
     if (cnonce_value != null && qop_value != null
         && (qop_value.equals("auth") || (qop_value.equals("auth-int")))) {
       request_digest =

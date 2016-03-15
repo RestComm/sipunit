@@ -1280,7 +1280,7 @@ public class SipCall implements SipActionObject, MessageListener {
     initErrorInfo();
 
     try {
-      ContactHeader contact_hdr = null;
+      ContactHeader contact_hdr;
       if (newContact == null) {
         contact_hdr = (ContactHeader) parent.getContactInfo().getContactHeader().clone();
       } else {

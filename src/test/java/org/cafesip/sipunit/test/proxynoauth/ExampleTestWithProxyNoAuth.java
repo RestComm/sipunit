@@ -69,7 +69,7 @@ public class ExampleTestWithProxyNoAuth {
   private static final Properties defaultProperties = new Properties();
 
   static {
-    String host = null;
+    String host;
     try {
       host = InetAddress.getLocalHost().getHostAddress();
     } catch (UnknownHostException e) {
