@@ -1502,7 +1502,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     initErrorInfo();
 
     synchronized (this) {
-      if (reqEvents.size() == 0) {
+      if (reqEvents.isEmpty()) {
         try {
           LOG.trace("about to block, waiting");
           this.wait(timeout);
@@ -1516,7 +1516,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       }
 
       LOG.trace("either we got the request, or timed out");
-      if (reqEvents.size() == 0) {
+      if (reqEvents.isEmpty()) {
         String err =
             "*** NOTIFY REQUEST ERROR ***  (" + targetUri
                 + ") - The maximum amount of time to wait for a NOTIFY message has elapsed.";
@@ -1554,7 +1554,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
   protected EventObject waitResponse(long timeout) {
     synchronized (responseBlock) {
       LinkedList<EventObject> events = transaction.getEvents();
-      if (events.size() == 0) {
+      if (events.isEmpty()) {
         try {
           LOG.trace("about to block, waiting");
           responseBlock.waitForEvent(timeout);
@@ -1569,7 +1569,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
       LOG.trace("either we got the response, or timed out");
 
-      if (events.size() == 0) {
+      if (events.isEmpty()) {
         setReturnCode(SipSession.TIMEOUT_OCCURRED);
         setErrorMessage("The maximum amount of time to wait for a response message has elapsed.");
         return null;
