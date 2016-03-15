@@ -28,6 +28,8 @@ import java.util.EventObject;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import javax.sip.ClientTransaction;
@@ -185,7 +187,7 @@ public class SipSession implements SipListener, SipActionObject {
 
   private BlockObject respBlock = new BlockObject();
 
-  private HashMap<String, ArrayList<RequestListener>> requestListeners = new HashMap<>();
+  private Map<String, ArrayList<RequestListener>> requestListeners = new HashMap<>();
 
   // key = String request method, value = ArrayList of RequestListener
 
@@ -409,7 +411,7 @@ public class SipSession implements SipListener, SipActionObject {
 
     // check for listener handling
     synchronized (requestListeners) {
-      ArrayList<RequestListener> listeners = requestListeners.get(req_msg.getMethod());
+      List<RequestListener> listeners = requestListeners.get(req_msg.getMethod());
       if (listeners != null) {
         Iterator<RequestListener> i = listeners.iterator();
         while (i.hasNext()) {
@@ -1403,7 +1405,7 @@ public class SipSession implements SipListener, SipActionObject {
     }
   }
 
-  protected ArrayList<Header> toHeader(ArrayList<String> strings) throws Exception {
+  protected ArrayList<Header> toHeader(List<String> strings) throws Exception {
     if (strings == null) {
       return null;
     }
@@ -1516,8 +1518,8 @@ public class SipSession implements SipListener, SipActionObject {
     return sendReply(transaction, response);
   }
 
-  protected void putElements(Message message, ArrayList<Header> additionalHeaders,
-      ArrayList<Header> replaceHeaders, String body) throws Exception {
+  protected void putElements(Message message, List<Header> additionalHeaders,
+                             List<Header> replaceHeaders, String body) throws Exception {
     // check for additional headers and body to add
     if (additionalHeaders != null) {
       Iterator<Header> i = additionalHeaders.iterator();
@@ -1855,7 +1857,7 @@ public class SipSession implements SipListener, SipActionObject {
     // multiple listeners per method
 
     synchronized (requestListeners) {
-      ArrayList<RequestListener> listeners = requestListeners.get(requestMethod);
+      List<RequestListener> listeners = requestListeners.get(requestMethod);
       if (listeners != null) {
         listeners.remove(listener);
         if (listeners.isEmpty()) {

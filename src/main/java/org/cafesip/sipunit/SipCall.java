@@ -835,7 +835,7 @@ public class SipCall implements SipActionObject, MessageListener {
         MaxForwardsHeader max_forwards =
             hdr_factory.createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
 
-        ArrayList<ViaHeader> via_headers = parent.getViaHeaders();
+        List<ViaHeader> via_headers = parent.getViaHeaders();
 
         msg = parent.getMessageFactory().createRequest(request_uri, method, callId, cseq,
             from_header, to_header, via_headers, max_forwards);
@@ -1606,7 +1606,7 @@ public class SipCall implements SipActionObject, MessageListener {
       MaxForwardsHeader max_forwards =
           hdr_factory.createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
 
-      ArrayList<ViaHeader> via_headers = parent.getViaHeaders();
+      List<ViaHeader> via_headers = parent.getViaHeaders();
 
       Request msg = parent.getMessageFactory().createRequest(request_uri, method, callId, cseq,
           from_header, to_header, via_headers, max_forwards);
@@ -2971,7 +2971,7 @@ public class SipCall implements SipActionObject, MessageListener {
    * @return SipResponse object or null, if not found.
    */
   public SipResponse findMostRecentResponse(int statusCode) {
-    ArrayList<SipResponse> responses = getAllReceivedResponses();
+    List<SipResponse> responses = getAllReceivedResponses();
 
     ListIterator<SipResponse> i = responses.listIterator(responses.size());
     while (i.hasPrevious()) {

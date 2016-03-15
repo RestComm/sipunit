@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.sip.Dialog;
 import javax.sip.RequestEvent;
@@ -387,7 +388,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
         MaxForwardsHeader maxForwards =
             hdrFactory.createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
 
-        ArrayList<ViaHeader> viaHeaders = parent.getViaHeaders();
+        List<ViaHeader> viaHeaders = parent.getViaHeaders();
 
         req =
             parent.getMessageFactory().createRequest(requestUri, method, callId, requestCSeq,
@@ -1395,7 +1396,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
   // if returns null, returnCode and errorMessage already set
   protected Response createNotifyResponse(RequestEvent request, int status, String reason,
-      ArrayList<Header> additionalHeaders) {
+      List<Header> additionalHeaders) {
     // when used internally - WATCH OUT - retcode, errorMessage initialized here
     initErrorInfo();
 

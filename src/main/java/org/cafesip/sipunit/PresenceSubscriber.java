@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.sip.header.AcceptHeader;
 import javax.sip.header.ContentTypeHeader;
@@ -196,7 +197,7 @@ public class PresenceSubscriber extends EventSubscriber {
           dev.setStatusExtensions(t.getStatus().getAny());
           dev.setTimestamp(t.getTimestamp());
 
-          ArrayList<PresenceNote> notes = new ArrayList<>();
+          List<PresenceNote> notes = new ArrayList<>();
           if (t.getNote() != null) {
             Iterator<?> j = t.getNote().iterator();
             while (j.hasNext()) {
@@ -264,7 +265,7 @@ public class PresenceSubscriber extends EventSubscriber {
    * 
    * @return An ArrayList containing zero or more Object.
    */
-  public ArrayList<Object> getPresenceExtensions() {
+  public List<Object> getPresenceExtensions() {
     return new ArrayList<>(presenceExtensions);
   }
 
