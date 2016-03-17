@@ -1030,7 +1030,7 @@ public class SipSession implements SipListener, SipActionObject {
 
     synchronized (trans.getBlock()) {
       LinkedList<EventObject> events = trans.getEvents();
-      if (events.size() == 0) {
+      if (events.isEmpty()) {
         try {
           trans.getBlock().waitForEvent(timeout);
         } catch (Exception ex) {
@@ -1041,7 +1041,7 @@ public class SipSession implements SipListener, SipActionObject {
         }
       }
 
-      if (events.size() == 0) {
+      if (events.isEmpty()) {
         setReturnCode(TIMEOUT_OCCURRED);
         setErrorMessage("The maximum amount of time to wait for a response message has elapsed.");
         return null;
@@ -1103,7 +1103,7 @@ public class SipSession implements SipListener, SipActionObject {
     initErrorInfo();
 
     synchronized (reqBlock) {
-      if (reqEvents.size() == 0) {
+      if (reqEvents.isEmpty()) {
         try {
           LOG.trace("about to block, waiting");
           reqBlock.waitForEvent(timeout);
@@ -1117,7 +1117,7 @@ public class SipSession implements SipListener, SipActionObject {
       }
 
       LOG.trace("either we got the request, or timed out");
-      if (reqEvents.size() == 0) {
+      if (reqEvents.isEmpty()) {
         setReturnCode(TIMEOUT_OCCURRED);
         setErrorMessage("The maximum amount of time to wait for a request message has elapsed.");
         return null;

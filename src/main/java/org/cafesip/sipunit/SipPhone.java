@@ -1065,7 +1065,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
     this.removeRequestListener(Request.NOTIFY, this);
 
     // drop calls
-    while (callList.size() > 0) {
+    while (!callList.isEmpty()) {
       ((SipCall) callList.get(0)).dispose();
     }
 
