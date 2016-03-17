@@ -278,7 +278,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
         }
       }
 
-      ArrayList<ViaHeader> via_headers = getViaHeaders();
+      List<ViaHeader> via_headers = getViaHeaders();
 
       Request msg = parent.getMessageFactory().createRequest(requestUri, method, callid_header,
           cseq, from_header, to_header, via_headers, max_forwards);
@@ -294,10 +294,10 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
       // include any auth information for this User Agent's registration
       // if any exists
 
-      LinkedHashMap<String, AuthorizationHeader> auth_list =
+      Map<String, AuthorizationHeader> auth_list =
           getAuthorizations().get(myRegistrationId);
       if (auth_list != null) {
-        ArrayList<AuthorizationHeader> auth_headers =
+        List<AuthorizationHeader> auth_headers =
             new ArrayList<>(auth_list.values());
         Iterator<AuthorizationHeader> i = auth_headers.iterator();
         while (i.hasNext()) {
@@ -579,7 +579,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
     // find the list of cached AuthorizationHeaders for this call (Call-ID)
     String call_id = ((CallIdHeader) req_msg.getHeader(CallIdHeader.NAME)).getCallId();
-    LinkedHashMap<String, AuthorizationHeader> authorization_list =
+    Map<String, AuthorizationHeader> authorization_list =
         getAuthorizations().get(call_id);
 
     if (authorization_list == null) {
@@ -1155,7 +1155,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   /**
    * @return Returns the authorizations.
    */
-  protected Hashtable<String, LinkedHashMap<String, AuthorizationHeader>> getAuthorizations() {
+  protected Map<String, LinkedHashMap<String, AuthorizationHeader>> getAuthorizations() {
     return authorizations;
   }
 
@@ -1168,9 +1168,9 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   protected void addAuthorizations(String call_id, Request msg) {
-    LinkedHashMap<String, AuthorizationHeader> auth_list = getAuthorizations().get(call_id);
+    Map<String, AuthorizationHeader> auth_list = getAuthorizations().get(call_id);
     if (auth_list != null) {
-      ArrayList<AuthorizationHeader> auth_headers =
+      List<AuthorizationHeader> auth_headers =
           new ArrayList<>(auth_list.values());
       Iterator<AuthorizationHeader> i = auth_headers.iterator();
       while (i.hasNext()) {
@@ -1309,7 +1309,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   private void distributeEventError(String err)
   // to all the Subscriptions - test program will need to see the error
   {
-    ArrayList<EventSubscriber> subscriptions =
+    List<EventSubscriber> subscriptions =
         new ArrayList<EventSubscriber>(getBuddyList().values());
     subscriptions.addAll(new ArrayList<>(getRetiredBuddies().values()));
     subscriptions.addAll(getRefererList());
@@ -1622,7 +1622,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * @return a Hashtable of zero or more entries, where the key = URI of the buddy, value =
    *         PresenceSubscriber object.
    */
-  public Hashtable<String, PresenceSubscriber> getBuddyList() {
+  public Map<String, PresenceSubscriber> getBuddyList() {
     return new Hashtable<>(buddyList);
   }
 
@@ -1639,7 +1639,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
    * @return a Hashtable of zero or more entries, where the key = URI of the user, value =
    *         PresenceSubscriber object.
    */
-  public Hashtable<String, PresenceSubscriber> getRetiredBuddies() {
+  public Map<String, PresenceSubscriber> getRetiredBuddies() {
     return new Hashtable<>(buddyTerminatedList);
   }
 

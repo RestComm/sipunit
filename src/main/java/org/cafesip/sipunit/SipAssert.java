@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Callable;
 
@@ -330,7 +331,7 @@ public class SipAssert {
 
   private static boolean responseReceived(int statusCode, String method, long sequenceNumber,
       MessageListener obj) {
-    ArrayList<SipResponse> responses = obj.getAllReceivedResponses();
+    List<SipResponse> responses = obj.getAllReceivedResponses();
 
     Iterator<SipResponse> i = responses.iterator();
     while (i.hasNext()) {
@@ -444,7 +445,7 @@ public class SipAssert {
   }
 
   private static boolean requestReceived(String method, MessageListener obj) {
-    ArrayList<SipRequest> requests = obj.getAllReceivedRequests();
+    List<SipRequest> requests = obj.getAllReceivedRequests();
 
     Iterator<SipRequest> i = requests.iterator();
     while (i.hasNext()) {
@@ -475,7 +476,7 @@ public class SipAssert {
   }
 
   private static boolean requestReceived(String method, long sequenceNumber, MessageListener obj) {
-    ArrayList<SipRequest> requests = obj.getAllReceivedRequests();
+    List<SipRequest> requests = obj.getAllReceivedRequests();
 
     Iterator<SipRequest> i = requests.iterator();
     while (i.hasNext()) {

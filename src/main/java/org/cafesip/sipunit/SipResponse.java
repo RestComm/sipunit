@@ -17,6 +17,7 @@
 package org.cafesip.sipunit;
 
 import java.util.HashMap;
+import java.util.Map;
 import javax.sip.ResponseEvent;
 import javax.sip.message.Response;
 
@@ -158,7 +159,7 @@ public class SipResponse extends SipMessage {
    * Comment for <code>statusCodeDescription</code> This map yields a reason phrase, given a SIP
    * network response message status code.
    */
-  public static HashMap<Integer, String> statusCodeDescription = new HashMap<>();
+  public static Map<Integer, String> statusCodeDescription = new HashMap<>();
 
   static {
     // PROVISIONAL (1xx)

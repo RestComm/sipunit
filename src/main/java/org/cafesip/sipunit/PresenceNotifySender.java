@@ -528,7 +528,7 @@ public class PresenceNotifySender implements MessageListener {
               .createMaxForwardsHeader(SipPhone.MAX_FORWARDS_DEFAULT);
           req.setHeader(max_forwards);
 
-          ArrayList<ViaHeader> via_headers = phone.getViaHeaders();
+          List<ViaHeader> via_headers = phone.getViaHeaders();
           Iterator<ViaHeader> i = via_headers.iterator();
           while (i.hasNext()) {
             req.addHeader((Header) i.next());
