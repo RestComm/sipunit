@@ -22,6 +22,6 @@ The following are the highlights of the release. Thanks to George Vagenas for hi
 Releases
 -------
  
- Get the latest release either as a [http://sourceforge.net/projects/mobicents/files/Mobicents%20SipUnit/ binary] or [https://oss.sonatype.org/content/groups/public/org/cafesip/sipunit/sipunit/2.0.0/ Maven dependency]
+Get the latest release either as a [binary](http://sourceforge.net/projects/mobicents/files/Mobicents%20SipUnit/) or [Maven dependency](https://oss.sonatype.org/content/groups/public/org/cafesip/sipunit/sipunit/2.0.0/).
 
 For SipUnit history/archive information please visit http://cafesip.sourceforge.net/site/projects/sipunit/
