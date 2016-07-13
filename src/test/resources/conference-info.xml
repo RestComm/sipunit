@@ -1,0 +1,30 @@
+<conference-info version="0" state="full"
+  entity="sip:conference@example.com">
+  <conference-description>
+    <conf-uris>
+      <entry>
+        <uri>tel:+18882934234</uri>
+      </entry>
+    </conf-uris>
+  </conference-description>
+  <users>
+    <user entity="sip:alice@example.com" state="full">
+      <display-text>Alice</display-text>
+      <endpoint entity="sip:alice@example.com">
+        <status>connected</status>
+        <joining-method>dialed-in</joining-method>
+        <media id="1">
+          <display-text>Main Audio</display-text>
+          <type>audio</type>
+          <src-id>583398</src-id>
+          <status>sendrecv</status>
+        </media>
+        <media id="2">
+          <type>video</type>
+          <src-id>345212</src-id>
+          <status>sendrecv</status>
+        </media>
+      </endpoint>
+    </user>
+  </users>
+</conference-info>
