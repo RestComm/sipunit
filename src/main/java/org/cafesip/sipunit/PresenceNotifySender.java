@@ -112,8 +112,6 @@ public class PresenceNotifySender implements MessageListener {
    * This method waits for up to 10 seconds to receive a SUBSCRIBE and if received, it sends an OK
    * response.
    * 
-   * @return true if SUBSCRIBE received and response sending was successful, false otherwise (call
-   *         getErrorMessage() for details).
    */
   public void processSubscribe() {
     processSubscribe(10000, SipResponse.OK, null);
@@ -128,7 +126,6 @@ public class PresenceNotifySender implements MessageListener {
    * @param timeout - number of milliseconds to wait for the SUBSCRIBE
    * @param statusCode - use in the response to the SUBSCRIBE
    * @param reasonPhrase - if not null, use in the SUBSCRIBE response
-   * @return true if the thread got started OK.
    */
   public void processSubscribe(long timeout, int statusCode, String reasonPhrase) {
     processSubscribe(timeout, statusCode, reasonPhrase, -1, null);

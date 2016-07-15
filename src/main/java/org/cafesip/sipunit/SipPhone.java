@@ -1279,6 +1279,9 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
           }
         }
       }
+    } else if (event.getEventType().equals("conference")) {
+        // just return so that the test can use waitRequest()
+        return;
     } else {
       String error =
           "Received a NOTIFY request with unrecognized event header : " + event.getEventType();

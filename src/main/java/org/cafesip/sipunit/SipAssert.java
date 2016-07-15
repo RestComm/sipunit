@@ -575,7 +575,6 @@ public class SipAssert {
    * Awaits that the given incoming or outgoing call leg was answered. Assertion failure output
    * includes the given message text.
    * 
-   * @param msg message text to output if the assertion fails.
    * @param call The incoming or outgoing call leg.
    */
   public static void awaitAnswered(SipCall call) {
