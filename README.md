@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2FRestComm%2Fsipunit.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2FRestComm%2Fsipunit?ref=badge_shield)
+
 SipUnit
 -------
 
@@ -25,3 +27,7 @@ Releases
 Get the latest release either as a [binary](http://sourceforge.net/projects/mobicents/files/Mobicents%20SipUnit/) or [Maven dependency](https://oss.sonatype.org/content/groups/public/org/cafesip/sipunit/sipunit/2.0.0/).
 
 For SipUnit history/archive information please visit http://cafesip.sourceforge.net/site/projects/sipunit/
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2FRestComm%2Fsipunit.svg?type=large)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2FRestComm%2Fsipunit?ref=badge_large)
