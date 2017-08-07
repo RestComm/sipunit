@@ -1691,13 +1691,22 @@ public class SipSession implements SipListener, SipActionObject {
   public AuthorizationHeader getAuthorization(String method, String uri, String requestBody,
       WWWAuthenticateHeader authHeader, String username, String password) throws SecurityException {
     String response = null;
+    String cnonce = "";
+    String nc_value = "";
+    String qop = "";
+
     try {
+      //TODO: check empty?
+      qop = authHeader.getQop();
+      if(!qop.isEmpty()){
+          cnonce = getCNonce();
+          nc_value = "00000001";
+      }
       response = MessageDigestAlgorithm.calculateResponse(authHeader.getAlgorithm(), username,
           authHeader.getRealm(), new String(password), authHeader.getNonce(),
-          // TODO we should one day implement those two null-s
-          null, // nc-value
-          null, // cnonce
-          method, uri, requestBody, authHeader.getQop());
+          nc_value,
+          cnonce,
+          method, uri, requestBody, qop);
     } catch (NullPointerException exc) {
       throw new SecurityException(
           "The received authenticate header was malformatted: " + exc.getMessage());
@@ -1717,6 +1726,13 @@ public class SipSession implements SipListener, SipActionObject {
       authorization.setNonce(authHeader.getNonce());
       authorization.setParameter("uri", uri);
       authorization.setResponse(response);
+      if(cnonce!=null && !cnonce.isEmpty())
+          authorization.setCNonce(cnonce);
+      if(nc_value!=null && !nc_value.isEmpty())
+          authorization.setNonceCount(Integer.parseInt(nc_value));
+      if(qop!=null && !qop.isEmpty())
+          authorization.setQop(qop);
+
       if (authHeader.getAlgorithm() != null)
         authorization.setAlgorithm(authHeader.getAlgorithm());
       if (authHeader.getOpaque() != null)
@@ -1911,5 +1927,13 @@ public class SipSession implements SipListener, SipActionObject {
   public void processDialogTerminated(DialogTerminatedEvent arg0) {
     // TODO Auto-generated method stub
 
+  }
+
+  /*
+   * @return String the cnonce value
+   * */
+  protected String getCNonce(){
+      Double d = Math.floor(Math.random()*16777215);
+      return Long.toHexString(Double.doubleToRawLongBits( d ));
   }
 }
