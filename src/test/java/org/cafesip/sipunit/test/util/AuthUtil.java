@@ -22,7 +22,7 @@ public class AuthUtil {
    */
   public static WWWAuthenticateHeader getAuthenticationHeader(SipRequest message,
       HeaderFactory headerFactory, String realm) throws Exception {
-    WWWAuthenticateHeader header = null;
+    WWWAuthenticateHeader header;
     String htype =
         message.getRequestEvent().getRequest().getMethod().equals(Request.REGISTER) == true ? WWWAuthenticateHeader.NAME
             : ProxyAuthenticateHeader.NAME;

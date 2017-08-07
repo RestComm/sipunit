@@ -370,7 +370,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       AddressFactory addrFactory = parent.getAddressFactory();
       HeaderFactory hdrFactory = parent.getHeaderFactory();
 
-      Request req = null;
+      Request req;
 
       if (dialog == null) {
         // first time sending a request

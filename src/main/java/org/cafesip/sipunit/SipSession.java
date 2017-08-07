@@ -443,7 +443,7 @@ public class SipSession implements SipListener, SipActionObject {
       return;
     }
 
-    SipTransaction sip_trans = null;
+    SipTransaction sip_trans;
 
     synchronized (respTransactions) {
       sip_trans = (SipTransaction) respTransactions.get(trans);
@@ -482,7 +482,7 @@ public class SipSession implements SipListener, SipActionObject {
       return;
     }
 
-    SipTransaction sip_trans = null;
+    SipTransaction sip_trans;
     synchronized (respTransactions) {
       sip_trans = (SipTransaction) respTransactions.get(trans);
     }
@@ -1690,7 +1690,7 @@ public class SipSession implements SipListener, SipActionObject {
 
   public AuthorizationHeader getAuthorization(String method, String uri, String requestBody,
       WWWAuthenticateHeader authHeader, String username, String password) throws SecurityException {
-    String response = null;
+    String response;
     try {
       response = MessageDigestAlgorithm.calculateResponse(authHeader.getAlgorithm(), username,
           authHeader.getRealm(), new String(password), authHeader.getNonce(),
@@ -1703,7 +1703,7 @@ public class SipSession implements SipListener, SipActionObject {
           "The received authenticate header was malformatted: " + exc.getMessage());
     }
 
-    AuthorizationHeader authorization = null;
+    AuthorizationHeader authorization;
     try {
       if (authHeader instanceof ProxyAuthenticateHeader) {
         authorization =
