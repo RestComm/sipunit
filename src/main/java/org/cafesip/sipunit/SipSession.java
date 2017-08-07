@@ -1698,7 +1698,7 @@ public class SipSession implements SipListener, SipActionObject {
     try {
       //TODO: check empty?
       qop = authHeader.getQop();
-      if(!qop.isEmpty()){
+      if(qop!=null && !qop.isEmpty()){
           cnonce = getCNonce();
           nc_value = "00000001";
       }
