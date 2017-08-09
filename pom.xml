@@ -8,7 +8,7 @@
   <packaging>jar</packaging>
 
   <name>SipUnit</name>
-  <url>http://code.google.com/p/commtesting/</url>
+  <url>git@github.com:RestComm/sipunit.git</url>
   <description>
     SipUnit provides a test environment geared toward unit testing SIP applications
   </description>
@@ -54,9 +54,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:https://code.google.com/p/commtesting/</connection>
-    <developerConnection>scm:git:https://code.google.com/p/commtesting/</developerConnection>
-    <url>https://code.google.com/p/commtesting/</url>
+    <connection>scm:git:git@github.com:RestComm/sipunit.git</connection>
+    <developerConnection>scm:git:git@github.com:RestComm/sipunit.git</developerConnection>
+    <url>git@github.com:RestComm/sipunit.git</url>
   </scm>
 
   <distributionManagement>
@@ -398,6 +398,49 @@
   </build>
 
   <profiles>
+      <profile>
+      <id>maven-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <configuration>
+              <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+              <autoVersionSubmodules>true</autoVersionSubmodules>
+              <preparationGoals>clean install</preparationGoals>
+              <arguments>-Dmaven.test.skip</arguments>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>release-sign-artifacts</id>
       <activation>
