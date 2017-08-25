@@ -127,6 +127,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
   protected SipPhone(SipStack stack, String registrarHost, int registrarPort, String host, String proto, int port, String me) throws ParseException, InvalidArgumentException, NoSuchFieldException {
     super(stack, host, proto, port, me);
+    this.addRequestListener(Request.NOTIFY, this);
 
     this.registrarHost = registrarHost;
     this.registrarPort = registrarPort;
