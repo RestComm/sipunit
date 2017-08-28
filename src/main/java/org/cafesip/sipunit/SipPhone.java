@@ -531,6 +531,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
     Response response = ((ResponseEvent) response_event).getResponse();
     int status_code = response.getStatusCode();
+    lastRegistrationResponse = response;
 
     while (status_code != Response.OK) {
       if (status_code == Response.TRYING) {
@@ -549,6 +550,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
         response = ((ResponseEvent) response_event).getResponse();
         status_code = response.getStatusCode();
+        lastRegistrationResponse = response;
         continue;
       } else if ((status_code == Response.UNAUTHORIZED)
               || (status_code == Response.PROXY_AUTHENTICATION_REQUIRED)) {
@@ -591,6 +593,7 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
         response = ((ResponseEvent) response_event).getResponse();
         status_code = response.getStatusCode();
+        lastRegistrationResponse = response;
         continue;
       } else {
         setReturnCode(status_code);
