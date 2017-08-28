@@ -353,6 +353,9 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 				msg.setExpires(headerConfiguration.getExpiresHeader());
 			}
 
+			if (headerConfiguration.getUserAgentHeader() != null) {
+				msg.addHeader(headerConfiguration.getUserAgentHeader());
+			}
 
 			// include any auth information for this User Agent's registration
 			// if any exists

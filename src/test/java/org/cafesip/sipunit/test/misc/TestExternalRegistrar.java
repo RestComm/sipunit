@@ -15,6 +15,7 @@ import javax.sip.header.*;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -182,6 +183,17 @@ public class TestExternalRegistrar {
 
 		final ExpiresHeader overrideHeader = ua.getParent().getHeaderFactory().createExpiresHeader(3600);
 		headerConfiguration.setExpiresHeader(overrideHeader);
+
+		testHeaderOverride(headerConfiguration, overrideHeader);
+	}
+
+	@Test
+	public void testRegisterUserAgentOverride() throws Exception {
+		HeaderConfiguration headerConfiguration = new HeaderConfiguration();
+
+		final UserAgentHeader overrideHeader = ua.getParent().getHeaderFactory()
+				.createUserAgentHeader(Arrays.asList("test-agent"));
+		headerConfiguration.setUserAgentHeader(overrideHeader);
 
 		testHeaderOverride(headerConfiguration, overrideHeader);
 	}
