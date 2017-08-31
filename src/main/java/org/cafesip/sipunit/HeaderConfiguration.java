@@ -27,6 +27,11 @@ public class HeaderConfiguration {
 
 	private ExpiresHeader expiresHeader;
 
+	/**
+	 * If set to true, will not add the {@link ContactHeader} to the REGISTER request in {@link SipPhone}
+	 */
+	private boolean ignoreContact = false;
+
 	public ToHeader getToHeader() {
 		return toHeader;
 	}
@@ -89,5 +94,13 @@ public class HeaderConfiguration {
 
 	public void setExpiresHeader(ExpiresHeader expiresHeader) {
 		this.expiresHeader = expiresHeader;
+	}
+
+	public boolean isIgnoreContact() {
+		return ignoreContact;
+	}
+
+	public void setIgnoreContact(boolean ignoreContact) {
+		this.ignoreContact = ignoreContact;
 	}
 }

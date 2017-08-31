@@ -335,13 +335,14 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 					headerConfiguration.getCSeqHeader(), headerConfiguration.getFromHeader(), headerConfiguration.getToHeader(),
 					headerConfiguration.getViaHeaders(), headerConfiguration.getMaxForwardsHeader());
 
-			if (headerConfiguration.getContactHeader() == null) {
-				msg.addHeader(contactInfo.getContactHeader()); // use
-				// setHeader()?
-			} else {
-				msg.addHeader(headerConfiguration.getContactHeader());
+			if (!headerConfiguration.isIgnoreContact()) {
+				if (headerConfiguration.getContactHeader() == null) {
+					msg.addHeader(contactInfo.getContactHeader()); // use
+					// setHeader()?
+				} else {
+					msg.addHeader(headerConfiguration.getContactHeader());
+				}
 			}
-
 
 			if (headerConfiguration.getExpiresHeader() == null) {
 				if (expiry > 0) {

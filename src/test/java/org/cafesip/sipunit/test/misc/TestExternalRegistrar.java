@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
 /**
  * Tests the integration of SipUnit clients in a case where the registrar is separate from the proxy. Also tests out
  * header override methods which are used in validation of registrar error-handling capabilities.
- *
+ * <p>
  * Created by TELES AG on 08/01/2018.
  */
 public class TestExternalRegistrar {
@@ -186,7 +186,19 @@ public class TestExternalRegistrar {
 		testHeaderOverride(headerConfiguration, overrideHeader);
 	}
 
+	@Test
+	public void testRegisterWithOmittedContactOverride() throws Exception {
+		HeaderConfiguration headerConfiguration = new HeaderConfiguration();
+		headerConfiguration.setIgnoreContact(true);
+
+		testHeaderOverride(headerConfiguration, ContactHeader.NAME, null);
+	}
+
 	private void testHeaderOverride(final HeaderConfiguration headerConfiguration, final Header overrideHeader) throws InterruptedException, java.util.concurrent.ExecutionException {
+		testHeaderOverride(headerConfiguration, overrideHeader.getName(), overrideHeader);
+	}
+
+	private void testHeaderOverride(final HeaderConfiguration headerConfiguration, final String headerName, final Header expectedHeaderValue) throws InterruptedException, java.util.concurrent.ExecutionException {
 		registrar.setSupportRegisterRequests(true);
 		assertTrue(registrar.listenRequestMessage());
 
@@ -196,8 +208,8 @@ public class TestExternalRegistrar {
 				RequestEvent requestEvent = registrar.waitRequest(10000);
 				assertNotNull(requestEvent);
 
-				Header receivedHeader = requestEvent.getRequest().getHeader(overrideHeader.getName());
-				assertEquals(overrideHeader,receivedHeader);
+				Header receivedHeader = requestEvent.getRequest().getHeader(headerName);
+				assertEquals(expectedHeaderValue, receivedHeader);
 
 				Response response = null;
 				try {
