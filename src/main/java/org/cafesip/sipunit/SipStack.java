@@ -282,7 +282,8 @@ public class SipStack implements SipListener {
    */
   public void dispose() {
     try {
-      sipStack.deleteListeningPoint(sipProvider.getListeningPoints()[0]);
+      if(sipProvider.getListeningPoints().length > 0)
+          sipStack.deleteListeningPoint(sipProvider.getListeningPoints()[0]);
       sipProvider.removeSipListener(this);
       sipStack.deleteSipProvider(sipProvider);
       sipFactory.resetFactory();
