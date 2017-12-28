@@ -1,6 +1,6 @@
 /*
  * Created on Feb 19, 2005
- * 
+ *
  * Copyright 2005 CafeSip.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -17,20 +17,9 @@
 
 package org.cafesip.sipunit;
 
+import gov.nist.javax.sip.header.ParameterNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import gov.nist.javax.sip.header.ParameterNames;
-
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
 
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
@@ -52,6 +41,7 @@ import javax.sip.address.URI;
 import javax.sip.header.AuthorizationHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.ExpiresHeader;
 import javax.sip.header.Header;
 import javax.sip.header.ProxyAuthenticateHeader;
 import javax.sip.header.ToHeader;
@@ -60,13 +50,22 @@ import javax.sip.header.WWWAuthenticateHeader;
 import javax.sip.message.Message;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.EventObject;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Methods of this class provide the test program with low-level access to a SIP session. Instead of
  * using the SipPhone and SipCall methods to communicate with other SIP agents, the test program can
  * use methods of this class to send and receive SIP messages. Methods of this class can be accessed
  * via the SipPhone object returned by SipStack.createSipPhone().
- * 
+ *
  * <p>
  * Many of the methods in this class return an object or true return value if successful. In case of
  * an error or caller-specified timeout, a null object or a false is returned. The
@@ -80,9 +79,9 @@ import javax.sip.message.Response;
  * indicating the cause of the problem. If an exception was involved, this string will contain the
  * name of the Exception class and the exception message. This class has a method, format(), which
  * can be called to obtain a human-readable string containing all of this error information.
- * 
+ *
  * @author Amit Chatterjee, Becky McElroy
- * 
+ *
  */
 public class SipSession implements SipListener, SipActionObject {
 
@@ -193,6 +192,13 @@ public class SipSession implements SipListener, SipActionObject {
 
   private boolean loopback;
 
+  private boolean supportRegisterRequests;
+
+  private boolean autoResponseOptionsRequests = true;
+  private Request lastReceivedOptionsRequest;
+  private int errorRespondToOptions = -1;
+
+
   protected SipSession(SipStack stack, String proxyHost, String proxyProto, int proxyPort,
       String me) throws InvalidArgumentException, ParseException {
     this.parent = stack;
@@ -263,7 +269,7 @@ public class SipSession implements SipListener, SipActionObject {
 
   /**
    * Generates a newly generated unique tag ID.
-   * 
+   *
    * @return A String tag ID
    */
   public String generateNewTag() {
@@ -287,10 +293,34 @@ public class SipSession implements SipListener, SipActionObject {
     this(stack, proxyHost, SipStack.PROTOCOL_UDP, SipStack.DEFAULT_PORT, me);
   }
 
+  public boolean isSupportRegisterRequests () {
+    return supportRegisterRequests;
+  }
+
+  public void setSupportRegisterRequests (boolean supportRegisterRequests) {
+    this.supportRegisterRequests = supportRegisterRequests;
+  }
+
+  public boolean isAutoResponseOptionsRequests () {
+    return autoResponseOptionsRequests;
+  }
+
+  public void setAutoResponseOptionsRequests (boolean autoResponseOptionsRequests) {
+    this.autoResponseOptionsRequests = autoResponseOptionsRequests;
+  }
+
+    public Request getLastReceivedOptionsRequest () {
+        return lastReceivedOptionsRequest;
+    }
+
+  public void setErrorRespondToOptions (int errorRespondToOptions) {
+    this.errorRespondToOptions = errorRespondToOptions;
+  }
+
   /**
    * This method idles this SipSession. This SipSession object must not be used again after calling
    * the dispose() method.
-   * 
+   *
    */
   public void dispose() {
     parent.unregisterListener(this);
@@ -301,7 +331,7 @@ public class SipSession implements SipListener, SipActionObject {
    * this SipSession object. A test program can use the SipStack object to get the header, address,
    * and message factories for building requests and responses, before passing those to methods of
    * this class.
-   * 
+   *
    * @return Returns the parent.
    */
   public SipStack getParent() {
@@ -318,7 +348,7 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * Gets the IP address and port currently being used in this Sip agent's contact
    * address, via, and listening point 'sentby' components. Example: 66.32.44.114:5066
-   * 
+   *
    * @return A String containing address + ':' + port.
    */
   public String getPublicAddress() {
@@ -328,13 +358,13 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * This method replaces the host/port values currently being used in this Sip agent's contact
    * address, via, and listening point 'sentby' components with the given host and port parameters.
-   * 
+   *
    * <p>
    * Call this method when you are running a SipUnit testcase behind a NAT and need to register with
    * a proxy on the public internet. Before creating the SipStack and SipPhone, you'll need to first
    * obtain the public IP address/port using a mechanism such as the Stun4j API. See the
    * TestWithStun.java file in the sipunit test/examples directory for an example of how to do it.
-   * 
+   *
    * @param host The publicly accessible IP address for this Sip client (ex: 66.32.44.112).
    * @param port The port to be used with the publicly accessible IP address.
    * @return true if the parameters are successfully parsed and this client's information is
@@ -396,7 +426,22 @@ public class SipSession implements SipListener, SipActionObject {
     LOG.trace("     my local contact info ('Request URI' check) = {}", my_contact_info.getURI());
     LOG.trace("     {}" , req_msg.toString());
 
-    if (destMatch((SipURI) my_contact_info.getContactHeader().getAddress().getURI(),
+    if (req_msg.getMethod().equalsIgnoreCase(SipRequest.REGISTER)) {
+      if (!supportRegisterRequests) {
+        return;
+      } else {
+        ExpiresHeader expires = req_msg.getExpires();
+        if (expires.getExpires() == 0) {
+          try {
+            Response response = getParent().getMessageFactory().createResponse(Response.OK, request.getRequest());
+            sendReply(request, response);
+            return;
+          } catch (Exception e) {
+            LOG.error("Exception while trying to respond to REGISTER with Expires header 0 request");
+          }
+        }
+      }
+    } else if (destMatch((SipURI) my_contact_info.getContactHeader().getAddress().getURI(),
         (SipURI) req_msg.getRequestURI()) == false) {
       if (!loopback) {
         LOG.trace("     skipping 'To' check, we're not loopback (see setLoopback())");
@@ -406,6 +451,24 @@ public class SipSession implements SipListener, SipActionObject {
       // check 'To' for a match
       if (to.getAddress().getURI().toString().equals(me) == false) {
         return;
+      }
+    }
+
+    if (req_msg.getMethod().equalsIgnoreCase(Request.OPTIONS)) {
+      int responseCode = Response.OK;
+      if (!isAutoResponseOptionsRequests()) {
+        if (errorRespondToOptions != -1 ) {
+          responseCode = errorRespondToOptions;
+        } else {
+          return;
+        }
+      }
+      try {
+        Response response = getParent().getMessageFactory().createResponse(responseCode, request.getRequest());
+        sendReply(request, response);
+        lastReceivedOptionsRequest = req_msg;
+      } catch (Exception e) {
+        LOG.error("Exception while trying to respond to OPTIONS request");
       }
     }
 
@@ -557,27 +620,27 @@ public class SipSession implements SipListener, SipActionObject {
       /*
        * if (uri1.getTransportParam() != null) { if (uri2.getTransportParam() == null) { return
        * false; }
-       * 
+       *
        * if (uri1.getTransportParam().equals(uri2.getTransportParam()) == false) { return false; } }
        * else if (uri2.getTransportParam() != null) { return false; }
-       * 
+       *
        * if (uri1.getTTLParam() != -1) { if (uri2.getTTLParam() == -1) { return false; }
-       * 
+       *
        * if (uri1.getTTLParam() != uri2.getTTLParam()) { return false; } } else if
        * (uri2.getTTLParam() != -1) { return false; }
-       * 
+       *
        * if (uri1.getMethodParam() != null) { if (uri2.getMethodParam() == null) { return false; }
-       * 
+       *
        * if (uri1.getMethodParam().equals(uri2.getMethodParam()) == false) { return false; } } else
        * if (uri2.getMethodParam() != null) { return false; } / next - incorporate the following
        * remaining checks:
-       * 
+       *
        * URI uri-parameter components are compared as follows: - Any uri-parameter appearing in both
        * URIs must match. - A user, ttl, or method uri-parameter appearing in only one URI never
        * matches, even if it contains the default value. - A URI that includes an maddr parameter
        * will not match a URI that contains no maddr parameter. - All other uri-parameters appearing
        * in only one URI are ignored when comparing the URIs.
-       * 
+       *
        * o URI header components are never ignored. Any present header component MUST be present in
        * both URIs and match for the URIs to match. The matching rules are defined for each header
        * field in Section 20.
@@ -592,7 +655,7 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * This sendUnidirectionalRequest() method sends out a request message with no response expected.
    * A Request object is constructed from the string parameter passed in.
-   * 
+   *
    * Example: <code>
    * StringBuffer invite = new StringBuffer("INVITE sip:becky@"
    + PROXY_HOST + ':' + PROXY_PORT + ";transport="
@@ -610,15 +673,15 @@ public class SipSession implements SipListener, SipActionObject {
    invite.append("Content-Length: 5\n");
    invite.append("\n");
    invite.append("12345");
-  
+
    SipTransaction trans = ua.sendRequestWithTransaction(invite
    .toString(), true, null);
    assertNotNull(ua.format(), trans);
    *            </code>
-   * 
+   *
    * @param reqMessage A request message in the form of a String with everything from the request
    *        line and headers to the body. It must be in the proper format per RFC-3261.
-   * 
+   *
    * @param viaProxy If true, send the message to the proxy. In this case the request URI is
    *        modified by this method. Else send it to the user specified in the given request URI. In
    *        this case, for an INVITE request, a route header must be present for the request routing
@@ -636,7 +699,7 @@ public class SipSession implements SipListener, SipActionObject {
    * This sendUnidirectionalRequest() method sends out a request message with no response expected.
    * The Request object passed in must be a fully formed Request with all required content, ready to
    * be sent.
-   * 
+   *
    * @param request The request to be sent out.
    * @param viaProxy If true, send the message to the proxy. In this case a Route header is added by
    *        this method. Else send the message as is. In this case, for an INVITE request, a route
@@ -706,11 +769,11 @@ public class SipSession implements SipListener, SipActionObject {
    * This basic method sends out a request message as part of a transaction. A test program should
    * use this method when a response to a request is expected. A Request object is constructed from
    * the string passed in.
-   * 
+   *
    * <p>
    * This method returns when the request message has been sent out. The calling program must
    * subsequently call the waitResponse() method to wait for the result (response, timeout, etc.).
-   * 
+   *
    * @param reqMessage A request message in the form of a String with everything from the request
    *        line and headers to the body. It must be in the proper format per RFC-3261.
    * @param viaProxy If true, send the message to the proxy. In this case the request URI is
@@ -735,10 +798,10 @@ public class SipSession implements SipListener, SipActionObject {
    * it allows the caller to specify a message body and/or additional JAIN-SIP API message headers
    * to add to or replace in the outbound message. Use of this method requires knowledge of the
    * JAIN-SIP API.
-   * 
+   *
    * <p>
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
    *        to the outbound message. These headers are added to the message after a correct message
    *        has been constructed. Note that if you try to add a header that there is only supposed
@@ -766,9 +829,9 @@ public class SipSession implements SipListener, SipActionObject {
    * This method is the same as the basic sendRequestWithTransaction(String,...) method except that
    * it allows the caller to specify a message body and/or additional message headers to add to or
    * replace in the outbound message without requiring knowledge of the JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param body A String to be used as the body of the message. Parameters contentType,
    *        contentSubType must both be non-null to get the body included in the message. Use null
    *        for no body bytes.
@@ -794,7 +857,7 @@ public class SipSession implements SipListener, SipActionObject {
    *        occur if your headers are not syntactically correct or contain nonsensical values (the
    *        message may not pass through the local SIP stack). Use null for no replacement of
    *        message headers.
-   * 
+   *
    */
   public SipTransaction sendRequestWithTransaction(String reqMessage, boolean viaProxy,
       Dialog dialog, String body, String contentType, String contentSubType,
@@ -819,10 +882,10 @@ public class SipSession implements SipListener, SipActionObject {
    * which cannot be filled in until a client transaction is obtained. That happens in this method.
    * If the Via branch value is set in the request parameter passed to this method, it is nulled out
    * by this method so that a new client transaction can be created by the stack.
-   * 
+   *
    * This method returns when the request message has been sent out. The calling program must
    * subsequently call the waitResponse() method to wait for the result (response, timeout, etc.).
-   * 
+   *
    * @param request The request to be sent out.
    * @param viaProxy If true, send the message to the proxy. In this case a Route header is added by
    *        this method. Else send the message as is. In this case, for an INVITE request, a route
@@ -843,9 +906,9 @@ public class SipSession implements SipListener, SipActionObject {
    * it allows the caller to specify a message body and/or additional JAIN-SIP API message headers
    * to add to or replace in the outbound message. Use of this method requires knowledge of the
    * JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
    *        to the outbound message. These headers are added to the message after a correct message
    *        has been constructed. Note that if you try to add a header that there is only supposed
@@ -871,9 +934,9 @@ public class SipSession implements SipListener, SipActionObject {
    * This method is the same as the basic sendRequestWithTransaction(Request,...) method except that
    * it allows the caller to specify a message body and/or additional message headers to add to or
    * replace in the outbound message without requiring knowledge of the JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param body A String to be used as the body of the message. Parameters contentType,
    *        contentSubType must both be non-null to get the body included in the message. Use null
    *        for no body bytes.
@@ -899,7 +962,7 @@ public class SipSession implements SipListener, SipActionObject {
    *        occur if your headers are not syntactically correct or contain nonsensical values (the
    *        message may not pass through the local SIP stack). Use null for no replacement of
    *        message headers.
-   * 
+   *
    */
   public SipTransaction sendRequestWithTransaction(Request request, boolean viaProxy, Dialog dialog,
       String body, String contentType, String contentSubType, ArrayList<String> additionalHeaders,
@@ -924,9 +987,9 @@ public class SipSession implements SipListener, SipActionObject {
    * This method is like other sendRequestWithTransaction() except that it allows the caller to
    * specify a message body and/or additional JAIN-SIP API message headers to add to or replace in
    * the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
    *        to the outbound message. These headers are added to the message after a correct message
    *        has been constructed. Note that if you try to add a header that there is only supposed
@@ -1007,15 +1070,15 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * The waitResponse() method waits for a response to a previously sent transactional request
    * message. Call this method after using one of the sendRequestWithTransaction() methods.
-   * 
+   *
    * This method blocks until one of the following occurs: 1) A javax.sip.ResponseEvent is received.
    * This is the object returned by this method. 2) A javax.sip.TimeoutEvent is received. This is
    * the object returned by this method. 3) The wait timeout period specified by the parameter to
    * this method expires. Null is returned in this case. 4) An error occurs. Null is returned in
    * this case.
-   * 
+   *
    * Note that this method can be called repeatedly upon receipt of provisional response message(s).
-   * 
+   *
    * @param trans The SipTransaction object associated with the sent request.
    * @param timeout The maximum amount of time to wait, in milliseconds. Use a value of 0 to wait
    *        indefinitely.
@@ -1055,7 +1118,7 @@ public class SipSession implements SipListener, SipActionObject {
    * This method prepares the SipSession for reception of a request message addressed to this
    * SipSession's URI. It is non-blocking and returns immediately. A test program must subsequently
    * call the waitRequest() method which blocks until a request is received for this session's URI.
-   * 
+   *
    * @return true unless an error is encountered, in which case false is returned.
    */
   public boolean listenRequestMessage() {
@@ -1070,9 +1133,9 @@ public class SipSession implements SipListener, SipActionObject {
    * The unlistenRequestMessage() method cancels out a previous directive to listen for reception of
    * a request addressed to this SipSession's URI. That is, it undoes a previous call to
    * listenRequestMessage().
-   * 
+   *
    * If there are any pending requests (received but not processed yet), those are discarded.
-   * 
+   *
    * @return true unless an error is encountered, in which case false is returned.
    */
   public boolean unlistenRequestMessage() {
@@ -1087,12 +1150,12 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * The waitRequest() method waits for a request addressed to this SipSession's URI to be received
    * from the network. Call this method after calling the listenRequestMessage() method.
-   * 
+   *
    * This method blocks until one of the following occurs: 1) A javax.sip.RequestEvent is received,
    * addressed to this URI. This is the object returned by this method. 2) The wait timeout period
    * specified by the parameter to this method expires. Null is returned in this case. 3) An error
    * occurs. Null is returned in this case.
-   * 
+   *
    * @param timeout The maximum amount of time to wait, in milliseconds. Use a value of 0 to wait
    *        indefinitely.
    * @return A RequestEvent or null in the case of wait timeout or error. If null, call
@@ -1132,7 +1195,7 @@ public class SipSession implements SipListener, SipActionObject {
    * after calling waitRequest(). The response is constructed based on the parameters passed in. The
    * returned SipTransaction object must be used in any subsequent calls to sendReply() for the same
    * received request, if there are any.
-   * 
+   *
    * @param request The RequestEvent object that was returned by a previous call to waitRequest().
    * @param statusCode The status code of the response to send (may use SipResponse constants).
    * @param reasonPhrase If not null, the reason phrase to send.
@@ -1157,9 +1220,9 @@ public class SipSession implements SipListener, SipActionObject {
    * This method is the same as the basic sendReply(RequestEvent, ...) method except that it allows
    * the caller to specify a message body and/or additional JAIN-SIP API message headers to add to
    * or replace in the outbound message. Use of this method requires knowledge of the JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
    *        to the outbound message. These headers are added to the message after a correct message
    *        has been constructed. Note that if you try to add a header that there is only supposed
@@ -1222,9 +1285,9 @@ public class SipSession implements SipListener, SipActionObject {
    * This method is the same as the basic sendReply(RequestEvent, ...) method except that it allows
    * the caller to specify a message body and/or additional message headers to add to or replace in
    * the outbound message, without requiring knowledge of the JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param body A String to be used as the body of the message. Parameters contentType,
    *        contentSubType must both be non-null to get the body included in the message. Use null
    *        for no body bytes.
@@ -1250,7 +1313,7 @@ public class SipSession implements SipListener, SipActionObject {
    *        occur if your headers are not syntactically correct or contain nonsensical values (the
    *        message may not pass through the local SIP stack). Use null for no replacement of
    *        message headers.
-   * 
+   *
    */
   public SipTransaction sendReply(RequestEvent request, int statusCode, String reasonPhrase,
       String toTag, Address contact, int expires, String body, String contentType,
@@ -1271,7 +1334,7 @@ public class SipSession implements SipListener, SipActionObject {
    * This method sends a stateful response to a previously received request. Call this method after
    * calling waitRequest(). The returned SipTransaction object must be used in any subsequent calls
    * to sendReply() for the same received request, if there are any.
-   * 
+   *
    * @param request The RequestEvent object that was returned by a previous call to waitRequest().
    * @param response The response to send, as is.
    * @return A SipTransaction object that must be passed in to any subsequent call to sendReply()
@@ -1334,7 +1397,7 @@ public class SipSession implements SipListener, SipActionObject {
    * This method sends a basic, stateful response to a previously received request. The response is
    * constructed based on the parameters passed in. The returned SipTransaction object must be used
    * in any subsequent calls to sendReply() for the same received request, if there are any.
-   * 
+   *
    * @param transaction The SipTransaction object returned from a previous call to sendReply().
    * @param statusCode The status code of the response to send (may use SipResponse constants).
    * @param reasonPhrase If not null, the reason phrase to send.
@@ -1360,9 +1423,9 @@ public class SipSession implements SipListener, SipActionObject {
    * This method is the same as the basic sendReply(SipTransaction, ...) method except that it
    * allows the caller to specify a message body and/or additional message headers to add to or
    * replace in the outbound message, without requiring knowledge of the JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param body A String to be used as the body of the message. Parameters contentType,
    *        contentSubType must both be non-null to get the body included in the message. Use null
    *        for no body bytes.
@@ -1388,7 +1451,7 @@ public class SipSession implements SipListener, SipActionObject {
    *        occur if your headers are not syntactically correct or contain nonsensical values (the
    *        message may not pass through the local SIP stack). Use null for no replacement of
    *        message headers.
-   * 
+   *
    */
   public SipTransaction sendReply(SipTransaction transaction, int statusCode, String reasonPhrase,
       String toTag, Address contact, int expires, String body, String contentType,
@@ -1457,9 +1520,9 @@ public class SipSession implements SipListener, SipActionObject {
    * allows the caller to specify a message body and/or additional JAIN-SIP API message headers to
    * add to or replace in the outbound message. Use of this method requires knowledge of the
    * JAIN-SIP API.
-   * 
+   *
    * The extra parameters supported by this method are:
-   * 
+   *
    * @param additionalHeaders ArrayList of javax.sip.header.Header, each element a SIP header to add
    *        to the outbound message. These headers are added to the message after a correct message
    *        has been constructed. Note that if you try to add a header that there is only supposed
@@ -1551,7 +1614,7 @@ public class SipSession implements SipListener, SipActionObject {
    * This method sends a stateful response to a previously received request. The returned
    * SipTransaction object must be used in any subsequent calls to sendReply() for the same received
    * request, if there are any.
-   * 
+   *
    * @param transaction The SipTransaction object returned from a previous call to sendReply().
    * @param response The response to send, as is.
    * @return A SipTransaction object that must be passed in to any subsequent call to sendReply()
@@ -1586,7 +1649,7 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * The sendUnidirectionalResponse() method sends out a stateless response message. The response is
    * sent out as is.
-   * 
+   *
    * @param response The response to be sent out.
    * @return true if the message was successfully sent, false otherwise.
    */
@@ -1608,7 +1671,7 @@ public class SipSession implements SipListener, SipActionObject {
 
   /**
    * This method sends out a stateless response to the given request.
-   * 
+   *
    * @param request The RequestEvent object that contains the request we are responding to.
    * @param statusCode The status code of the response to send (may use SipResponse constants).
    * @param reasonPhrase If not null, the reason phrase to send.
@@ -1666,12 +1729,12 @@ public class SipSession implements SipListener, SipActionObject {
    * authentication challenge. The WWWAuthenticateHeader parameter can represent an UAS-&gt;UAC
    * challenge (received status code = Response.UNAUTHORIZED) or a Proxy-&gt;UAC challenge (received
    * status code = Response.PROXY_AUTHENTICATION_REQUIRED).
-   * 
+   *
    * This method was copied from the Sip Communicator project (package
    * net.java.sip.communicator.sip.security.SipSecurityManager, its author is Emil Ivov) and
    * slightly modified to fit here. Thanks for making it publicly available. It is licensed under
    * the Apache Software License, Version 1.1 Copyright (c) 2000.
-   * 
+   *
    * @param method method of the request being authenticated.
    * @param uri digest-uri. This is the request uri of the request (ie,
    *        request.getRequestURI().toString()).
@@ -1685,7 +1748,7 @@ public class SipSession implements SipListener, SipActionObject {
    * @param password the user's password
    * @return The AuthorizationHeader to use for this challenge.
    * @throws SecurityException
-   * 
+   *
    */
 
   public AuthorizationHeader getAuthorization(String method, String uri, String requestBody,
@@ -1752,7 +1815,7 @@ public class SipSession implements SipListener, SipActionObject {
    * requests such as INVITE. By default, it is set to the IP address and port used by this user
    * agent's sip stack. But if the setPublicAddress() has been called on this object, the returned
    * value will reflect the most recent call to setPublicAddress().
-   * 
+   *
    * @return an ArrayList containing a single element: the javax.sip.header.ViaHeader currently in
    *         effect for this user agent.
    */
@@ -1762,10 +1825,10 @@ public class SipSession implements SipListener, SipActionObject {
 
   /**
    * This method is the same as getViaHeaders().
-   * 
+   *
    * @deprecated Use getViaHeaders() instead of this method, the term 'local' in the method name is
    *             misleading if the SipUnit test is running behind a NAT.
-   * 
+   *
    * @return A list of ViaHeader
    */
   public ArrayList<ViaHeader> getLocalViaHeaders() {
@@ -1795,7 +1858,7 @@ public class SipSession implements SipListener, SipActionObject {
 
   /**
    * This method indicates if the given return code is an internal SipUnit return code or not.
-   * 
+   *
    * @param returnCode the return code in question
    * @return true if the return code is internal to SipUnit, false if it is a SIP RFC 3261 return
    *         code.
@@ -1886,7 +1949,7 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * Call this method to get the IP address being used by this user agent (ie, the address it is
    * putting in its contact header, via header, etc. when it sends out messages).
-   * 
+   *
    * @return A String containing the host IP address being used by this user agent.
    */
   public String getStackAddress() {
@@ -1907,7 +1970,7 @@ public class SipSession implements SipListener, SipActionObject {
    * the 'To' header matches even if the Request URI doesn't - so that local messaging tests without
    * proxy still work. This is for direct UA-UA testing convenience. This should not be the default,
    * however.
-   * 
+   *
    * @param loopback The loopback to set.
    */
   public void setLoopback(boolean loopback) {
