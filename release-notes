@@ -32,6 +32,13 @@ This command will bring up the window to put your passphrase and will create a t
 
 mvn release:prepare -Pmaven-release --batch-mode -DdevelopmentVersion=2.0.4-SNAPSHOT -DreleaseVersion=2.0.3 -Dtag=2.0.3 -Darguments="-Dmaven.test.skip=true"
 
+Notice there is a maven-release plugin bug that the created branch for release has -SNAPSHOT in the version, check herehttps://stackoverflow.com/questions/16650698/maven-release-plugin-prepare-creates-tag-of-snapshot-version-instead-of-releas
+Patch has been provided in the pom.xml according to the link
+
 mvn release:perform -Pmaven-release,release-sign-artifacts -Darguments="-Dmaven.test.skip=true"
+
+
+Next login in https://oss.sonatype.org/index.html, click staging repositories, then click close button.
+After repository is closed, click release button.
 
 
