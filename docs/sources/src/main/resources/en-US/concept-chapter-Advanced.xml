@@ -50,6 +50,56 @@
 		</table>
 	</section>
 	<section>
+		<title>SIP REGISTER and SIP OPTIONS support</title>
+		<para>
+			SipPhone now supports SIP REGISTER and SIP OPTIONS requests.
+
+			Using
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+			sipPhone.setSupportRegisterRequests(true);
+			]]></programlisting>
+			any SIP REGISTER request that reached the specific sip stack, will be processed by SipPhone.
+
+			Example:
+
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+			        proxy.setSupportRegisterRequests(true);
+					assertTrue(proxy.listenRequestMessage());
+
+					new Thread() {
+						@Override
+						public void run () {
+							RequestEvent requestEvent = proxy.waitRequest(10000);
+							assertNotNull(requestEvent);
+							Response response = null;
+							try {
+								response = proxy.getParent().getMessageFactory().createResponse(200, requestEvent.getRequest());
+							} catch (ParseException e) {
+								e.printStackTrace();
+							}
+							proxy.sendReply(requestEvent, response);
+						}
+					}.start();
+
+					assertTrue(ua.register("amit", "a1b2c3d4", uaContact, 4890, 1000000));
+					assertLastOperationSuccess("user a registration - " + ua.format(), ua);
+			]]></programlisting>
+
+
+			Notice that if SipPhone receives SIP REGISTER with Expires 0 (un-register) it will automatically respond with 200 OK.
+
+
+			Also, by default SipPhone now responds to SIP OPTIONS requests with 200 OK. This feature can be disabled if needed using:
+
+			<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+			sipPhone.setAutoResponseOptionsRequests(false);
+			]]></programlisting>
+
+			See "org.cafesip.sipunit.test.misc.TestRegisterWithOptions" for example of how to use both features
+
+		</para>
+	</section>
+	<section>
 		<title>Example</title>
 		<para>When using the lower-level SipSession methods to send/receive SIP messages, you'll be using the JAIN SIP API message, address, header, request, and response classes to build/view the SIP messages. Here is an example of test class code operating at this level.</para>
 		<programlisting linenumbering="unnumbered" role="Java"><![CDATA[
@@ -66,7 +116,7 @@ SipPhone ua = sipStack.createSipPhone("sip:amit@nist.gov");
 AddressFactory addr_factory = ua.getParent().getAddressFactory();
 HeaderFactory hdr_factory = ua.getParent().getHeaderFactory();
 
-Request invite = ua.getParent().getMessageFactory().createRequest( 
+Request invite = ua.getParent().getMessageFactory().createRequest(
         "INVITE sip:becky@nist.gov SIP/2.0\n");
 
 invite.addHeader(ua.getParent().getSipProvider().getNewCallId());
@@ -96,7 +146,7 @@ SipTransaction trans = ua.sendRequestWithTransaction(invite, false,
 assertNotNull(ua.format(), trans);
 // call sent
 Etc.
-			]]></programlisting> 
+			]]></programlisting>
 	</section>
 	<section id="ProxyConsiderations">
 		<title>Proxy Considerations and Routing Policies</title>
@@ -104,20 +154,20 @@ Etc.
 		<itemizedlist>
          	<listitem>
 	           	<para>
-				 define an outbound proxy on a per-SipStack basis (done via a Properties parameter to &SHORT_PLATFORM_NAME; SipStack constructor which is the same list of properties the JAIN-SIP SipStack class takes) to be used at the SIP stack level for outgoing initial requests.  This cannot be changed during the life of the SipStack.    
+				 define an outbound proxy on a per-SipStack basis (done via a Properties parameter to &SHORT_PLATFORM_NAME; SipStack constructor which is the same list of properties the JAIN-SIP SipStack class takes) to be used at the SIP stack level for outgoing initial requests.  This cannot be changed during the life of the SipStack.
 				</para>
 			</listitem>
 			<listitem>
 	           	<para>
-				define an outbound proxy on a per-SipPhone(/SipSession) basis (done via host/port/protocol parms to the SipPhone constructor). At the SipSession (low-) level, this is applied by the caller on a per-request basis. If applied, the request URI of the given request is modified to reflect the proxy destination. If not applied, no modification of the request is done and no additional headers are added before sending the request out (caller must handle details such as adding a RouteHeader). At the SipCall/SipPhone (high-) level, this is applied for all registrations and outbound calls, but can be overridden on a per-outbound-call basis by specifying an alternate route to use instead of the SipPhone's proxy.   
-				</para>
-			</listitem>			
-			<listitem>
-	           	<para>
-				do neither of the above. This is only an option when using low-level API calls and handling all message/routing details yourself, or using high-level API calls (except SipPhone.un/registration()) and always specifying an outbound call alternate route.   
+				define an outbound proxy on a per-SipPhone(/SipSession) basis (done via host/port/protocol parms to the SipPhone constructor). At the SipSession (low-) level, this is applied by the caller on a per-request basis. If applied, the request URI of the given request is modified to reflect the proxy destination. If not applied, no modification of the request is done and no additional headers are added before sending the request out (caller must handle details such as adding a RouteHeader). At the SipCall/SipPhone (high-) level, this is applied for all registrations and outbound calls, but can be overridden on a per-outbound-call basis by specifying an alternate route to use instead of the SipPhone's proxy.
 				</para>
 			</listitem>
-		</itemizedlist>					
+			<listitem>
+	           	<para>
+				do neither of the above. This is only an option when using low-level API calls and handling all message/routing details yourself, or using high-level API calls (except SipPhone.un/registration()) and always specifying an outbound call alternate route.
+				</para>
+			</listitem>
+		</itemizedlist>
 		<para>For an example of a test class not using a proxy, see the TestNoProxy.java file in the &SHORT_PLATFORM_NAME; examples directory.</para>
 		<para>For an example of a test class using a proxy, see one of the other test files in the &SHORT_PLATFORM_NAME; examples directory. It's class header comment will indicate the required proxy settings for running that test.</para>
 	</section>
