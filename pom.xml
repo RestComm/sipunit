@@ -56,6 +56,7 @@
     <connection>scm:git:git@github.com:RestComm/sipunit.git</connection>
     <developerConnection>scm:git:git@github.com:RestComm/sipunit.git</developerConnection>
     <url>git@github.com:RestComm/sipunit.git</url>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>

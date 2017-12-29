@@ -1,4 +1,4 @@
-Make sure you have gpg keys 
+Make sure you have gpg keys
 1. gpg --list-keys
 2. gpg --list-secret-keys
 
@@ -23,8 +23,15 @@ Make sure that ~/.m2/settings.xml contains the following profile:
     </profile>
   </profiles>
 
-mvn release:prepare -Pmaven-release --batch-mode -DdevelopmentVersion=2.0.2-SNAPSHOT -DreleaseVersion=2.0.1 -Dtag=2.0.1 -Darguments="-Dmaven.test.skip=true"
+New version of gpg will fail to sign artifacts, to workaround this check https://issues.apache.org/jira/browse/MGPG-59
+and run:
 
-mvn release:perform -Pmaven-release,set-git-hash -Darguments="-Dgpg.passphrase=yourpassphrasehere -Dmaven.test.skip=true"
+gpg --use-agent --armor --detach-sign --output $(mktemp) pom.xml
+
+This command will bring up the window to put your passphrase and will create a temp file to be used during the release process.
+
+mvn release:prepare -Pmaven-release --batch-mode -DdevelopmentVersion=2.0.4-SNAPSHOT -DreleaseVersion=2.0.3 -Dtag=2.0.3 -Darguments="-Dmaven.test.skip=true"
+
+mvn release:perform -Pmaven-release,release-sign-artifacts -Darguments="-Dmaven.test.skip=true"
 
 
