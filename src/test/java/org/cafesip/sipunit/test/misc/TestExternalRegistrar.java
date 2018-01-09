@@ -122,6 +122,9 @@ public class TestExternalRegistrar {
 		assertLastOperationSuccess("user a registration - " + ua.format(), ua);
 
 		registrarResult.get();
+
+		assertNotNull(ua.getLastRegistrationRequest());
+		assertNotNull(ua.getLastRegistrationResponse());
 	}
 
 	@Test
