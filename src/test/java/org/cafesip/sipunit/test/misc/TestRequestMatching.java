@@ -3,6 +3,7 @@ package org.cafesip.sipunit.test.misc;
 import org.cafesip.sipunit.SipPhone;
 import org.cafesip.sipunit.SipSession;
 import org.cafesip.sipunit.SipStack;
+import org.cafesip.sipunit.matching.RequestMatcher;
 import org.cafesip.sipunit.matching.RequestMatchingStrategy;
 import org.cafesip.sipunit.matching.RequestUriMatchingStrategy;
 import org.cafesip.sipunit.matching.ToMatchingStrategy;
@@ -16,8 +17,6 @@ import javax.sip.RequestEvent;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -31,10 +30,10 @@ import static org.junit.Assert.*;
 
 /**
  * Test behavior of matching depending on the configuration of {@link RequestMatchingStrategy} in {@link SipSession}.
- *
+ * <p>
  * Provides backwards compatibility testing with the removed loopback attribute which has been replaced by the tested
  * strategy approach.
- *
+ * <p>
  * Created by TELES AG on 10/01/2018.
  */
 @SuppressWarnings("deprecation")
@@ -130,30 +129,45 @@ public class TestRequestMatching {
 		awaitStackDispose(sipStackProxy);
 	}
 
+	/**
+	 * The request matcher should not allow any mutation because of the immutable list
+	 */
+	@Test(expected = UnsupportedOperationException.class)
+	public void testGetStrategiesMutation() {
+		ua.getRequestMatcher().getRequestMatchingStrategies().clear();
+	}
+
 	@Test
 	public void testStrategiesMutation() {
+		final RequestMatcher requestMatcher = new RequestMatcher();
+
 		// Attempt mutating the list obtained through the getter
 		// Should have 2 default matching strategies
-		List<RequestMatchingStrategy> requestMatchingStrategies = ua.getRequestMatchingStrategies();
+		List<RequestMatchingStrategy> requestMatchingStrategies = requestMatcher.getRequestMatchingStrategies();
 		assertEquals(1, requestMatchingStrategies.size());
 
-		requestMatchingStrategies.clear();
-		assertEquals(1, ua.getRequestMatchingStrategies().size());
-
 		// Create a dummy strategy
-		RequestMatchingStrategy newStrategy = new RequestMatchingStrategy(ua) {
+		RequestMatchingStrategy newStrategy = new RequestMatchingStrategy() {
 			@Override
-			public boolean isRequestMatching(Request request) {
+			public boolean isRequestMatching(Request request, SipSession sipSession) {
 				return true;
 			}
 		};
 
-		// Mutate strategies through the setter
-		ua.setRequestMatchingStrategies(Arrays.asList(newStrategy));
-		List<RequestMatchingStrategy> newMatchingStrategies = ua.getRequestMatchingStrategies();
+		// Mutate strategies through the accessor
+		requestMatcher.add(newStrategy);
+		// Returned list should be updated
+		assertEquals(2, requestMatchingStrategies.size());
 
-		assertEquals(1, newMatchingStrategies.size());
-		assertEquals(newStrategy, newMatchingStrategies.get(0));
+		List<RequestMatchingStrategy> newMatchingStrategies = requestMatcher.getRequestMatchingStrategies();
+		assertEquals(2, newMatchingStrategies.size());
+		assertEquals(newStrategy, newMatchingStrategies.get(1));
+
+		assertTrue(requestMatcher.contains(newStrategy));
+		assertTrue(requestMatcher.contains(newStrategy.getClass()));
+
+		// Default strategy
+		assertTrue(requestMatcher.contains(RequestUriMatchingStrategy.class));
 	}
 
 	/**
@@ -163,20 +177,17 @@ public class TestRequestMatching {
 	 */
 	@Test
 	public void testRemoveOnlyToStrategy() {
-		ua.setRequestMatchingStrategies(Arrays.asList(new ToMatchingStrategy(ua)));
+		final RequestMatcher requestMatcher = ua.getRequestMatcher();
+		requestMatcher.add(new ToMatchingStrategy());
 		assertTrue(ua.isLoopback());
 
-		ua.setLoopback(false);
-		assertEquals(1, ua.getRequestMatchingStrategies().size());
-		assertEquals(RequestUriMatchingStrategy.class, ua.getRequestMatchingStrategies().get(0).getClass());
-	}
+		requestMatcher.remove(RequestUriMatchingStrategy.class);
+		assertEquals(1, requestMatcher.getRequestMatchingStrategies().size());
+		assertEquals(ToMatchingStrategy.class, requestMatcher.getRequestMatchingStrategies().get(0).getClass());
 
-	/**
-	 * The session object should not allow for no request strategies to be present for request processing
-	 */
-	@Test(expected = IllegalArgumentException.class)
-	public void testStrategiesMutationEmpty() {
-		ua.setRequestMatchingStrategies(Collections.<RequestMatchingStrategy>emptyList());
+		ua.setLoopback(false);
+		assertEquals(1, requestMatcher.getRequestMatchingStrategies().size());
+		assertEquals(RequestUriMatchingStrategy.class, requestMatcher.getRequestMatchingStrategies().get(0).getClass());
 	}
 
 	/**
@@ -188,47 +199,53 @@ public class TestRequestMatching {
 	 */
 	@Test
 	public void testIsLoopbackSetting() {
+		final RequestMatcher requestMatcher = ua.getRequestMatcher();
+
 		// Default is false
 		assertFalse(ua.isLoopback());
-		assertEquals(1, ua.getRequestMatchingStrategies().size());
-		assertEquals(RequestUriMatchingStrategy.class, ua.getRequestMatchingStrategies().get(0).getClass());
+		assertEquals(1, requestMatcher.getRequestMatchingStrategies().size());
+		assertEquals(RequestUriMatchingStrategy.class, requestMatcher.getRequestMatchingStrategies().get(0).getClass());
 
 		ua.setLoopback(true);
 		assertTrue(ua.isLoopback());
-		assertEquals(2, ua.getRequestMatchingStrategies().size());
-		assertEquals(RequestUriMatchingStrategy.class, ua.getRequestMatchingStrategies().get(0).getClass());
-		assertEquals(ToMatchingStrategy.class, ua.getRequestMatchingStrategies().get(1).getClass());
+		assertEquals(2, requestMatcher.getRequestMatchingStrategies().size());
+		assertEquals(RequestUriMatchingStrategy.class, requestMatcher.getRequestMatchingStrategies().get(0).getClass());
+		assertEquals(ToMatchingStrategy.class, requestMatcher.getRequestMatchingStrategies().get(1).getClass());
 
 		// Add a new strategy and set loopback to false to check that this strategy will not be deleted
-		List<RequestMatchingStrategy> strategies = ua.getRequestMatchingStrategies();
-		RequestMatchingStrategy additionalStrategy = new RequestMatchingStrategy(ua) {
+		RequestMatchingStrategy additionalStrategy = new RequestMatchingStrategy() {
 			@Override
-			public boolean isRequestMatching(Request request) {
-				return false;
+			public boolean isRequestMatching(Request request, SipSession sipSession) {
+				return true;
 			}
 		};
-		strategies.add(additionalStrategy);
-
-		ua.setRequestMatchingStrategies(strategies);
+		requestMatcher.add(additionalStrategy);
 
 		ua.setLoopback(false);
-		assertEquals(2, ua.getRequestMatchingStrategies().size());
-		assertEquals(RequestUriMatchingStrategy.class, ua.getRequestMatchingStrategies().get(0).getClass());
-		assertEquals(additionalStrategy, ua.getRequestMatchingStrategies().get(1));
+		assertEquals(2, requestMatcher.getRequestMatchingStrategies().size());
+		assertEquals(RequestUriMatchingStrategy.class, requestMatcher.getRequestMatchingStrategies().get(0).getClass());
+		assertEquals(additionalStrategy, requestMatcher.getRequestMatchingStrategies().get(1));
 	}
 
 	@Test
 	public void testToMatching() {
-		testMatchingStrategy(new ToMatchingStrategy(ub));
+		testMatchingStrategy(new ToMatchingStrategy());
 	}
 
 	@Test
 	public void testRequestUriMatching() {
-		testMatchingStrategy(new RequestUriMatchingStrategy(ub));
+		testMatchingStrategy(new RequestUriMatchingStrategy());
 	}
 
 	private void testMatchingStrategy(RequestMatchingStrategy requestMatchingStrategy) {
-		ub.setRequestMatchingStrategies(Arrays.asList(requestMatchingStrategy));
+		final RequestMatcher requestMatcher = ub.getRequestMatcher();
+
+		List<RequestMatchingStrategy> initialStrategies = requestMatcher.getRequestMatchingStrategies();
+
+		requestMatcher.add(requestMatchingStrategy);
+		for (RequestMatchingStrategy initialStrategy : initialStrategies) {
+			requestMatcher.remove(initialStrategy);
+		}
 
 		assertTrue(ua.register("userA", "test1", uaContact, 4890, 1000000));
 		assertLastOperationSuccess("user a registration - " + ua.format(), ua);

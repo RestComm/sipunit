@@ -21,15 +21,17 @@ public abstract class RequestMatchingStrategy {
 
 	protected static final Logger LOG = LoggerFactory.getLogger(RequestMatchingStrategy.class);
 
-	protected final SipSession managedSession;
+	/**
+	 * Determines if the inbound request matches the criterion defined by this matching strategy.
+	 *
+	 * @param request The inbound request
+	 * @param sipSession The governing SipSession which received the request through its {@link org.cafesip.sipunit.SipStack}
+	 *
+	 * @return True if the request matches the defined criterion, false otherwise
+	 */
+	public abstract boolean isRequestMatching(final Request request, final SipSession sipSession);
 
-	public RequestMatchingStrategy(SipSession managedSession){
-		this.managedSession = managedSession;
-	}
-
-	public abstract boolean isRequestMatching(Request request);
-
-	protected static boolean destMatch(SipURI uri1, SipURI uri2) {
+	protected static boolean isSipUriEquals(SipURI uri1, SipURI uri2) {
 		if (uri1.getScheme().equalsIgnoreCase(uri2.getScheme())) {
 			if (uri1.getUser() != null) {
 				if (uri2.getUser() == null) {

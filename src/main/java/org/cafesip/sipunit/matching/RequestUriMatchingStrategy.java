@@ -11,15 +11,13 @@ import javax.sip.message.Request;
  * Created by TELES AG on 09/01/2018.
  */
 public final class RequestUriMatchingStrategy extends RequestMatchingStrategy {
-	public RequestUriMatchingStrategy(SipSession managedSession) {
-		super(managedSession);
-	}
 
 	@Override
-	public boolean isRequestMatching(Request request) {
-		LOG.trace("my local contact info ('Request URI' check) = {}", managedSession.getContactInfo().getURI());
+	public boolean isRequestMatching(Request request, SipSession sipSession) {
+		LOG.trace("my local contact info ('Request URI' check) = {}", sipSession.getContactInfo().getURI());
 
-		return destMatch((SipURI) managedSession.getContactInfo().getContactHeader().getAddress().getURI(),
+		return isSipUriEquals((SipURI) sipSession.getContactInfo().getContactHeader().getAddress().getURI(),
 				(SipURI) request.getRequestURI());
 	}
+
 }

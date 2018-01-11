@@ -13,19 +13,17 @@ import javax.sip.message.Request;
  * Created by TELES AG on 09/01/2018.
  */
 public final class ToMatchingStrategy extends RequestMatchingStrategy {
-	public ToMatchingStrategy(SipSession managedSession) {
-		super(managedSession);
-	}
 
 	@Override
-	public boolean isRequestMatching(Request request) {
+	public boolean isRequestMatching(Request request, SipSession sipSession) {
 		ToHeader to = (ToHeader) request.getHeader(ToHeader.NAME);
 
-		String me = managedSession.getAddress().getURI().toString();
+		String me = sipSession.getAddress().getURI().toString();
 		String expected = to.getAddress().getURI().toString();
 
 		LOG.trace("me ('To' check) = {}", me);
 
 		return expected.equals(me);
 	}
+	
 }

@@ -18,8 +18,8 @@
 package org.cafesip.sipunit;
 
 import gov.nist.javax.sip.header.ParameterNames;
+import org.cafesip.sipunit.matching.RequestMatcher;
 import org.cafesip.sipunit.matching.RequestMatchingStrategy;
-import org.cafesip.sipunit.matching.RequestUriMatchingStrategy;
 import org.cafesip.sipunit.matching.ToMatchingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,16 +165,7 @@ public class SipSession implements SipListener, SipActionObject {
    */
   private Map<String, ArrayList<RequestListener>> requestListeners = new HashMap<>();
 
-  /**
-   * Request matching strategies determine if an incoming {@link Request} will be accepted for this client after receiving
-   * the request through the stack. This class is initialized with {@link org.cafesip.sipunit.matching.RequestUriMatchingStrategy}}.
-   * The user of this library may add additional matching strategies in order to accept a certain request which has
-   * been formed in different ways depending on the SIP back end configuration.
-   *
-   * @see SipSession#isLoopback()
-   * @see SipSession#setLoopback(boolean)
-   */
-  private final List<RequestMatchingStrategy> requestMatchingStrategies = Collections.synchronizedList(new ArrayList<RequestMatchingStrategy>());
+  private final RequestMatcher requestMatcher = new RequestMatcher();
 
   private boolean supportRegisterRequests;
 
@@ -234,9 +225,6 @@ public class SipSession implements SipListener, SipActionObject {
 
     viaHeaders = new ArrayList<>(1);
     viaHeaders.add(via_header);
-
-    // Initialize the default request matching strategies
-	requestMatchingStrategies.add(new RequestUriMatchingStrategy(this));
 
     // finally, register with the sip stack
     parent.registerListener(this);
@@ -481,14 +469,7 @@ public class SipSession implements SipListener, SipActionObject {
    * @return If the request matches (true) or not (false)
    */
   private boolean requestMatches(Request request) {
-    boolean requestMatches = false;
-    synchronized (requestMatchingStrategies) {
-      for (RequestMatchingStrategy strategy : requestMatchingStrategies) {
-        // If we find a match, then the other strategies will not execute
-        requestMatches = requestMatches || strategy.isRequestMatching(request);
-      }
-    }
-    return requestMatches;
+    return requestMatcher.requestMatches(request, this);
   }
 
   /**
@@ -1875,19 +1856,11 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * @return Returns the loopback. See setLoopback().
    * @see SipSession#setLoopback(boolean)
-   * @deprecated Replaced by {@link SipSession#getRequestMatchingStrategies()}
+   * @deprecated Replaced by {@link RequestMatcher} behavior
    */
   @Deprecated
   public boolean isLoopback() {
-    synchronized (requestMatchingStrategies) {
-      for (RequestMatchingStrategy requestMatchingStrategy : requestMatchingStrategies) {
-        if (requestMatchingStrategy.getClass().equals(ToMatchingStrategy.class)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return requestMatcher.contains(ToMatchingStrategy.class);
   }
 
   /**
@@ -1898,72 +1871,28 @@ public class SipSession implements SipListener, SipActionObject {
    * proxy still work. This is for direct UA-UA testing convenience. This should not be the default,
    * however.
    * <p/>
-   * If set to false, it will remove any existing {@link ToMatchingStrategy} in the request matching list. If this is the
-   * only strategy in the strategy list before removal, the strategy list will be set to default, i.e. be reset with the
-   * default {@link RequestUriMatchingStrategy}.
+   * If set to false, it will remove any existing {@link ToMatchingStrategy} in the request matching list.
    *
    * @param loopback The loopback to set.
-   * @deprecated Replaced by {@link SipSession#setRequestMatchingStrategies(Collection)}
+   * @deprecated Replaced by {@link RequestMatcher} behavior
+   *
+   * @see RequestMatcher#add(RequestMatchingStrategy)
+   * @see RequestMatcher#remove(Class)
    */
   @Deprecated
   public void setLoopback(boolean loopback) {
     if (loopback) {
-      addToMatching();
+      requestMatcher.add(new ToMatchingStrategy());
     } else {
-      removeToMatching();
-
-      if (requestMatchingStrategies.isEmpty()) {
-        LOG.info("Request matching strategies empty, setting default strategy to " + RequestUriMatchingStrategy.class.getName());
-        requestMatchingStrategies.add(new RequestUriMatchingStrategy(this));
-      }
-    }
-  }
-
-  @Deprecated
-  private void addToMatching() {
-    if (!isLoopback()) {
-      requestMatchingStrategies.add(new ToMatchingStrategy(this));
-    }
-  }
-
-  @Deprecated
-  private void removeToMatching() {
-    synchronized (requestMatchingStrategies) {
-      Iterator<RequestMatchingStrategy> it = requestMatchingStrategies.iterator();
-
-      while (it.hasNext()) {
-        RequestMatchingStrategy current = it.next();
-
-        if (current.getClass().equals(ToMatchingStrategy.class)) {
-          it.remove();
-        }
-      }
+      requestMatcher.remove(ToMatchingStrategy.class);
     }
   }
 
   /**
-   * @return A list of matching strategies for incoming requests which this instance uses to determine
-   * if a request will be accepted or not. Mutating this list WILL NOT affect currently configured strategies in this
-   * instance.
+   * @return The request matcher which governs the acceptance of inbound requests in this session
    */
-  public List<RequestMatchingStrategy> getRequestMatchingStrategies() {
-    return new ArrayList<>(requestMatchingStrategies);
-  }
-
-  /**
-   * Sets request matching strategies which will be used by this instance to determine if a request will be accepted.
-   * The new strategy collection must not be empty.
-   *
-   * @param requestMatchingStrategies New collection of request matching strategies
-   * @throws IllegalArgumentException If the new collection is empty
-   */
-  public void setRequestMatchingStrategies(Collection<? extends RequestMatchingStrategy> requestMatchingStrategies) {
-    if (requestMatchingStrategies.size() == 0) {
-      throw new IllegalArgumentException("Cannot set an empty request matching strategy");
-    }
-
-    this.requestMatchingStrategies.clear();
-    this.requestMatchingStrategies.addAll(requestMatchingStrategies);
+  public final RequestMatcher getRequestMatcher() {
+    return requestMatcher;
   }
 
   /**
