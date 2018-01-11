@@ -190,6 +190,44 @@ public class TestRequestMatching {
 		assertEquals(RequestUriMatchingStrategy.class, requestMatcher.getRequestMatchingStrategies().get(0).getClass());
 	}
 
+	@Test
+	public void testMultipleInstancesAllowed() {
+		RequestMatchingStrategy toStrategy = new ToMatchingStrategy();
+		RequestMatchingStrategy requestUriStrategy = new RequestUriMatchingStrategy();
+
+		assertFalse(toStrategy.multipleInstanceAllowed());
+		assertFalse(requestUriStrategy.multipleInstanceAllowed());
+
+		RequestMatchingStrategy multipleInstancesStrategy = new RequestMatchingStrategy() {
+			@Override
+			public boolean isRequestMatching(Request request, SipSession sipSession) {
+				return false;
+			}
+		};
+
+		final RequestMatcher requestMatcher = new RequestMatcher();
+		assertEquals(1, requestMatcher.getRequestMatchingStrategies().size());
+		assertTrue(requestMatcher.contains(requestUriStrategy.getClass()));
+
+		assertTrue(requestMatcher.add(toStrategy));
+		assertEquals(2, requestMatcher.getRequestMatchingStrategies().size());
+
+		// Already has this strategies by now
+		assertFalse(requestMatcher.add(requestUriStrategy));
+		assertEquals(2, requestMatcher.getRequestMatchingStrategies().size());
+
+		assertFalse(requestMatcher.add(toStrategy));
+		assertEquals(2, requestMatcher.getRequestMatchingStrategies().size());
+
+		// Add a multiple instance strategy
+		assertTrue(requestMatcher.add(multipleInstancesStrategy));
+		assertEquals(3, requestMatcher.getRequestMatchingStrategies().size());
+
+		assertTrue(requestMatcher.add(multipleInstancesStrategy));
+		assertEquals(4, requestMatcher.getRequestMatchingStrategies().size());
+	}
+
+
 	/**
 	 * Backwards compatibility check for isLoopback after the addition of request matching strategies
 	 * <p>

@@ -5,10 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sip.message.Request;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class takes care that the inbound requests received by a governing {@link SipSession} are tested against a
@@ -76,14 +73,20 @@ public class RequestMatcher {
 	}
 
 	/**
-	 * Add the strategy to be used in request processing in this matches
+	 * Add the strategy to be used in request processing in this matches. If the strategy is not permitted to add multiple
+	 * instances and an existing instance of the same strategy class is present in the matcher, it will not be added.
+	 * Otherwise, the strategy will be added per the collection add behavior contract.
 	 *
 	 * @param requestMatchingStrategy The added request matching strategy
 	 * @return If the request matching strategy was successfully added to the list of strategies used by this matcher
+	 * @see List#add(Object)
 	 */
 	public boolean add(RequestMatchingStrategy requestMatchingStrategy) {
-		// TODO: check if strategy is forced to have only one instance
-		return requestMatchingStrategies.add(requestMatchingStrategy);
+		synchronized (requestMatchingStrategies) {
+			boolean permittedToAddAdditionalInstances = requestMatchingStrategy.multipleInstanceAllowed() ||
+					!contains(requestMatchingStrategy.getClass());
+			return permittedToAddAdditionalInstances && requestMatchingStrategies.add(requestMatchingStrategy);
+		}
 	}
 
 	/**
@@ -94,7 +97,12 @@ public class RequestMatcher {
 	 * @see List#remove(Object)
 	 */
 	public boolean remove(RequestMatchingStrategy requestMatchingStrategy) {
-		return requestMatchingStrategies.remove(requestMatchingStrategy);
+		synchronized (requestMatchingStrategies){
+			boolean isRemoved = requestMatchingStrategies.remove(requestMatchingStrategy);
+			setDefaultStrategy();
+
+			return isRemoved;
+		}
 	}
 
 	/**
@@ -157,7 +165,10 @@ public class RequestMatcher {
 
 	/**
 	 * @return A list of matching strategies for incoming requests which this instance uses to determine
-	 * if a request will be accepted or not. This list is unmodifiable and will be updated with each change.
+	 * if a request will be accepted or not. This list is unmodifiable and synchronized and will be updated
+	 * with each change.
+	 *
+	 * @see Collections#synchronizedCollection(Collection)
 	 */
 	public List<RequestMatchingStrategy> getRequestMatchingStrategies() {
 		return Collections.unmodifiableList(requestMatchingStrategies);

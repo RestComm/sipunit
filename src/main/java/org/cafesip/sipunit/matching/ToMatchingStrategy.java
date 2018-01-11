@@ -14,6 +14,10 @@ import javax.sip.message.Request;
  */
 public final class ToMatchingStrategy extends RequestMatchingStrategy {
 
+	public ToMatchingStrategy(){
+		super(false);
+	}
+
 	@Override
 	public boolean isRequestMatching(Request request, SipSession sipSession) {
 		ToHeader to = (ToHeader) request.getHeader(ToHeader.NAME);
@@ -25,5 +29,5 @@ public final class ToMatchingStrategy extends RequestMatchingStrategy {
 
 		return expected.equals(me);
 	}
-	
+
 }

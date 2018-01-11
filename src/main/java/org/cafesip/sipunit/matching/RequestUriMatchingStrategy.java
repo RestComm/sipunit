@@ -12,6 +12,10 @@ import javax.sip.message.Request;
  */
 public final class RequestUriMatchingStrategy extends RequestMatchingStrategy {
 
+	public RequestUriMatchingStrategy(){
+		super(false);
+	}
+
 	@Override
 	public boolean isRequestMatching(Request request, SipSession sipSession) {
 		LOG.trace("my local contact info ('Request URI' check) = {}", sipSession.getContactInfo().getURI());
