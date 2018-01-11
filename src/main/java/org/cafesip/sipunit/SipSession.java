@@ -407,9 +407,9 @@ public class SipSession implements SipListener, SipActionObject {
         }
       }
     } else if (requestMatches(req_msg)) {
-      LOG.trace("     incoming request match found, proceeding with processing");
+      LOG.trace("incoming request match found, proceeding with processing");
     } else {
-      LOG.trace("     no match found for incoming request, skipping processing");
+      LOG.trace("no match found for incoming request, skipping processing");
       return;
     }
 
