@@ -18,47 +18,23 @@
 package org.cafesip.sipunit;
 
 import gov.nist.javax.sip.header.ParameterNames;
+import org.cafesip.sipunit.matching.RequestMatchingStrategy;
+import org.cafesip.sipunit.matching.RequestUriMatchingStrategy;
+import org.cafesip.sipunit.matching.ToMatchingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sip.ClientTransaction;
-import javax.sip.Dialog;
-import javax.sip.DialogTerminatedEvent;
-import javax.sip.IOExceptionEvent;
-import javax.sip.InvalidArgumentException;
-import javax.sip.RequestEvent;
-import javax.sip.ResponseEvent;
-import javax.sip.ServerTransaction;
-import javax.sip.SipListener;
-import javax.sip.TimeoutEvent;
-import javax.sip.TransactionAlreadyExistsException;
-import javax.sip.TransactionState;
-import javax.sip.TransactionTerminatedEvent;
+import javax.sip.*;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
 import javax.sip.address.SipURI;
 import javax.sip.address.URI;
-import javax.sip.header.AuthorizationHeader;
-import javax.sip.header.ContactHeader;
-import javax.sip.header.ContentTypeHeader;
-import javax.sip.header.ExpiresHeader;
-import javax.sip.header.Header;
-import javax.sip.header.ProxyAuthenticateHeader;
-import javax.sip.header.ToHeader;
-import javax.sip.header.ViaHeader;
-import javax.sip.header.WWWAuthenticateHeader;
+import javax.sip.header.*;
 import javax.sip.message.Message;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Methods of this class provide the test program with low-level access to a SIP session. Instead of
@@ -166,8 +142,6 @@ public class SipSession implements SipListener, SipActionObject {
 
   protected Object contactLock = new Object();
 
-  protected String myDisplayName;
-
   protected String proxyHost;
 
   protected String proxyProto;
@@ -186,11 +160,21 @@ public class SipSession implements SipListener, SipActionObject {
 
   private BlockObject respBlock = new BlockObject();
 
+  /**
+   * key = String request method, value = ArrayList of RequestListener
+   */
   private Map<String, ArrayList<RequestListener>> requestListeners = new HashMap<>();
 
-  // key = String request method, value = ArrayList of RequestListener
-
-  private boolean loopback;
+  /**
+   * Request matching strategies determine if an incoming {@link Request} will be accepted for this client after receiving
+   * the request through the stack. This class is initialized with {@link org.cafesip.sipunit.matching.RequestUriMatchingStrategy}}.
+   * The user of this library may add additional matching strategies in order to accept a certain request which has
+   * been formed in different ways depending on the SIP back end configuration.
+   *
+   * @see SipSession#isLoopback()
+   * @see SipSession#setLoopback(boolean)
+   */
+  private final List<RequestMatchingStrategy> requestMatchingStrategies = Collections.synchronizedList(new ArrayList<RequestMatchingStrategy>());
 
   private boolean supportRegisterRequests;
 
@@ -250,6 +234,9 @@ public class SipSession implements SipListener, SipActionObject {
 
     viaHeaders = new ArrayList<>(1);
     viaHeaders.add(via_header);
+
+    // Initialize the default request matching strategies
+	requestMatchingStrategies.add(new RequestUriMatchingStrategy(this));
 
     // finally, register with the sip stack
     parent.registerListener(this);
@@ -407,23 +394,13 @@ public class SipSession implements SipListener, SipActionObject {
    */
   public void processRequest(RequestEvent request) {
     Request req_msg = request.getRequest();
-    ToHeader to = (ToHeader) req_msg.getHeader(ToHeader.NAME);
     SipContact my_contact_info = new SipContact();
 
     synchronized (contactLock) {
       my_contact_info.setContactHeader((ContactHeader) (contactInfo.getContactHeader().clone()));
     }
 
-    // Is it for me? Check: Request-URI = my contact address (I may not be
-    // the original 'To' party, also there may be multiple devices for one
-    // "me" address of record)
-    // If no match, check 'To' = me
-    // (so that local messaging without proxy still works) - but ONLY IF
-    // setLoopback() has been called
-
     LOG.trace("request received !");
-    LOG.trace("     me ('To' check) = {}", me);
-    LOG.trace("     my local contact info ('Request URI' check) = {}", my_contact_info.getURI());
     LOG.trace("     {}" , req_msg.toString());
 
     if (req_msg.getMethod().equalsIgnoreCase(SipRequest.REGISTER)) {
@@ -441,17 +418,11 @@ public class SipSession implements SipListener, SipActionObject {
           }
         }
       }
-    } else if (destMatch((SipURI) my_contact_info.getContactHeader().getAddress().getURI(),
-        (SipURI) req_msg.getRequestURI()) == false) {
-      if (!loopback) {
-        LOG.trace("     skipping 'To' check, we're not loopback (see setLoopback())");
-        return;
-      }
-
-      // check 'To' for a match
-      if (to.getAddress().getURI().toString().equals(me) == false) {
-        return;
-      }
+    } else if (requestMatches(req_msg)) {
+      LOG.trace("     incoming request match found, proceeding with processing");
+    } else {
+      LOG.trace("     no match found for incoming request, skipping processing");
+      return;
     }
 
     if (req_msg.getMethod().equalsIgnoreCase(Request.OPTIONS)) {
@@ -495,6 +466,29 @@ public class SipSession implements SipListener, SipActionObject {
       LOG.trace("notifying block object");
       reqBlock.notifyEvent();
     }
+  }
+
+  /**
+   * Is it for me? By default check:
+   *
+   * Request-URI = my contact address (I may not be the original 'To' party, also there may be multiple devices for one
+   * "me" address of record)
+   *
+   * If no match, check 'To' = me (so that local messaging without proxy still works) - but ONLY IF setLoopback()
+   * has been called
+   *
+   * @param request The request being tested for a match with the available strategies
+   * @return If the request matches (true) or not (false)
+   */
+  private boolean requestMatches(Request request) {
+    boolean requestMatches = false;
+    synchronized (requestMatchingStrategies) {
+      for (RequestMatchingStrategy strategy : requestMatchingStrategies) {
+        // If we find a match, then the other strategies will not execute
+        requestMatches = requestMatches || strategy.isRequestMatching(request);
+      }
+    }
+    return requestMatches;
   }
 
   /**
@@ -572,84 +566,6 @@ public class SipSession implements SipListener, SipActionObject {
       sip_trans.getEvents().addLast(timeout);
       sip_trans.getBlock().notifyEvent();
     }
-  }
-
-  protected static boolean destMatch(SipURI uri1, SipURI uri2) {
-    if (uri1.getScheme().equalsIgnoreCase(uri2.getScheme())) {
-      if (uri1.getUser() != null) {
-        if (uri2.getUser() == null) {
-          return false;
-        }
-
-        if (uri1.getUser().equals(uri2.getUser()) == false) {
-          return false;
-        }
-
-        if (uri1.getUserPassword() != null) {
-          if (uri2.getUserPassword() == null) {
-            return false;
-          }
-
-          if (uri1.getUserPassword().equals(uri2.getUserPassword()) == false) {
-            return false;
-          }
-        } else if (uri2.getUserPassword() != null) {
-          return false;
-        }
-      } else if (uri2.getUser() != null) {
-        return false;
-      }
-
-      if (uri1.getHost().equalsIgnoreCase(uri2.getHost()) == false) {
-        return false;
-      }
-
-      if (uri1.toString().indexOf(uri1.getHost() + ':') != -1) {
-        if (uri2.toString().indexOf(uri2.getHost() + ':') == -1) {
-          return false;
-        }
-
-        if (uri1.getPort() != uri2.getPort()) {
-          return false;
-        }
-      } else if (uri2.toString().indexOf(uri2.getHost() + ':') != -1) {
-        return false;
-      }
-
-      // FOR A FULL URI-EQUAL CHECK, add the following:
-      /*
-       * if (uri1.getTransportParam() != null) { if (uri2.getTransportParam() == null) { return
-       * false; }
-       *
-       * if (uri1.getTransportParam().equals(uri2.getTransportParam()) == false) { return false; } }
-       * else if (uri2.getTransportParam() != null) { return false; }
-       *
-       * if (uri1.getTTLParam() != -1) { if (uri2.getTTLParam() == -1) { return false; }
-       *
-       * if (uri1.getTTLParam() != uri2.getTTLParam()) { return false; } } else if
-       * (uri2.getTTLParam() != -1) { return false; }
-       *
-       * if (uri1.getMethodParam() != null) { if (uri2.getMethodParam() == null) { return false; }
-       *
-       * if (uri1.getMethodParam().equals(uri2.getMethodParam()) == false) { return false; } } else
-       * if (uri2.getMethodParam() != null) { return false; } / next - incorporate the following
-       * remaining checks:
-       *
-       * URI uri-parameter components are compared as follows: - Any uri-parameter appearing in both
-       * URIs must match. - A user, ttl, or method uri-parameter appearing in only one URI never
-       * matches, even if it contains the default value. - A URI that includes an maddr parameter
-       * will not match a URI that contains no maddr parameter. - All other uri-parameters appearing
-       * in only one URI are ignored when comparing the URIs.
-       *
-       * o URI header components are never ignored. Any present header component MUST be present in
-       * both URIs and match for the URIs to match. The matching rules are defined for each header
-       * field in Section 20.
-       */
-
-      return true;
-    }
-
-    return false;
   }
 
   /**
@@ -1958,9 +1874,20 @@ public class SipSession implements SipListener, SipActionObject {
 
   /**
    * @return Returns the loopback. See setLoopback().
+   * @see SipSession#setLoopback(boolean)
+   * @deprecated Replaced by {@link SipSession#getRequestMatchingStrategies()}
    */
+  @Deprecated
   public boolean isLoopback() {
-    return loopback;
+    synchronized (requestMatchingStrategies) {
+      for (RequestMatchingStrategy requestMatchingStrategy : requestMatchingStrategies) {
+        if (requestMatchingStrategy.getClass().equals(ToMatchingStrategy.class)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -1970,11 +1897,95 @@ public class SipSession implements SipListener, SipActionObject {
    * the 'To' header matches even if the Request URI doesn't - so that local messaging tests without
    * proxy still work. This is for direct UA-UA testing convenience. This should not be the default,
    * however.
+   * <p/>
+   * If set to false, it will remove any existing {@link ToMatchingStrategy} in the request matching list. If this is the
+   * only strategy in the strategy list before removal, the strategy list will be set to default, i.e. be reset with the
+   * default {@link RequestUriMatchingStrategy}.
    *
    * @param loopback The loopback to set.
+   * @deprecated Replaced by {@link SipSession#setRequestMatchingStrategies(Collection)}
    */
+  @Deprecated
   public void setLoopback(boolean loopback) {
-    this.loopback = loopback;
+    if (loopback) {
+      addToMatching();
+    } else {
+      removeToMatching();
+
+      if (requestMatchingStrategies.isEmpty()) {
+        LOG.info("Request matching strategies empty, setting default strategy to " + RequestUriMatchingStrategy.class.getName());
+        requestMatchingStrategies.add(new RequestUriMatchingStrategy(this));
+      }
+    }
+  }
+
+  @Deprecated
+  private void addToMatching() {
+    if (!isLoopback()) {
+      requestMatchingStrategies.add(new ToMatchingStrategy(this));
+    }
+  }
+
+  @Deprecated
+  private void removeToMatching() {
+    synchronized (requestMatchingStrategies) {
+      Iterator<RequestMatchingStrategy> it = requestMatchingStrategies.iterator();
+
+      while (it.hasNext()) {
+        RequestMatchingStrategy current = it.next();
+
+        if (current.getClass().equals(ToMatchingStrategy.class)) {
+          it.remove();
+        }
+      }
+    }
+  }
+
+  /**
+   * @return A list of matching strategies for incoming requests which this instance uses to determine
+   * if a request will be accepted or not. Mutating this list WILL NOT affect currently configured strategies in this
+   * instance.
+   */
+  public List<RequestMatchingStrategy> getRequestMatchingStrategies() {
+    return new ArrayList<>(requestMatchingStrategies);
+  }
+
+  /**
+   * Sets request matching strategies which will be used by this instance to determine if a request will be accepted.
+   * The new strategy collection must not be empty.
+   *
+   * @param requestMatchingStrategies New collection of request matching strategies
+   * @throws IllegalArgumentException If the new collection is empty
+   */
+  public void setRequestMatchingStrategies(Collection<? extends RequestMatchingStrategy> requestMatchingStrategies) {
+    if (requestMatchingStrategies.size() == 0) {
+      throw new IllegalArgumentException("Cannot set an empty request matching strategy");
+    }
+
+    this.requestMatchingStrategies.clear();
+    this.requestMatchingStrategies.addAll(requestMatchingStrategies);
+  }
+
+  /**
+   * The method getContactInfo() returns the contact information currently in effect for this user
+   * agent. This may be the value associated with the last registration attempt or as defaulted to
+   * user@host if no registration has occurred. Or, if the setPublicAddress() has been called on
+   * this object, the returned value will reflect the most recent call to setPublicAddress().
+   *
+   * @return The SipContact object currently in effect for this user agent
+   */
+  public SipContact getContactInfo() {
+    return contactInfo;
+  }
+
+  /**
+   * Gets the user Address for this user agent. This is the same address used in the
+   * "from" header field.
+   *
+   * @return Returns the javax.sip.address.Address for this user agent.
+   */
+  public Address getAddress() {
+    return myAddress;
   }
 
   public void processIOException(IOExceptionEvent arg0) {
