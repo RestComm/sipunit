@@ -1870,7 +1870,7 @@ public class SipSession implements SipListener, SipActionObject {
    * the 'To' header matches even if the Request URI doesn't - so that local messaging tests without
    * proxy still work. This is for direct UA-UA testing convenience. This should not be the default,
    * however.
-   * <p/>
+   * <p>
    * If set to false, it will remove any existing {@link ToMatchingStrategy} in the request matching list.
    *
    * @param loopback The loopback to set.
