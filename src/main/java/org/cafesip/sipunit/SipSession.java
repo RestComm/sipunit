@@ -18,9 +18,11 @@
 package org.cafesip.sipunit;
 
 import gov.nist.javax.sip.header.ParameterNames;
-import org.cafesip.sipunit.matching.RequestMatcher;
-import org.cafesip.sipunit.matching.RequestMatchingStrategy;
-import org.cafesip.sipunit.matching.ToMatchingStrategy;
+import org.cafesip.sipunit.processing.RequestProcessingResult;
+import org.cafesip.sipunit.processing.RequestProcessingStrategy;
+import org.cafesip.sipunit.processing.RequestProcessor;
+import org.cafesip.sipunit.processing.matching.RequestUriMatchingStrategy;
+import org.cafesip.sipunit.processing.matching.ToMatchingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,7 +167,14 @@ public class SipSession implements SipListener, SipActionObject {
    */
   private Map<String, ArrayList<RequestListener>> requestListeners = new HashMap<>();
 
-  private final RequestMatcher requestMatcher = new RequestMatcher();
+  /**
+   * Request matching processor. By default, matches incoming request according to their request URI, but provides
+   * extensibility in request processing methods by adding additional {@link RequestProcessingStrategy}
+   * strategies.
+   */
+  private final RequestProcessor<SipSession> requestMatcher = new RequestProcessor<>(
+          new RequestUriMatchingStrategy()
+  );
 
   private boolean supportRegisterRequests;
 
@@ -406,7 +415,7 @@ public class SipSession implements SipListener, SipActionObject {
           }
         }
       }
-    } else if (requestMatches(req_msg)) {
+    } else if (requestMatches(request)) {
       LOG.trace("incoming request match found, proceeding with processing");
     } else {
       LOG.trace("no match found for incoming request, skipping processing");
@@ -465,11 +474,12 @@ public class SipSession implements SipListener, SipActionObject {
    * If no match, check 'To' = me (so that local messaging without proxy still works) - but ONLY IF setLoopback()
    * has been called
    *
-   * @param request The request being tested for a match with the available strategies
+   * @param requestEvent The request being tested for a match with the available strategies
    * @return If the request matches (true) or not (false)
    */
-  private boolean requestMatches(Request request) {
-    return requestMatcher.requestMatches(request, this);
+  private boolean requestMatches(RequestEvent requestEvent) {
+    RequestProcessingResult result = requestMatcher.processRequestEvent(requestEvent, this);
+    return result.isProcessed() && result.isSuccessful();
   }
 
   /**
@@ -1856,7 +1866,7 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * @return Returns the loopback. See setLoopback().
    * @see SipSession#setLoopback(boolean)
-   * @deprecated Replaced by {@link RequestMatcher} behavior
+   * @deprecated Replaced by {@link RequestProcessor} behavior
    */
   @Deprecated
   public boolean isLoopback() {
@@ -1874,16 +1884,21 @@ public class SipSession implements SipListener, SipActionObject {
    * If set to false, it will remove any existing {@link ToMatchingStrategy} in the request matching list.
    *
    * @param loopback The loopback to set.
-   * @deprecated Replaced by {@link RequestMatcher} behavior
+   * @deprecated Replaced by {@link RequestProcessor} behavior
    *
-   * @see RequestMatcher#add(RequestMatchingStrategy)
-   * @see RequestMatcher#remove(Class)
+   * @see RequestProcessor#add(RequestProcessingStrategy)
+   * @see RequestProcessor#remove(Class)
    */
   @Deprecated
   public void setLoopback(boolean loopback) {
     if (loopback) {
       requestMatcher.add(new ToMatchingStrategy());
     } else {
+      // Safeguard against side effects caused by removing the request uri matching strategy
+      if (requestMatcher.getAvailableStrategies().size() == 1 && requestMatcher.contains(ToMatchingStrategy.class)) {
+        requestMatcher.add(new RequestUriMatchingStrategy());
+      }
+
       requestMatcher.remove(ToMatchingStrategy.class);
     }
   }
@@ -1891,7 +1906,7 @@ public class SipSession implements SipListener, SipActionObject {
   /**
    * @return The request matcher which governs the acceptance of inbound requests in this session
    */
-  public final RequestMatcher getRequestMatcher() {
+  public final RequestProcessor<SipSession> getRequestMatcher() {
     return requestMatcher;
   }
 

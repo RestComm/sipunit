@@ -1,48 +1,36 @@
-package org.cafesip.sipunit.matching;
+package org.cafesip.sipunit.processing.matching;
 
 import org.cafesip.sipunit.SipSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.cafesip.sipunit.processing.RequestProcessingResult;
+import org.cafesip.sipunit.processing.RequestProcessingStrategy;
 
 import javax.sip.RequestEvent;
 import javax.sip.address.SipURI;
 import javax.sip.message.Request;
 
 /**
- * The request matching strategy is used within every {@link SipSession} which is bound to process an incoming request.
- * In order to provide multiple ways of accepting a request from various sources, we introduce this type to provide an
- * unified way to determine if a request fits a criterion for it to be accepted and stored within a session.
+ * Determines if the request is viable for processing base on the {@link Request#getRequestURI()} of the received {@link Request}
  * <p>
  * Created by TELES AG on 09/01/2018.
- *
- * @see RequestMatcher
- * @see SipSession#processRequest(RequestEvent)
  */
-public abstract class RequestMatchingStrategy {
+public final class RequestUriMatchingStrategy extends RequestProcessingStrategy<SipSession> {
 
-	protected static final Logger LOG = LoggerFactory.getLogger(RequestMatchingStrategy.class);
-
-	private final boolean multipleInstanceAllowed;
-
-	/**
-	 * Initialize this strategy with multiple instances of this class allowed to be present in the matcher
-	 */
-	public RequestMatchingStrategy() {
-		this(true);
+	public RequestUriMatchingStrategy(){
+		super(false);
 	}
 
-	/**
-	 * Initialize this strategy with option of multiple instances of this class to be present in the matcher
-	 *
-	 * @param multipleInstanceAllowed If set to true, the matcher will allow multiple instances of this class. Otherwise,
-	 *                                any additional instances will not be added to the matcher, and will be treated as
-	 *                                a localized singleton.
-	 */
-	public RequestMatchingStrategy(boolean multipleInstanceAllowed) {
-		this.multipleInstanceAllowed = multipleInstanceAllowed;
+	@Override
+	public RequestProcessingResult processRequestEvent(RequestEvent requestEvent, SipSession receiver) {
+		LOG.trace("my local contact info ('Request URI' check) = {}", receiver.getContactInfo().getURI());
+		Request request = requestEvent.getRequest();
+
+		boolean isRequestMatching = isSipUriEquals((SipURI) receiver.getContactInfo().getContactHeader().getAddress().getURI(),
+				(SipURI) request.getRequestURI());
+
+		return new RequestProcessingResult(isRequestMatching, isRequestMatching);
 	}
 
-	protected static boolean isSipUriEquals(SipURI uri1, SipURI uri2) {
+	private static boolean isSipUriEquals(SipURI uri1, SipURI uri2) {
 		if (uri1.getScheme().equalsIgnoreCase(uri2.getScheme())) {
 			if (uri1.getUser() != null) {
 				if (uri2.getUser() == null) {
@@ -119,22 +107,4 @@ public abstract class RequestMatchingStrategy {
 
 		return false;
 	}
-
-	/**
-	 * @return If true, the matcher will allow multiple instances of this class. Otherwise,
-	 * any additional instances will not be added to the matcher, and will be treated as
-	 * a localized singleton.
-	 */
-	public final boolean multipleInstanceAllowed() {
-		return multipleInstanceAllowed;
-	}
-
-	/**
-	 * Determines if the inbound request matches the criterion defined by this matching strategy.
-	 *
-	 * @param request    The inbound request
-	 * @param sipSession The governing SipSession which received the request through its {@link org.cafesip.sipunit.SipStack}
-	 * @return True if the request matches the defined criterion, false otherwise
-	 */
-	public abstract boolean isRequestMatching(final Request request, final SipSession sipSession);
 }
