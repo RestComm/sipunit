@@ -16,41 +16,19 @@
 
 package org.cafesip.sipunit;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.sip.Dialog;
-import javax.sip.RequestEvent;
-import javax.sip.ResponseEvent;
-import javax.sip.SipProvider;
-import javax.sip.TimeoutEvent;
+import javax.sip.*;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
 import javax.sip.address.SipURI;
 import javax.sip.address.URI;
-import javax.sip.header.AcceptHeader;
-import javax.sip.header.CSeqHeader;
-import javax.sip.header.CallIdHeader;
-import javax.sip.header.ContactHeader;
-import javax.sip.header.EventHeader;
-import javax.sip.header.ExpiresHeader;
-import javax.sip.header.FromHeader;
-import javax.sip.header.Header;
-import javax.sip.header.HeaderFactory;
-import javax.sip.header.MaxForwardsHeader;
-import javax.sip.header.ReferToHeader;
-import javax.sip.header.SubscriptionStateHeader;
-import javax.sip.header.ToHeader;
-import javax.sip.header.ViaHeader;
+import javax.sip.header.*;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.text.ParseException;
+import java.util.*;
 
 /**
  * The EventSubscriber class represents a generic subscription conforming to the event subscription
@@ -590,7 +568,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
     CSeqHeader rcvSeqHdr = (CSeqHeader) request.getHeader(CSeqHeader.NAME);
     if (rcvSeqHdr == null) {
-      EventSubscriber.sendResponse(parent, requestEvent, SipResponse.BAD_REQUEST,
+      parent.sendResponse(requestEvent, SipResponse.BAD_REQUEST,
           "no CSEQ header received");
 
       String err = "*** NOTIFY REQUEST ERROR ***  (" + targetUri + ") - no CSEQ header received";
@@ -604,7 +582,7 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     if (notifyCSeq != null) {
       // This is not the first NOTIFY
       if (rcvSeqHdr.getSeqNumber() <= notifyCSeq.getSeqNumber()) {
-        EventSubscriber.sendResponse(parent, requestEvent, SipResponse.OK, "OK");
+        parent.sendResponse(requestEvent, SipResponse.OK, "OK");
 
         LOG.trace("Received NOTIFY CSEQ {}  not new, discarding message", rcvSeqHdr.getSeqNumber());
         return;
@@ -830,21 +808,13 @@ public class EventSubscriber implements MessageListener, SipActionObject {
 
   }
 
+  /**
+   * @deprecated by instance method call of SipPhone
+   * @see SipPhone#sendResponse(RequestEvent, int, String)
+   */
+  @Deprecated
   protected static void sendResponse(SipPhone parent, RequestEvent req, int status, String reason) {
-    try {
-      Response response = parent.getMessageFactory().createResponse(status, req.getRequest());
-      response.setReasonPhrase(reason);
-
-      if (req.getServerTransaction() != null) {
-        req.getServerTransaction().sendResponse(response);
-        return;
-      }
-
-      ((SipProvider) req.getSource()).sendResponse(response);
-    } catch (Exception e) {
-      LOG.error("Failure sending error response (" + reason + ") for received "
-          + req.getRequest().getMethod() + ", Exception: " + e.toString(), e);
-    }
+    parent.sendResponse(req, status, reason);
   }
 
   /**
@@ -1021,13 +991,15 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     return true;
   }
 
-  protected boolean messageForMe(javax.sip.message.Message msg) {
-    /*
-     * NOTIFY requests are matched to SUBSCRIBE/REFER requests if they contain the same "Call-ID", a
-     * "To" header "tag" parameter which matches the "From" header "tag" parameter of the
-     * SUBSCRIBE/REFER, and the same "Event" header field.
-     */
-
+  /**
+   * NOTIFY requests are matched to SUBSCRIBE/REFER requests if they contain the same "Call-ID", a
+   * "To" header "tag" parameter which matches the "From" header "tag" parameter of the
+   * SUBSCRIBE/REFER, and the same "Event" header field.
+   *
+   * @param msg             The NOTIFY message whose headers will be evaluated and matched
+   * @return If the message matches to this event subscriber
+   */
+  public boolean messageForMe(javax.sip.message.Message msg) {
     Request lastSentRequest = getLastSentRequest();
 
     if (lastSentRequest == null) {
@@ -1048,19 +1020,19 @@ public class EventSubscriber implements MessageListener, SipActionObject {
       return false;
     }
 
-    if (hdr.getCallId().equals(sentHdr.getCallId()) == false) {
+    if (!hdr.getCallId().equals(sentHdr.getCallId())) {
       return false;
     }
 
     // check to-tag = from-tag, (my tag), and event header
     // fields same as in sent request
 
-    ToHeader tohdr = (ToHeader) msg.getHeader(ToHeader.NAME);
-    if (tohdr == null) {
+    ToHeader toHeader = (ToHeader) msg.getHeader(ToHeader.NAME);
+    if (toHeader == null) {
       return false;
     }
 
-    String toTag = tohdr.getTag();
+    String toTag = toHeader.getTag();
     if (toTag == null) {
       return false;
     }
@@ -1071,30 +1043,23 @@ public class EventSubscriber implements MessageListener, SipActionObject {
     }
 
     String fromTag = sentFrom.getTag();
-    if (fromTag == null) {
-      return false;
-    }
-
-    if (toTag.equals(fromTag) == false) {
-      return false;
-    }
-
-    return eventForMe(msg, lastSentRequest);
+    return fromTag != null && toTag.equals(fromTag) && eventForMe(msg, lastSentRequest);
   }
 
-  protected boolean eventForMe(javax.sip.message.Message msg, Request lastSentRequest) {
-    EventHeader eventhdr = (EventHeader) msg.getHeader(EventHeader.NAME);
-    EventHeader sentEventhdr = (EventHeader) lastSentRequest.getHeader(EventHeader.NAME);
+  /**
+   * @param msg             The inbound NOTIFY request
+   * @param lastSentRequest The last sent request by an EventSubscriber
+   * @return If the NOTIFY request and the last sent request event headers match.
+   */
+  public boolean eventForMe(javax.sip.message.Message msg, Request lastSentRequest) {
+    EventHeader eventHeader = (EventHeader) msg.getHeader(EventHeader.NAME);
+    EventHeader sentEventHeader = (EventHeader) lastSentRequest.getHeader(EventHeader.NAME);
 
-    if ((eventhdr == null) || (sentEventhdr == null)) {
+    if (eventHeader == null || sentEventHeader == null) {
       return false;
     }
 
-    if (eventhdr.equals(sentEventhdr) == false) {
-      return false;
-    }
-
-    return true;
+    return eventHeader.equals(sentEventHeader);
   }
 
   private void validateEventHeader(EventHeader receivedHdr, EventHeader sentHdr)
