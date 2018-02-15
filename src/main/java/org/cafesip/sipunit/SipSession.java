@@ -193,6 +193,7 @@ public class SipSession implements SipListener, SipActionObject {
   private boolean loopback;
 
   private boolean supportRegisterRequests;
+  private boolean passThroughRegisterRequests;
 
   private boolean autoResponseOptionsRequests = true;
   private Request lastReceivedOptionsRequest;
@@ -299,6 +300,14 @@ public class SipSession implements SipListener, SipActionObject {
 
   public void setSupportRegisterRequests (boolean supportRegisterRequests) {
     this.supportRegisterRequests = supportRegisterRequests;
+  }
+
+  public boolean isPassThroughRegisterRequests () {
+    return passThroughRegisterRequests;
+  }
+
+  public void setPassThroughRegisterRequests (boolean passThroughRegisterRequests) {
+    this.passThroughRegisterRequests = passThroughRegisterRequests;
   }
 
   public boolean isAutoResponseOptionsRequests () {
@@ -427,17 +436,19 @@ public class SipSession implements SipListener, SipActionObject {
     LOG.trace("     {}" , req_msg.toString());
 
     if (req_msg.getMethod().equalsIgnoreCase(SipRequest.REGISTER)) {
-      if (!supportRegisterRequests) {
-        return;
-      } else {
-        ExpiresHeader expires = req_msg.getExpires();
-        if (expires.getExpires() == 0) {
-          try {
-            Response response = getParent().getMessageFactory().createResponse(Response.OK, request.getRequest());
-            sendReply(request, response);
-            return;
-          } catch (Exception e) {
-            LOG.error("Exception while trying to respond to REGISTER with Expires header 0 request");
+      if (!isPassThroughRegisterRequests()) {
+        if (!isSupportRegisterRequests()) {
+          return;
+        } else {
+          ExpiresHeader expires = req_msg.getExpires();
+          if (expires.getExpires() == 0) {
+            try {
+              Response response = getParent().getMessageFactory().createResponse(Response.OK, request.getRequest());
+              sendReply(request, response);
+              return;
+            } catch (Exception e) {
+              LOG.error("Exception while trying to respond to REGISTER with Expires header 0 request");
+            }
           }
         }
       }

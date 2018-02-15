@@ -86,7 +86,10 @@
 			]]></programlisting>
 
 
-			Notice that if SipPhone receives SIP REGISTER with Expires 0 (un-register) it will automatically respond with 200 OK.
+			Notice that if SipPhone receives SIP REGISTER with Expires 0 (un-register) it will automatically respond with 200 OK,
+			UNLESS if <programlisting linenumbering="unnumbered" role="Java"><![CDATA[
+			sipPhone.setPassThroughRegisterRequests(true);
+			]]></programlisting> is set.
 
 
 			Also, by default SipPhone now responds to SIP OPTIONS requests with 200 OK. This feature can be disabled if needed using:
