@@ -1701,7 +1701,7 @@ public class TestReferNoProxy {
     // prepare the far end to respond to unSUBSCRIBE
     ub.processSubscribe(5000, SipResponse.OK, "OK Done");
     // send the un-SUBSCRIBE
-    assertTrue(subscription.unsubscribe(100));
+    assertTrue(subscription.unsubscribe(1000));
     assertFalse(subscription.isRemovalComplete());
     assertEquals(SipResponse.OK, subscription.getReturnCode());
     assertTrue(subscription.isSubscriptionTerminated());
