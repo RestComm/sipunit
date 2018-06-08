@@ -1102,18 +1102,6 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
   }
 
   /**
-   * The method getContactInfo() returns the contact information currently in effect for this user
-   * agent. This may be the value associated with the last registration attempt or as defaulted to
-   * user@host if no registration has occurred. Or, if the setPublicAddress() has been called on
-   * this object, the returned value will reflect the most recent call to setPublicAddress().
-   * 
-   * @return The SipContact object currently in effect for this user agent
-   */
-  public SipContact getContactInfo() {
-    return contactInfo;
-  }
-
-  /**
    * This method is the same as getContactInfo().
    * 
    * @deprecated Use getContactInfo() instead of this method, the term 'local' in the method name is
@@ -1131,16 +1119,6 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
       contactInfo = new SipContact();
       contactInfo.setContactHeader(hdr);
     }
-  }
-
-  /**
-   * Gets the user Address for this SipPhone. This is the same address used in the
-   * "from" header field.
-   * 
-   * @return Returns the javax.sip.address.Address for this SipPhone (UA).
-   */
-  public Address getAddress() {
-    return myAddress;
   }
 
   /**
