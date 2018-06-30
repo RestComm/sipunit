@@ -16,37 +16,20 @@
 
 package org.cafesip.sipunit;
 
+import gov.nist.javax.sip.ResponseEventExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gov.nist.javax.sip.ResponseEventExt;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.text.ParseException;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import java.util.Properties;
-import java.util.Random;
-
-import javax.sip.DialogTerminatedEvent;
-import javax.sip.IOExceptionEvent;
-import javax.sip.InvalidArgumentException;
-import javax.sip.ListeningPoint;
-import javax.sip.RequestEvent;
-import javax.sip.ResponseEvent;
-import javax.sip.SipFactory;
-import javax.sip.SipListener;
-import javax.sip.SipProvider;
-import javax.sip.TimeoutEvent;
-import javax.sip.TransactionTerminatedEvent;
+import javax.sip.*;
 import javax.sip.address.AddressFactory;
 import javax.sip.header.HeaderFactory;
 import javax.sip.header.RecordRouteHeader;
 import javax.sip.header.RouteHeader;
 import javax.sip.message.MessageFactory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.ParseException;
+import java.util.*;
 
 /**
  * This class is the starting point for a SipUnit test. Before establishing any SIP sessions, the
@@ -211,6 +194,41 @@ public class SipStack implements SipListener {
   public SipStack(String proto, int port) throws Exception {
     this(proto, port, null);
   }
+
+  /**
+   * This method is used to create a SipPhone object. The SipPhone class simulates a SIP User Agent.
+   * The SipPhone object is used to communicate with other SIP agents. Using a SipPhone object, the
+   * test program can make one (or more, in future) outgoing calls or (and, in future) receive one
+   * (or more, in future) incoming calls.
+   * <p/>
+   * This factory method provides the option to configure a different address for the registrar and the proxy component
+   * in SIP backend.
+   *
+   * @param registrarHost host name or address of the SIP registrar. The registrar handles registrations in a SIP backend,
+   *                      and provides credentials for a registering client.
+   *                      If a host name is given here, it must resolve to a valid, reachable DNS address.
+   * @param registrarPort  port number into with the registrar server listens to for SIP messages and
+   *                   connections.
+   * @param proxyHost  host name or address of the SIP proxy to use. The proxy is used for outbound calling on
+   *                   a per-call basis. If a host name is given here, it must resolve to a valid, reachable DNS address.
+   * @param proxyProto used to specify the protocol for communicating with the proxy server - "udp"
+   *                   or "tcp".
+   * @param proxyPort  port number into with the proxy server listens to for SIP messages and
+   *                   connections.
+   * @param me         "Address of Record" URI of the phone user. Each SipPhone is associated with one user.
+   *                   This parameter is used in the "from" header field.
+   * @return A new SipPhone object.
+   * @throws InvalidArgumentException
+   * @throws ParseException
+   */
+  public SipPhone createSipPhone(String registrarHost, int registrarPort, String proxyHost, String proxyProto, int proxyPort, String me) throws InvalidArgumentException, ParseException {
+    try {
+      return new SipPhone(this, registrarHost, registrarPort, proxyHost, proxyProto, proxyPort, me);
+    } catch (NoSuchFieldException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 
   /**
    * This method is used to create a SipPhone object. The SipPhone class simulates a SIP User Agent.
