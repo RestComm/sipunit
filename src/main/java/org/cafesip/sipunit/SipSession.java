@@ -199,14 +199,28 @@ public class SipSession implements SipListener, SipActionObject {
   private Request lastReceivedOptionsRequest;
   private int errorRespondToOptions = -1;
 
+  /**
+    When using TCP or WS transport, the stack will create a new ephemeral port to send out traffic and even though stack
+    will listent the ephemeral port and deliver traffic to sipUnit, sipUnit will discard this traffic because RURI or To header
+    doesn't match contact address, which is constructed using the user provided port.
+    Setting `acceptTrafficOnEphemeralPorts` to true, we ask sipUnit stack to accept traffic on ephemeral ports.
+   */
+  private boolean acceptTrafficOnEphemeralPorts;
+
 
   protected SipSession(SipStack stack, String proxyHost, String proxyProto, int proxyPort,
-      String me) throws InvalidArgumentException, ParseException {
+                       String me) throws InvalidArgumentException, ParseException {
+    this(stack, proxyHost, proxyProto, proxyPort, me, false);
+  }
+
+  protected SipSession(SipStack stack, String proxyHost, String proxyProto, int proxyPort,
+      String me, boolean acceptTrafficOnEphemeralPorts) throws InvalidArgumentException, ParseException {
     this.parent = stack;
     this.proxyHost = proxyHost;
     this.proxyProto = proxyProto;
     this.proxyPort = proxyPort;
     this.me = me;
+    this.acceptTrafficOnEphemeralPorts = acceptTrafficOnEphemeralPorts;
 
     this.myhost = parent.getSipProvider().getListeningPoints()[0].getIPAddress();
 
@@ -318,7 +332,15 @@ public class SipSession implements SipListener, SipActionObject {
     this.autoResponseOptionsRequests = autoResponseOptionsRequests;
   }
 
-    public Request getLastReceivedOptionsRequest () {
+  public boolean isAcceptTrafficOnEphemeralPorts () {
+    return acceptTrafficOnEphemeralPorts;
+  }
+
+  public void setAcceptTrafficOnEphemeralPorts (boolean acceptTrafficOnEphemeralPorts) {
+    this.acceptTrafficOnEphemeralPorts = acceptTrafficOnEphemeralPorts;
+  }
+
+  public Request getLastReceivedOptionsRequest () {
         return lastReceivedOptionsRequest;
     }
 
@@ -452,16 +474,19 @@ public class SipSession implements SipListener, SipActionObject {
           }
         }
       }
-    } else if (destMatch((SipURI) my_contact_info.getContactHeader().getAddress().getURI(),
-        (SipURI) req_msg.getRequestURI()) == false) {
-      if (!loopback) {
-        LOG.trace("     skipping 'To' check, we're not loopback (see setLoopback())");
-        return;
-      }
+    } else if (!acceptTrafficOnEphemeralPorts) {
+      //Check if destination match
+      if (destMatch((SipURI) my_contact_info.getContactHeader().getAddress().getURI(),
+              (SipURI) req_msg.getRequestURI()) == false) {
+        if (!loopback) {
+          LOG.trace("     skipping 'To' check, we're not loopback (see setLoopback())");
+          return;
+        }
 
-      // check 'To' for a match
-      if (to.getAddress().getURI().toString().equals(me) == false) {
-        return;
+        // check 'To' for a match
+        if (to.getAddress().getURI().toString().equals(me) == false) {
+          return;
+        }
       }
     }
 
