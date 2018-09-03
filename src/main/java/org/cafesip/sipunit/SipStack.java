@@ -123,6 +123,11 @@ public class SipStack implements SipListener {
    */
   public static final String PROTOCOL_UDP = "udp";
 
+  /**
+   * <code>PROTOCOL_WS</code> Specifies WS transport.
+   * must use gov.nist.javax.sip.stack.NioMessageProcessorFactory
+   */
+  public static final String PROTOCOL_WS = "ws";
 
 
   public static final int DEFAULT_PORT = 5060;
@@ -170,15 +175,19 @@ public class SipStack implements SipListener {
       props.remove("javax.sip.IP_ADDRESS");
     }
 
+    if (proto == null) {
+      proto = DEFAULT_PROTOCOL;
+    }
+
+    if (PROTOCOL_WS.equalsIgnoreCase(proto)) {
+      props.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", "gov.nist.javax.sip.stack.NioMessageProcessorFactory");
+    }
+
     sipStack = sipFactory.createSipStack(props);
 
     headerFactory = sipFactory.createHeaderFactory();
     addressFactory = sipFactory.createAddressFactory();
     messageFactory = sipFactory.createMessageFactory();
-
-    if (proto == null) {
-      proto = DEFAULT_PROTOCOL;
-    }
 
     if (port < 0) {
       port = DEFAULT_PORT;
