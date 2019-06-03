@@ -86,7 +86,7 @@ public class SipStack implements SipListener {
     private static final Properties defaultProperties = new Properties();
 
     static {
-        String host = null;
+        String host;
         try {
             host = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
@@ -154,16 +154,21 @@ public class SipStack implements SipListener {
      * @throws Exception
      */
     public SipStack(String proto, int port, Properties props) throws Exception {
-        if (sipFactory == null) {
-            sipFactory = SipFactory.getInstance();
-            String pathName = props.getProperty("javax.sip.STACK_PATH", "gov.nist");
-            LOG.info("Using path name:" + pathName);
-            sipFactory.setPathName(pathName);
-        }
-
         if (props == null) {
             props = defaultProperties;
         }
+
+        if (sipFactory == null) {
+            sipFactory = SipFactory.getInstance();
+        }
+
+        // !! IMPORTANT !!
+        // Must enforce stack_path every time we create a new SipStack because we revert it back to "gov.nist" default
+        // on SipStack.dispose() because the factory is reset.
+        // Since SipFactory is a singleton then it would affect all sipStacks that are created afterwards.
+        String pathName = props.getProperty("javax.sip.STACK_PATH", "gov.nist");
+        LOG.info("Using path name:" + pathName);
+        sipFactory.setPathName(pathName);
 
         if (props.getProperty("javax.sip.STACK_NAME") == null) {
             props.setProperty("javax.sip.STACK_NAME", "SipUnitTestAgent");
