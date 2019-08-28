@@ -36,7 +36,7 @@ def tag() {
 
 def version() {
     def newVersion = "${MAJOR_VERSION_NUMBER}"
-    if (BRANCH_NAME != "ts2") {
+    if (BRANCH_NAME != "master") {
         newVersion = "${MAJOR_VERSION_NUMBER}-${BRANCH_NAME}"
     }
     currentBuild.displayName = "#${BUILD_NUMBER}-${newVersion}"
