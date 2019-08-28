@@ -1,13 +1,13 @@
 /*
  * Created on Feb 7, 2012
- * 
+ *
  * Copyright 2005 CafeSip.org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -41,13 +41,13 @@ import javax.sip.message.Response;
 
 /**
  * This class tests SipUnit API MESSAGE methods.
- * 
+ *
  * <p>
  * Tests in this class do not require a proxy/registrar server. Messaging between UACs is direct.
- * 
+ *
  * <p>
  * Also tests that MESSAGE request goes through an established dialog.
- * 
+ *
  * @author <a href="mailto:gvagenas@gmail.com">George Vagenas</a>
  *
  */
@@ -170,13 +170,13 @@ public class TestMessageNoProxy {
     assertTrue(msgsFromA.size() > 0);
     assertTrue(msgsFromA.get(0).equals("Hello Becky"));
 
-    callB.sendMessageResponse(200, "OK", -1);
+    assertTrue(callB.sendMessageResponse(202, "OK", -1));
 
     // The dialog should be null
     assertNull(callB.getDialog());
 
     assertTrue(callA.waitOutgoingMessageResponse(4000));
-    assertEquals(Response.OK, callA.getLastReceivedResponse().getStatusCode());
+    assertEquals(Response.ACCEPTED, callA.getLastReceivedResponse().getStatusCode());
 
     /*
      * callB send MESSAGE to callB
@@ -194,7 +194,7 @@ public class TestMessageNoProxy {
     assertTrue(msgsFromB.size() > 0);
     assertTrue(msgsFromB.get(0).equals("Hello Amit"));
 
-    callA.sendMessageResponse(200, "OK", -1);
+    assertTrue(callA.sendMessageResponse(200, "OK", -1));
 
     // The dialog should be null
     assertNull(callA.getDialog());
