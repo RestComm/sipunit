@@ -14,6 +14,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
+        <jain-sip-version>7.0.21</jain-sip-version>
     </properties>
 
     <developers>
@@ -53,22 +55,22 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com:RestComm/sipunit.git</connection>
-        <developerConnection>scm:git:git@github.com:RestComm/sipunit.git</developerConnection>
-        <url>git@github.com:RestComm/sipunit.git</url>
-        <tag>HEAD</tag>
+        <connection>scm:git:git@bitbucket.org:telestax/sipunit.git</connection>
+        <developerConnection>scm:git:git@bitbucket.org:telestax/sipunit.git</developerConnection>
+        <url>https://bitbucket.org/telestax/sipunit</url>
     </scm>
 
     <distributionManagement>
         <repository>
-            <id>mobicents-releases-repository</id>
-            <name>Mobicents Releases Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+            <id>cxs-prod-releases</id>
+            <name>cxs-prod-releases</name>
+            <url>http://cxsnexus.restcomm.com/nexus/content/repositories/product-releases/</url>
+
         </repository>
         <snapshotRepository>
-            <id>mobicents-snapshots-repository</id>
-            <name>Mobicents Snapshots Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>cxs-prod-snapshots</id>
+            <name>Restcomm Snapshots Repository</name>
+            <url>http://cxsnexus.restcomm.com/nexus/content/repositories/product-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -100,13 +102,13 @@
         <dependency>
             <groupId>javax.sip</groupId>
             <artifactId>jain-sip-api</artifactId>
-            <version>1.2.1.4</version>
+            <version>${jain-sip-version}</version>
         </dependency>
 
         <dependency>
             <groupId>javax.sip</groupId>
             <artifactId>jain-sip-ri</artifactId>
-            <version>1.2.244</version>
+            <version>${jain-sip-version}</version>
             <!--    <version>1.2.X-SNAPSHOT</version> -->
         </dependency>
 
@@ -210,8 +212,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -481,6 +483,32 @@
 
     <repositories>
         <repository>
+            <id>cxs-group</id>
+            <url>http://cxsnexus.restcomm.com/nexus/content/repositories/cxs-group/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
+        </repository>
+
+        <repository>
+            <id>cxs-product-snapshots</id>
+            <url>http://cxsnexus.restcomm.com/nexus/content/repositories/product-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+        </repository>
+
+        <repository>
             <id>mobicents-public-repository-group</id>
             <name>Mobicens Public Maven Repository Group</name>
             <url>https://oss.sonatype.org/content/groups/public</url>
@@ -494,6 +522,7 @@
                 <updatePolicy>never</updatePolicy>
             </snapshots>
         </repository>
+
         <repository>
             <id>jboss-public-repository-group</id>
             <name>JBoss Public Maven Repository Group</name>
@@ -508,6 +537,7 @@
                 <updatePolicy>never</updatePolicy>
             </snapshots>
         </repository>
+
         <repository>
             <id>java.net-Public</id>
             <name>Maven Java Net Snapshots and Releases</name>
