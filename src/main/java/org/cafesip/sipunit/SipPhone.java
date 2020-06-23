@@ -522,6 +522,14 @@ public class SipPhone extends SipSession implements SipActionObject, RequestList
 
         response = ((ResponseEvent) response_event).getResponse();
         status_code = response.getStatusCode();
+
+        if (status_code == Response.UNAUTHORIZED) {
+          //still unauthorized -> abort registration
+          setReturnCode(status_code);
+          setErrorMessage("An unauthorized response was received from the server - even after sending registration with authorization.");
+          return null;
+        }
+
         continue;
       } else {
         setReturnCode(status_code);
